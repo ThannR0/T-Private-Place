@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi"> <head>
+    <meta charset="UTF-8">
+
+    <title>Chatbox AI Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #chat-page { display: none; }
+        .message { padding: 5px 10px; margin: 5px 0; border-radius: 5px; }
+        .my-message { background-color: #dcf8c6; text-align: right; }
+        .other-message { background-color: #f1f0f0; }
+    </style>
+</head>
+<body>
+
+<div id="login-page">
+    <h2>Nhập tên của bạn để Chat</h2>
+    <input type="text" id="username" placeholder="Ví dụ: user1" />
+    <button onclick="connect()">Vào Chat</button>
+</div>
+
+<div id="chat-page">
+    <h2 id="welcome"></h2>
+
+    <div>
+        Gửi tới: <input type="text" id="recipient" placeholder="Ví dụ: user2" />
+    </div>
+
+    <div id="message-area" style="height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin: 10px 0;">
+    </div>
+
+    <input type="text" id="message" placeholder="Nhập tin nhắn..." />
+    <button onclick="send()">Gửi</button>
+</div>
+
+<script>
+    var stompClient = null;
+    var username = null;
+
+    function connect(options) {
+        username = document.getElementById('username').value.trim();
+        if (!username) return alert("Chưa nhập tên!");
+
+        if (username.toLowerCase() === 'bot') {
+            return alert("Đây là tên hệ thống AI, vui lòng chọn tên khác!");
+        }
+
+        var socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('chat-page').style.display = 'block';
+            document.getElementById('welcome').innerText = "Xin chào: " + username;
+
+            stompClient.subscribe('/user/' + username + '/queue/messages', function (msg) {
+                var messageBody = JSON.parse(msg.body);
+
+                // --- ĐOẠN SỬA ĐỂ CHỐNG DUPLICATE ---
+                // Nếu tin nhắn đến từ chính mình -> Bỏ qua (Vì đã hiện lúc bấm gửi rồi)
+                // Trừ trường hợp đặc biệt: Nếu là bot thì vẫn hiện (để debug) hoặc xử lý riêng
+                if (messageBody.senderId === username && username !== 'bot') {
+                    return;
+                }
+                // -----------------------------------
+
+                showMessage(messageBody);
+            });
+        });
+    }
+
+    function send() {
+        var content = document.getElementById('message').value;
+        var recipient = document.getElementById('recipient').value;
+
+        if (!content || !recipient) return alert("Nhập thiếu thông tin!");
+
+        var chatMessage = {
+            senderId: username,
+            recipientId: recipient,
+            content: content
+        };
+
+        // Gửi lên Server: /app/chat
+        stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
+
+        // Hiện luôn tin nhắn của mình lên màn hình cho đẹp
+        showMessage(chatMessage);
+        document.getElementById('message').value = '';
+    }
+
+    function showMessage(message) {
+        var messageArea = document.getElementById('message-area');
+        var msgElement = document.createElement('div');
+
+        msgElement.classList.add('message');
+        if (message.senderId === username) {
+            msgElement.classList.add('my-message');
+            msgElement.innerText = "Tôi: " + message.content;
+        } else {
+            msgElement.classList.add('other-message');
+            msgElement.innerText = message.senderId + ": " + message.content;
+        }
+
+        messageArea.appendChild(msgElement);
+    }
+</script>
+</body>
+</html>

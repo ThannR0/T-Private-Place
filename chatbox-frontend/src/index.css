@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Các style khác nếu có */
+body {
+    font-family: 'Inter', sans-serif; /* Nếu muốn font đẹp hơn */
+    background-color: #f9fafb;
+}
