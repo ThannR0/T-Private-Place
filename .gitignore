@@ -33,3 +33,10 @@ coverage
 
 # Vite build output
 dist
+
+# Bỏ qua thư mục upload
+upload/
+
+# Hoặc nếu nó nằm sâu hơn
+backend/upload/
+public/images/upload/
