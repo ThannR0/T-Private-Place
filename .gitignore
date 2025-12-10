@@ -28,6 +28,10 @@ dist-ssr
 .env
 .env.*
 
+# Docker
+docker-compose.yml
+backend/docker-compose.yml
+
 # Testing
 coverage
 
