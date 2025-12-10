@@ -19,12 +19,18 @@ const ChatHeader = () => {
     const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
     const [openInfo, setOpenInfo] = useState(false);
 
+
+    const isBot = recipient === 'bot';
     // 1. Tìm User/Group
     const targetUser = users.find(u => u.username === recipient) || {
-        username: recipient, displayName: recipient, status: 'OFFLINE', avatar: null
+        username: recipient,
+        // Nếu là bot thì ép tên luôn, nếu không thì lấy recipient làm tên tạm
+        displayName: isBot ? 'Trợ lý AI' : recipient,
+        status: 'OFFLINE',
+        avatar: null
     };
+
     const isGroupChat = targetUser.isGroup === true;
-    const isBot = recipient === 'bot';
 
     // 2. Logic Trạng thái
     let statusText = 'Ngoại tuyến';
@@ -52,6 +58,8 @@ const ChatHeader = () => {
             onOk: () => leaveGroup(targetUser.realGroupId)
         });
     };
+
+
 
     // 4. Nội dung Pop-up Menu (i)
     const infoContent = (

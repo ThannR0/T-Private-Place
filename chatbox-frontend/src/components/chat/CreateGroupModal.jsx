@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Modal, Input, Select, Button, message } from 'antd';
 import { useChat } from '../../context/ChatContext';
-import api from '../../services/api'; // Axios instance của bạn
+import api from '../../services/api';
 
 const { Option } = Select;
 
 const CreateGroupModal = ({ visible, onClose }) => {
-    const { users, currentUser, refreshGroups } = useChat(); // refreshGroups: hàm mới ta sẽ thêm vào Context
+    // refreshGroups đã được export từ Context
+    const { users, currentUser, refreshGroups } = useChat();
     const [groupName, setGroupName] = useState('');
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Lọc bỏ Bot và bản thân mình khỏi danh sách chọn
-    const availableUsers = users.filter(u => u.username !== 'bot' && u.username !== currentUser);
+    // Lọc bỏ Bot và bản thân
+    const availableUsers = users.filter(u => u.username !== 'bot' && u.username !== currentUser && !u.isGroup);
 
     const handleCreate = async () => {
         if (!groupName || selectedMembers.length === 0) {
@@ -21,16 +22,16 @@ const CreateGroupModal = ({ visible, onClose }) => {
 
         setLoading(true);
         try {
-            // Gọi API Backend đã viết ở Phần 1
             const res = await api.post('/groups/create', {
                 name: groupName,
-                members: [...selectedMembers, currentUser] // Thêm chính mình vào
+                members: [...selectedMembers, currentUser]
             });
 
             message.success("Tạo nhóm thành công!");
 
-            // Gọi hàm trong Context để reload danh sách chat (để hiện nhóm mới lên Sidebar)
-            if(refreshGroups) refreshGroups(res.data);
+            // --- CẬP NHẬT NGAY ---
+            if(refreshGroups) refreshGroups();
+            // ---------------------
 
             onClose();
             setGroupName('');

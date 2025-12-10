@@ -5,16 +5,25 @@ import com.mosoftvn.chatbox.DTO.GroupRequest;
 import com.mosoftvn.chatbox.Service.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/groups")
 public class GroupController {
 
-    @Autowired private GroupService groupService;
+    @Autowired
+    private GroupService groupService;
+
+    // --- 2. Inject công cụ gửi Socket ---
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     // Helper: Lấy username hiện tại
     private String getCurrentUser() {
@@ -23,32 +32,66 @@ public class GroupController {
 
     @PostMapping("/create")
     public ResponseEntity<GroupDetailDTO> createGroup(@RequestBody GroupRequest req) {
-        // Kiểm tra dữ liệu đầu vào
         if (req.getMembers() == null || req.getMembers().isEmpty()) {
             throw new RuntimeException("Danh sách thành viên không được trống");
         }
 
-        // Gọi service với getter mới: getName(), getMembers()
-        return ResponseEntity.ok(groupService.createGroup(
+        GroupDetailDTO newGroup = groupService.createGroup(
                 getCurrentUser(),
                 req.getName(),
                 req.getMembers()
-        ));
+        );
+
+        // --- 3. Bắn Socket báo có nhóm mới (NEW_GROUP_CREATED) ---
+        // Để người tạo và các thành viên thấy nhóm ngay lập tức
+        Map<String, Object> socketMsg = new HashMap<>();
+        socketMsg.put("type", "NEW_GROUP_CREATED");
+        socketMsg.put("group", newGroup); // Gửi cả cục thông tin nhóm về
+
+        messagingTemplate.convertAndSend("/topic/feed", Optional.of(socketMsg));
+        // --------------------------------------------------------
+
+        return ResponseEntity.ok(newGroup);
     }
+
     @GetMapping("/my-groups")
     public List<GroupDetailDTO> getMyGroups() {
         return groupService.getMyGroups(getCurrentUser());
     }
 
+    // --- 4. NÂNG CẤP API THÊM THÀNH VIÊN ---
     @PostMapping("/{groupId}/add")
     public ResponseEntity<?> addMembers(@PathVariable Long groupId, @RequestBody GroupRequest req) {
-        groupService.addMembers(groupId, getCurrentUser(), req.getMembers()); // Getter mới
+        // A. Gọi Service xử lý logic lưu vào DB (Code cũ)
+        groupService.addMembers(groupId, getCurrentUser(), req.getMembers(), req.isShareHistory());
+
+        // B. Lấy thông tin nhóm để biết tên nhóm là gì (Cần thiết cho thông báo)
+        GroupDetailDTO groupInfo = groupService.getGroupDetail(groupId);
+
+        // C. Bắn Socket thông báo cho từng người vừa được thêm
+        if (req.getMembers() != null) {
+            for (String addedUser : req.getMembers()) {
+                Map<String, Object> socketMsg = new HashMap<>();
+                socketMsg.put("type", "GROUP_MEMBER_ADDED");
+                socketMsg.put("groupId", groupId);
+                socketMsg.put("realGroupId", groupId);
+                socketMsg.put("groupName", groupInfo.getName()); // Lấy tên nhóm từ DTO
+                socketMsg.put("addedUser", addedUser); // Tên người được thêm
+
+                socketMsg.put("eventId", System.currentTimeMillis() + "_" + addedUser);
+                // Gửi vào kênh chung /topic/feed
+                messagingTemplate.convertAndSend("/topic/feed", Optional.of(socketMsg));
+            }
+        }
+
         return ResponseEntity.ok("Đã thêm thành viên");
     }
 
     @PostMapping("/{groupId}/remove")
     public ResponseEntity<?> removeMember(@PathVariable Long groupId, @RequestBody GroupRequest req) {
         groupService.removeMember(groupId, getCurrentUser(), req.getTargetUsername());
+
+        // (Tùy chọn) Bạn có thể bắn socket báo người đó bị kick nếu muốn
         return ResponseEntity.ok("Đã xóa thành viên");
     }
 
@@ -60,7 +103,6 @@ public class GroupController {
 
     @PutMapping("/{groupId}/rename")
     public ResponseEntity<?> renameGroup(@PathVariable Long groupId, @RequestBody GroupRequest req) {
-        // Getter mới: getName()
         groupService.renameGroup(groupId, getCurrentUser(), req.getName());
         return ResponseEntity.ok("Đã đổi tên nhóm");
     }

@@ -29,14 +29,10 @@ export const getAvatarUrl = (username, fullName, avatarUrlFromDB) => {
 
 // 2. LOGIC LẤY MÀU TRẠNG THÁI (Cái bạn đang thiếu)
 export const getStatusColor = (status) => {
-    if (!status) return 'default'; // Xám
-
-    const s = status.toUpperCase();
-
-    switch (s) {
-        case 'ONLINE': return 'success'; // Xanh lá
-        case 'BUSY': return 'error';     // Đỏ
-        case 'OFFLINE': return 'default'; // Xám
-        default: return 'default';
+    switch (status) {
+        case 'ONLINE': return '#52c41a'; // Xanh lá (Sáng hơn màu mặc định)
+        case 'BUSY': return '#ff4d4f';   // Đỏ
+        case 'OFFLINE': return '#d9d9d9'; // Xám
+        default: return '#d9d9d9';
     }
 };

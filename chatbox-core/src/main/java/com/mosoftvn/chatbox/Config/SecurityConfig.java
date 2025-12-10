@@ -50,6 +50,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/posts").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
+                        .requestMatchers("/api/chat/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
 
                         // 4. Còn lại các API khác thì phải có Token

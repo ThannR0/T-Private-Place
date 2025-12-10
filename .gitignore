@@ -37,6 +37,7 @@ dist
 # Bỏ qua thư mục upload
 upload/
 
-# Hoặc nếu nó nằm sâu hơn
 backend/upload/
 public/images/upload/
+# Bỏ qua file cấu hình chứa mật khẩu/API Key
+src/main/resources/application.properties

@@ -21,13 +21,15 @@ export const ChatProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [feedUpdate, setFeedUpdate] = useState(null);
-
     const [isConnected, setIsConnected] = useState(false);
 
-    // --- REFS (Bộ nhớ đệm không gây render lại) ---
+    // --- REFS (Bộ nhớ đệm chống trùng) ---
     const stompClientRef = useRef(null);
     const subscribedGroupsRef = useRef(new Set());
-    const processedNotiIdsRef = useRef(new Set()); // <-- QUAN TRỌNG: Chặn trùng thông báo
+    const processedNotiIdsRef = useRef(new Set());
+
+    // THÊM: Bộ lọc chống trùng cho Feed (Group, Status...)
+    const processedFeedIdsRef = useRef(new Set());
 
     // --- 1. XỬ LÝ TIN NHẮN ---
     const processMessage = (msg) => {
@@ -44,11 +46,15 @@ export const ChatProvider = ({ children }) => {
         const cleanMsg = processMessage(newMsg);
         setMessages(prev => {
             if (cleanMsg.id && prev.some(m => m.id === cleanMsg.id)) return prev;
+
+            // Check trùng nội dung + thời gian (chặn Echo)
             const isDuplicate = prev.some(m =>
-                m.senderId === cleanMsg.senderId && m.content === cleanMsg.content &&
-                Math.abs(new Date(m.timestamp).getTime() - new Date(cleanMsg.timestamp).getTime()) < 1000
+                m.senderId === cleanMsg.senderId &&
+                m.content === cleanMsg.content &&
+                Math.abs(new Date(m.timestamp).getTime() - new Date(cleanMsg.timestamp).getTime()) < 2000
             );
             if (isDuplicate) return prev;
+
             return [...prev, cleanMsg];
         });
     };
@@ -83,14 +89,17 @@ export const ChatProvider = ({ children }) => {
 
             setUsers([botUser, ...processedGroups, ...processedUsers]);
 
-            if (isConnected && stompClientRef.current) {
-                processedGroups.forEach(g => subscribeToGroup(g.realGroupId));
-            }
-
         } catch (error) {
             console.error("Lỗi tải data:", error);
             if (error.response && error.response.status === 403) logoutUser();
         }
+    };
+
+    const fetchMessages = async () => {
+        try {
+            const res = await api.get('/chat/history');
+            setMessages(res.data);
+        } catch (error) { console.error("Lỗi tải tin nhắn:", error); }
     };
 
     const refreshGroups = () => { fetchUsers(); };
@@ -102,7 +111,12 @@ export const ChatProvider = ({ children }) => {
         if (subscribedGroupsRef.current.has(topic)) return;
 
         stompClientRef.current.subscribe(topic, (payload) => {
-            addMessageUnique(JSON.parse(payload.body));
+            const msg = JSON.parse(payload.body);
+
+            // --- QUAN TRỌNG: Chặn tin nhắn của chính mình (để không hiện 2 lần) ---
+            if (msg.senderId === currentUser) return;
+            msg.type = 'GROUP';
+            addMessageUnique(msg);
         });
         subscribedGroupsRef.current.add(topic);
     };
@@ -110,9 +124,10 @@ export const ChatProvider = ({ children }) => {
     useEffect(() => {
         if (!currentUser) return;
 
-        // Reset các bộ lọc trùng khi login user mới
+        // Reset các bộ lọc khi login mới
         subscribedGroupsRef.current.clear();
         processedNotiIdsRef.current.clear();
+        processedFeedIdsRef.current.clear();
 
         const client = Stomp.over(() => new SockJS('http://localhost:8081/ws'));
         client.debug = () => {};
@@ -122,82 +137,85 @@ export const ChatProvider = ({ children }) => {
             setIsConnected(true);
             stompClientRef.current = client;
 
-            // Chat riêng
+            // 1. Chat riêng
             client.subscribe(`/user/${currentUser}/queue/messages`, (payload) => {
                 addMessageUnique(JSON.parse(payload.body));
             });
 
-            // Status & Feed
+            // 2. Status & Feed
             client.subscribe('/topic/status', (payload) => {
                 const update = JSON.parse(payload.body);
                 setUsers(prev => prev.map(u => u.username === update.username ? { ...u, status: update.status } : u));
             });
+
             client.subscribe('/topic/feed', (payload) => {
                 const data = JSON.parse(payload.body);
+
+                // --- BỘ LỌC FEED (Chặn thông báo lặp 2 lần) ---
+                // Nếu tin này đã xử lý rồi (dựa trên eventId) -> Bỏ qua
+                if (data.eventId && processedFeedIdsRef.current.has(data.eventId)) {
+                    return;
+                }
+                if (data.eventId) processedFeedIdsRef.current.add(data.eventId);
+                // ----------------------------------------------
+
                 setFeedUpdate(data);
 
-                // NẾU CÓ NGƯỜI UPDATE THÔNG TIN
-                if (data.type === 'USER_UPDATE') {
+                if (data.type === 'NEW_GROUP_CREATED') {
+                    if (data.group.members.includes(currentUser)) fetchUsers();
+                }
 
-                    // 1. Cập nhật danh sách chung (Users List)
+                if (data.type === 'GROUP_MEMBER_ADDED') {
+                    if (data.addedUser === currentUser) {
+                        message.info(`Bạn được thêm vào nhóm: ${data.groupName}`);
+                        fetchUsers();
+                        fetchMessages();
+                    }
+                }
+
+                if (data.type === 'USER_UPDATE') {
                     setUsers(prev => prev.map(u => {
                         if (u.username === data.username) {
-                            return {
-                                ...u,
-                                displayName: data.newFullName || u.displayName,
-                                avatar: data.newAvatar || u.avatar
-                            };
+                            return { ...u, displayName: data.newFullName || u.displayName, avatar: data.newAvatar || u.avatar };
                         }
                         return u;
                     }));
-
-                    // 2. NẾU LÀ CHÍNH MÌNH -> CẬP NHẬT BIẾN TOÀN CỤC (QUAN TRỌNG)
                     if (data.username === currentUser) {
-                        if (data.newFullName) {
-                            setCurrentFullName(data.newFullName); // Cập nhật State
-                            localStorage.setItem('fullName', data.newFullName); // Cập nhật Storage
-                        }
-                        if (data.newAvatar) {
-                            setCurrentAvatar(data.newAvatar);
-                            localStorage.setItem('avatar', data.newAvatar);
-                        }
+                        if (data.newFullName) { setCurrentFullName(data.newFullName); localStorage.setItem('fullName', data.newFullName); }
+                        if (data.newAvatar) { setCurrentAvatar(data.newAvatar); localStorage.setItem('avatar', data.newAvatar); }
                     }
                 }
             });
 
-            // --- NOTIFICATION (ĐÃ FIX LỖI LẶP) ---
+            // 3. Notification (Cũng lọc trùng)
             client.subscribe(`/user/${currentUser}/queue/notifications`, (payload) => {
                 const newNoti = JSON.parse(payload.body);
-
-                // Kiểm tra trùng ID
                 if (processedNotiIdsRef.current.has(newNoti.id)) return;
                 processedNotiIdsRef.current.add(newNoti.id);
-
                 setNotifications(prev => [newNoti, ...prev]);
                 setUnreadCount(prev => prev + 1);
                 message.info(newNoti.content);
             });
-            // ------------------------------------
-
-            users.filter(u => u.isGroup).forEach(g => subscribeToGroup(g.realGroupId));
 
         }, (err) => {
             setIsConnected(false);
+            subscribedGroupsRef.current.clear();
         });
 
         return () => {
             if (client && client.connected) client.disconnect();
+            setIsConnected(false);
         };
     }, [currentUser]);
 
-    // Khi users thay đổi, subscribe nhóm mới
+    // Tự động sub nhóm
     useEffect(() => {
-        if (isConnected && stompClientRef.current) {
+        if (isConnected && stompClientRef.current && users.length > 0) {
             users.filter(u => u.isGroup).forEach(g => subscribeToGroup(g.realGroupId));
         }
     }, [users, isConnected]);
 
-    // --- 4. GỬI TIN & HELPER ---
+    // --- 4. GỬI TIN ---
     const sendMessage = async (content, fileData = null) => {
         if (!stompClientRef.current || !isConnected) return message.error("Mất kết nối!");
         let uploadedFileUrl = null, uploadedFileType = null, uploadedFileName = null;
@@ -230,10 +248,14 @@ export const ChatProvider = ({ children }) => {
         try {
             const dest = isGroupChat ? "/app/chat.group" : "/app/chat";
             stompClientRef.current.send(dest, {}, JSON.stringify(chatMessage));
-            if (!isGroupChat) {
-                const localMsg = processMessage({ ...chatMessage, file: fileData ? { url: uploadedFileUrl, name: uploadedFileName, type: uploadedFileType } : null });
-                addMessageUnique(localMsg);
-            }
+
+            // Optimistic UI: Hiện tin nhắn ngay (Chỉ lần này là tin nhắn được thêm)
+            const localMsg = processMessage({
+                ...chatMessage,
+                file: fileData ? { url: uploadedFileUrl, name: uploadedFileName, type: uploadedFileType } : null
+            });
+            addMessageUnique(localMsg);
+
         } catch (e) { message.error("Gửi tin lỗi!"); }
     };
 
@@ -248,6 +270,7 @@ export const ChatProvider = ({ children }) => {
         setCurrentAvatar(data.avatar || "");
         setMyStatus("ONLINE");
         fetchUsers();
+        fetchMessages();
     };
 
     const logoutUser = async () => {
@@ -256,19 +279,21 @@ export const ChatProvider = ({ children }) => {
             try { await api.post('/auth/logout', {}, { headers: { 'Authorization': `Bearer ${token}` } }); } catch (e) {}
         }
         if (stompClientRef.current) stompClientRef.current.deactivate();
-        localStorage.clear();
-        setCurrentUser(null);
-        setCurrentFullName(null);
-        setCurrentAvatar(null);
-        setMyStatus("OFFLINE");
-        setMessages([]);
-        setNotifications([]);
+
+        ['token', 'username', 'fullName', 'avatar'].forEach(key => localStorage.removeItem(key));
+        setCurrentUser(null); setCurrentFullName(null); setCurrentAvatar(null);
+        setMyStatus("OFFLINE"); setMessages([]); setNotifications([]);
+        setRecipient("bot");
         setIsConnected(false);
-        subscribedGroupsRef.current.clear();
-        processedNotiIdsRef.current.clear();
+        subscribedGroupsRef.current.clear(); processedNotiIdsRef.current.clear(); processedFeedIdsRef.current.clear();
     };
 
-    const updateUserStatus = async (s) => { setMyStatus(s); try { await api.post('/users/status', { status: s }); } catch (e) {} };
+    const updateUserStatus = async (s) => {
+        setMyStatus(s);
+        setUsers(prev => prev.map(u => u.username === currentUser ? { ...u, status: s } : u));
+        try { await api.post('/users/status', { status: s }); } catch (e) {}
+    };
+
     const getUserAvatar = (target) => {
         if (!target) return 'https://via.placeholder.com/150';
         if (target === 'bot') return 'https://robohash.org/bot?set=set1';
@@ -276,6 +301,7 @@ export const ChatProvider = ({ children }) => {
         const u = users.find(x => x.username === target);
         return u ? u.avatar : getAvatarUrl(target, target, null);
     };
+
     const markNotificationsRead = async () => {
         if (unreadCount > 0) {
             try { await api.put('/notifications/read'); setUnreadCount(0); setNotifications(prev => prev.map(n => ({...n, read: true}))); } catch (e) {}
@@ -293,6 +319,7 @@ export const ChatProvider = ({ children }) => {
     useEffect(() => {
         if (currentUser) {
             fetchUsers();
+            fetchMessages();
             api.get('/notifications').then(res => {
                 setNotifications(res.data);
                 setUnreadCount(res.data.filter(n => !n.read).length);
@@ -305,7 +332,7 @@ export const ChatProvider = ({ children }) => {
         currentUser, currentFullName, currentAvatar, setCurrentAvatar,
         isConnected, loginUser, logoutUser,
         users, getUserAvatar, refreshGroups, leaveGroup,
-        myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate
+        myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

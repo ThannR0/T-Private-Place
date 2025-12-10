@@ -13,4 +13,6 @@ public class GroupRequest {
 
     // Biến này dùng cho API xóa/thêm thành viên lẻ
     private String targetUsername;
+
+    private boolean shareHistory;
 }

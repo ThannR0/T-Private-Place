@@ -9,4 +9,7 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
     // Tìm tin nhắn giữa 2 người (A gửi B hoặc B gửi A)
 
     List<ChatMessage> findBySenderIdAndRecipientId(String senderId, String recipientId);
+    List<ChatMessage> findBySenderIdOrRecipientId(String senderId, String recipientId);
+    List<ChatMessage> findByRecipientIdIn(List<String> recipientIds);
+    List<ChatMessage> findBySenderIdOrRecipientIdOrderByTimestampAsc(String senderId, String recipientId);
 }
