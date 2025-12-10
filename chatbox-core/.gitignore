@@ -28,6 +28,7 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
+# Bỏ qua file cấu hình chứa mật khẩu/API Key
+src/main/resources/application.properties
 ### VS Code ###
 .vscode/
