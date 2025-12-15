@@ -144,6 +144,28 @@ public class GroupService {
         return new GroupDetailDTO(group.getId(), group.getName(), group.getAvatar(), group.getAdminUsername(), memberDTOs);
     }
 
+    public void transferAdmin(Long groupId, String currentAdmin, String newAdminUsername) {
+        ChatGroup group = groupRepo.findById(groupId).orElseThrow();
+
+        // Check quyền: Phải là Admin hiện tại mới được chuyển
+        if (!group.getAdminUsername().equals(currentAdmin)) {
+            throw new RuntimeException("Bạn không phải trưởng nhóm!");
+        }
+
+        // Check thành viên: Người mới phải ở trong nhóm
+        User newAdmin = userRepo.findByUsername(newAdminUsername).orElseThrow();
+        if (memberRepo.findByGroupAndUser(group, newAdmin).isEmpty()) {
+            throw new RuntimeException("Người này không ở trong nhóm!");
+        }
+
+        // Chuyển quyền
+        group.setAdminUsername(newAdminUsername);
+        groupRepo.save(group);
+
+        // Bắn socket thông báo
+        notifyGroupUpdate(groupId, "ADMIN_CHANGED");
+    }
+
     private void notifyGroupUpdate(Long groupId, String action) {
         messagingTemplate.convertAndSend("/topic/group/" + groupId + "/update", Optional.of(Map.of("action", action, "groupId", groupId)));
     }

@@ -59,6 +59,29 @@ export const ChatProvider = ({ children }) => {
         });
     };
 
+    const deleteNotification = async (notiId) => {
+        try {
+            await api.delete(`/notifications/${notiId}`);
+            // Cập nhật State ngay lập tức
+            setNotifications(prev => prev.filter(n => n.id !== notiId));
+            // Tính lại số chưa đọc (nếu tin vừa xóa là tin chưa đọc)
+            setUnreadCount(prev => {
+                // Logic đơn giản: đếm lại từ list mới
+                // Nhưng ở đây ta filter state cũ nên hơi khó tính chính xác số unread giảm bao nhiêu
+                // Cách nhanh nhất: Trừ 1 nếu > 0 (tạm thời), hoặc để lần sau fetch lại tự đúng.
+                return prev > 0 ? prev - 1 : 0;
+            });
+        } catch (e) { console.error("Lỗi xóa noti", e); }
+    };
+
+    const clearAllNotifications = async () => {
+        try {
+            await api.delete('/notifications'); // Gọi API xóa hết
+            setNotifications([]); // Xóa sạch state
+            setUnreadCount(0);    // Reset số đỏ về 0
+        } catch (e) { console.error("Lỗi xóa all noti", e); }
+    };
+
     // --- 2. TẢI DỮ LIỆU ---
     const fetchUsers = async () => {
         try {
@@ -91,14 +114,16 @@ export const ChatProvider = ({ children }) => {
 
         } catch (error) {
             console.error("Lỗi tải data:", error);
-            if (error.response && error.response.status === 403) logoutUser();
+            if (error.response && error.response.status === 403) await logoutUser();
         }
     };
 
     const fetchMessages = async () => {
         try {
             const res = await api.get('/chat/history');
-            setMessages(res.data);
+
+            const processedHistory = res.data.map(msg => processMessage(msg));
+            setMessages(processedHistory);
         } catch (error) { console.error("Lỗi tải tin nhắn:", error); }
     };
 
@@ -151,7 +176,13 @@ export const ChatProvider = ({ children }) => {
             client.subscribe('/topic/feed', (payload) => {
                 const data = JSON.parse(payload.body);
 
-                // --- BỘ LỌC FEED (Chặn thông báo lặp 2 lần) ---
+                if (data.type === 'MSG_UPDATE') {
+                    setMessages(prev => prev.map(m =>
+                        m.id === data.msg.id ? { ...m, ...data.msg } : m
+                    ));
+                    return; // Xử lý xong thì return luôn
+                }
+
                 // Nếu tin này đã xử lý rồi (dựa trên eventId) -> Bỏ qua
                 if (data.eventId && processedFeedIdsRef.current.has(data.eventId)) {
                     return;
@@ -185,6 +216,10 @@ export const ChatProvider = ({ children }) => {
                         if (data.newAvatar) { setCurrentAvatar(data.newAvatar); localStorage.setItem('avatar', data.newAvatar); }
                     }
                 }
+                if (data.type === 'POST_REACTION_UPDATE') {
+
+                }
+
             });
 
             // 3. Notification (Cũng lọc trùng)
@@ -332,7 +367,8 @@ export const ChatProvider = ({ children }) => {
         currentUser, currentFullName, currentAvatar, setCurrentAvatar,
         isConnected, loginUser, logoutUser,
         users, getUserAvatar, refreshGroups, leaveGroup,
-        myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers
+        myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers,
+        deleteNotification, clearAllNotifications
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

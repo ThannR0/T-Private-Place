@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Input, Select, Button, message } from 'antd';
 import { useChat } from '../../context/ChatContext';
 import api from '../../services/api';
+import { useSettings } from "../../context/SettingsContext.jsx";
 
 const { Option } = Select;
 
@@ -12,12 +13,14 @@ const CreateGroupModal = ({ visible, onClose }) => {
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const { t } = useSettings();
+
     // Lọc bỏ Bot và bản thân
     const availableUsers = users.filter(u => u.username !== 'bot' && u.username !== currentUser && !u.isGroup);
 
     const handleCreate = async () => {
         if (!groupName || selectedMembers.length === 0) {
-            return message.warning("Vui lòng nhập tên nhóm và chọn thành viên!");
+            return message.warning(t('warningGroupName'));
         }
 
         setLoading(true);
@@ -27,7 +30,7 @@ const CreateGroupModal = ({ visible, onClose }) => {
                 members: [...selectedMembers, currentUser]
             });
 
-            message.success("Tạo nhóm thành công!");
+            message.success(t('successCreateGroup'));
 
             // --- CẬP NHẬT NGAY ---
             if(refreshGroups) refreshGroups();
@@ -37,7 +40,7 @@ const CreateGroupModal = ({ visible, onClose }) => {
             setGroupName('');
             setSelectedMembers([]);
         } catch (error) {
-            message.error("Lỗi khi tạo nhóm");
+            message.error(t('errorCreateGroup'));
         } finally {
             setLoading(false);
         }
@@ -45,19 +48,19 @@ const CreateGroupModal = ({ visible, onClose }) => {
 
     return (
         <Modal
-            title="Tạo nhóm chat mới"
+            title={t('createGroupTitle')}
             open={visible}
             onCancel={onClose}
             footer={[
-                <Button key="back" onClick={onClose}>Hủy</Button>,
+                <Button key="back" onClick={onClose}>{t('cancel')}</Button>,
                 <Button key="submit" type="primary" loading={loading} onClick={handleCreate}>
-                    Tạo nhóm
+                    {t('create')}
                 </Button>,
             ]}
         >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 <Input
-                    placeholder="Đặt tên nhóm..."
+                    placeholder={t('groupNamePlaceholder')}
                     value={groupName}
                     onChange={e => setGroupName(e.target.value)}
                 />
@@ -65,7 +68,7 @@ const CreateGroupModal = ({ visible, onClose }) => {
                 <Select
                     mode="multiple"
                     style={{ width: '100%' }}
-                    placeholder="Chọn thành viên"
+                    placeholder={t('searchMemberPlaceholder')}
                     onChange={setSelectedMembers}
                     value={selectedMembers}
                     optionLabelProp="label"

@@ -74,7 +74,7 @@ public class SecurityConfig {
 
         // Cho phép tất cả các header (quan trọng nhất là Authorization)
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
-
+        configuration.setAllowedHeaders(java.util.List.of("*"));
         // Cho phép gửi cookie/credentials (quan trọng cho Socket)
         configuration.setAllowCredentials(true);
 

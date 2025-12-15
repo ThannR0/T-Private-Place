@@ -5,11 +5,14 @@ import { Link } from 'react-router-dom';
 import api from '../services/api'; // Sử dụng chung instance axios với Login/Register
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import PageTitle from "../components/common/PageTitle.jsx";
+import { useSettings } from "../context/SettingsContext.jsx";
 
 const ForgotPassword = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [submittedEmail, setSubmittedEmail] = useState('');
+
+    const { t } = useSettings();
 
     const onFinish = async (values) => {
         setLoading(true);
@@ -32,27 +35,26 @@ const ForgotPassword = () => {
     // --- TRƯỜNG HỢP 1: ĐÃ GỬI THÀNH CÔNG (HIỆN THÔNG BÁO) ---
     if (isSubmitted) {
         return (
-            <AuthLayout title="Đã gửi yêu cầu" subtitle="Vui lòng kiểm tra hộp thư của bạn.">
+            <AuthLayout title={t('checkEmailTitle')} subtitle={t('checkEmailDesc').replace('{{email}}', submittedEmail)}>
                 <PageTitle title="Đã gửi email" />
 
                 <Result
-                    status="success"
+                    status={t('checkEmailTitle')}
                     title="Kiểm tra email nhé!"
                     subTitle={
                         <span>
-                            Chúng tôi đã gửi mã OTP đến <b>{submittedEmail}</b>.<br />
-                            Hãy kiểm tra cả mục Spam nếu không thấy thư.
+                            {t('checkEmailDesc').replace('{{email}}', submittedEmail)}
                         </span>
                     }
                     extra={[
                         <Link to={`/reset-password?email=${submittedEmail}`} key="next">
                             <Button type="primary" size="large" style={{ borderRadius: '6px' }}>
-                                Nhập mã OTP ngay
+                                {t('enterOtpNow')}
                             </Button>
                         </Link>,
                         <div key="back" style={{ marginTop: '20px' }}>
                             <Link to="/login" style={{ color: '#888' }}>
-                                <ArrowLeftOutlined /> Quay lại đăng nhập
+                                <ArrowLeftOutlined /> {t('backToLogin')}
                             </Link>
                         </div>
                     ]}
@@ -63,7 +65,7 @@ const ForgotPassword = () => {
 
     // --- TRƯỜNG HỢP 2: FORM NHẬP EMAIL ---
     return (
-        <AuthLayout title="Quên mật khẩu" subtitle="Đừng lo! Hãy nhập email để lấy lại mật khẩu.">
+        <AuthLayout title={t('forgotTitle')} subtitle={t('forgotSubtitle')}>
             <PageTitle title="Quên mật khẩu" />
 
             <Form
@@ -93,13 +95,13 @@ const ForgotPassword = () => {
                         loading={loading}
                         style={{ height: '45px', borderRadius: '6px' }}
                     >
-                        {loading ? "Đang gửi..." : "Gửi mã OTP"}
+                        {loading ? t('sending') : t('sendOtp')}
                     </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: 'center', marginTop: '10px' }}>
                     <Link to="/login" style={{ color: '#595959', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <ArrowLeftOutlined /> Quay lại đăng nhập
+                        <ArrowLeftOutlined /> {t('backToLogin')}
                     </Link>
                 </div>
             </Form>

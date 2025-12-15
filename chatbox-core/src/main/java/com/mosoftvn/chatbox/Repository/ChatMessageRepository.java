@@ -12,4 +12,8 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
     List<ChatMessage> findBySenderIdOrRecipientId(String senderId, String recipientId);
     List<ChatMessage> findByRecipientIdIn(List<String> recipientIds);
     List<ChatMessage> findBySenderIdOrRecipientIdOrderByTimestampAsc(String senderId, String recipientId);
+    List<ChatMessage> findByRecipientIdAndIsPinnedTrue(String recipientId);
+
+    // 2. Tìm tin nhắn đang ghim trong Chat 1-1 (Cần check cả 2 chiều A->B và B->A)
+    List<ChatMessage> findBySenderIdAndRecipientIdAndIsPinnedTrue(String senderId, String recipientId);
 }

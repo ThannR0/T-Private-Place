@@ -17,12 +17,13 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import AppHeader from './components/layout/AppHeader';
 import ResetPassword from "./pages/ResetPassword.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx"; // Đảm bảo đường dẫn đúng
-
+import { SettingsProvider } from './context/SettingsContext';
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
 const MainLayout = () => {
     return (
+
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {/* Header luôn nằm ở đây */}
             <AppHeader />
@@ -32,6 +33,7 @@ const MainLayout = () => {
                 <Outlet />
             </div>
         </div>
+
     );
 };
 
@@ -49,6 +51,7 @@ const ProtectedRoute = ({ children }) => {
 // ==========================================
 function App() {
     return (
+        <SettingsProvider>
         <ChatProvider>
             <Router>
                 <Routes>
@@ -86,6 +89,7 @@ function App() {
                 </Routes>
             </Router>
         </ChatProvider>
+        </SettingsProvider>
     );
 }
 

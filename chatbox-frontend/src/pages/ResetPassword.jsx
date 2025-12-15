@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api'; // Dùng api instance chung
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import PageTitle from "../components/common/PageTitle.jsx";
+import { useSettings } from "../context/SettingsContext.jsx";
 
 const ResetPassword = () => {
     const navigate = useNavigate();
@@ -12,6 +13,7 @@ const ResetPassword = () => {
     const email = searchParams.get('email'); // Lấy email từ URL
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
+    const { t } = useSettings();
 
     // Kiểm tra xem có email không, nếu không thì đá về trang quên mật khẩu
     useEffect(() => {
@@ -44,7 +46,7 @@ const ResetPassword = () => {
     };
 
     return (
-        <AuthLayout title="Đặt lại mật khẩu" subtitle={`Nhập mã OTP đã gửi tới ${email}`}>
+        <AuthLayout title={t('resetTitle')} subtitle={t('resetSubtitle').replace('{{email}}', email)}>
             <PageTitle title="Đặt lại mật khẩu" />
 
             <Form
@@ -61,7 +63,7 @@ const ResetPassword = () => {
                 >
                     <Input
                         prefix={<KeyOutlined style={{ color: '#1890ff' }} />}
-                        placeholder="Mã OTP (6 số)"
+                        placeholder={t('otpPlaceholder')}
                         maxLength={6}
                         style={{ textAlign: 'center', letterSpacing: '8px', fontWeight: 'bold' }}
                     />
@@ -71,13 +73,13 @@ const ResetPassword = () => {
                 <Form.Item
                     name="newPassword"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-                        { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' }
+                        { required: true, message: t('confirmPasswordLabel') },
+                        { min: 6, message: t('passwordMin') }
                     ]}
                 >
                     <Input.Password
                         prefix={<LockOutlined style={{ color: '#1890ff' }} />}
-                        placeholder="Mật khẩu mới"
+                        placeholder={t('newPassword')}
                     />
                 </Form.Item>
 
@@ -92,20 +94,20 @@ const ResetPassword = () => {
                                 if (!value || getFieldValue('newPassword') === value) {
                                     return Promise.resolve();
                                 }
-                                return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                                return Promise.reject(new Error(t('confirmMatchError')));
                             },
                         }),
                     ]}
                 >
                     <Input.Password
                         prefix={<LockOutlined style={{ color: '#1890ff' }} />}
-                        placeholder="Nhập lại mật khẩu mới"
+                        placeholder={t('confirmPasswordLabel')}
                     />
                 </Form.Item>
 
                 <Form.Item>
                     <Button type="primary" htmlType="submit" block loading={loading} style={{ height: '45px' }}>
-                        Xác nhận đổi mật khẩu
+                        {t('confirmPassword')}
                     </Button>
                 </Form.Item>
             </Form>

@@ -1,3 +1,41 @@
+/* 1. ĐỊNH NGHĨA MÀU CHO LIGHT MODE (MẶC ĐỊNH) */
+:root {
+  --bg-color: #ffffff;
+  --bg-secondary: #f0f2f5; /* Màu nền xám nhạt khung chat */
+  --text-color: #000000;
+  --text-secondary: #666666;
+  --border-color: #eeeeee;
+  --hover-color: #e6f7ff;
+  --my-msg-bg: #0084ff;
+  --my-msg-text: #ffffff;
+  --other-msg-bg: #ffffff;
+  --other-msg-text: #000000;
+}
+
+/* 2. ĐỊNH NGHĨA MÀU CHO DARK MODE */
+[data-theme='dark'] {
+  --bg-color: #141414;        /* Đen đậm */
+  --bg-secondary: #1f1f1f;    /* Đen nhạt hơn */
+  --text-color: #ffffff;      /* Chữ trắng */
+  --text-secondary: #aaaaaa;
+  --border-color: #303030;
+  --hover-color: #111b26;
+  --my-msg-bg: #177ddc;       /* Xanh tối hơn chút */
+  --my-msg-text: #ffffff;
+  --other-msg-bg: #262626;    /* Tin nhắn người khác nền tối */
+  --other-msg-text: #ffffff;
+}
+
+/* 3. ÁP DỤNG BIẾN VÀO TOÀN APP */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s; /* Hiệu ứng chuyển mượt */
+}
+
+/* Ant Design Dark Mode Override (Nếu muốn Antd cũng tối theo thì cần config ConfigProvider,
+   nhưng ở đây ta chỉnh thủ công các phần chính trước) */
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +77,27 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* CSS cho Markdown trong Chat */
+.markdown-content ul, .markdown-content ol {
+  margin-left: 0;
+  padding-left: 20px;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+}
+
+/* Nếu là tin nhắn của mình gửi (nền xanh), chữ nên màu trắng */
+.sent .markdown-content p,
+.sent .markdown-content li,
+.sent .markdown-content strong {
+  color: white;
+}
+
+/* Nếu là tin nhắn bot (nền xám), chữ màu đen */
+.received .markdown-content p,
+.received .markdown-content li {
+  color: #333;
 }

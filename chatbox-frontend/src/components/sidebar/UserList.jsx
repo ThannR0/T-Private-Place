@@ -4,6 +4,7 @@ import { UserOutlined, SearchOutlined, TeamOutlined, CaretRightOutlined } from '
 import { useChat } from '../../context/ChatContext';
 import { getStatusColor } from '../../utils/common';
 import dayjs from 'dayjs';
+import { useSettings } from "../../context/SettingsContext.jsx";
 
 const { Panel } = Collapse;
 const { Text } = Typography;
@@ -23,6 +24,8 @@ const removeVietnameseTones = (str) => {
 const UserList = () => {
     const { recipient, setRecipient, users, messages, currentUser } = useChat();
     const [searchText, setSearchText] = useState('');
+
+    const { t } = useSettings();
 
     // --- 1. STATE QUẢN LÝ ---
     const [savedContacts, setSavedContacts] = useState(() => {
@@ -71,7 +74,6 @@ const UserList = () => {
         if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
 
-            // --- SỬA LỖI TRẮNG MÀN ---
             // 1. Kiểm tra nếu là tin nhắn nhóm -> Bỏ qua việc thêm vào savedContacts
             // (Vì nhóm luôn luôn hiển thị sẵn, không cần lưu vào danh sách cá nhân)
             if (lastMsg.type === 'GROUP') {
@@ -190,7 +192,8 @@ const UserList = () => {
             key={item.username}
             style={{
                 padding: '10px 15px', cursor: 'pointer', transition: 'all 0.2s',
-                backgroundColor: recipient === item.username ? '#e6f7ff' : 'transparent',
+                // Sửa màu hover: dùng biến --bg-hover thay vì màu cứng
+                backgroundColor: recipient === item.username ? 'var(--bg-hover)' : 'transparent',
                 borderLeft: recipient === item.username ? '4px solid #1890ff' : '4px solid transparent',
             }}
             onClick={() => handleUserClick(item.username)}
@@ -203,7 +206,9 @@ const UserList = () => {
                             {!item.isGroup && item.username !== 'bot' && (
                                 <span style={{
                                     position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%',
-                                    backgroundColor: getStatusColor(item.status), border: '1px solid white'
+                                    backgroundColor: getStatusColor(item.status),
+                                    // Sửa viền: Trùng màu nền (trắng hoặc đen) để tạo khoảng cách
+                                    border: '1px solid var(--bg-color)'
                                 }} />
                             )}
                         </div>
@@ -211,18 +216,26 @@ const UserList = () => {
                 }
                 title={
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Text strong={item.unreadCount > 0} ellipsis style={{ maxWidth: 120 }}>{item.displayName}</Text>
-                        {item.lastTime > 0 && <Text type="secondary" style={{ fontSize: 10 }}>{dayjs(item.lastTime).format('HH:mm')}</Text>}
+                        {/* Sửa màu Tên: Dùng var(--text-color) */}
+                        <Text strong={item.unreadCount > 0} ellipsis style={{ maxWidth: 120, color: 'var(--text-color)' }}>
+                            {item.displayName}
+                        </Text>
+                        {/* Sửa màu Thời gian: Dùng var(--text-secondary) */}
+                        {item.lastTime > 0 && <Text type="secondary" style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
+                            {dayjs(item.lastTime).format('HH:mm')}
+                        </Text>}
                     </div>
                 }
                 description={
                     <div style={{display:'flex', justifyContent:'space-between'}}>
+                        {/* Sửa màu Nội dung chat cuối: Dùng biến thay vì #333/#999 */}
                         <Text type="secondary" style={{
                             fontSize: 11,
-                            color: item.unreadCount > 0 ? '#333' : '#999',
+                            // Quan trọng: Nếu chưa đọc -> Màu chính, Đã đọc -> Màu phụ
+                            color: item.unreadCount > 0 ? 'var(--text-color)' : 'var(--text-secondary)',
                             fontWeight: item.unreadCount > 0 ? 'bold' : 'normal'
                         }} ellipsis>
-                            {item.username === 'bot' ? 'Trợ lý AI' : (item.isGroup ? 'Nhóm chat' : `@${item.username}`)}
+                            {item.username === 'bot' ? t('alwaysReady') : (item.isGroup ? t('groupChat') : `@${item.username}`)}
                         </Text>
                     </div>
                 }
@@ -231,12 +244,23 @@ const UserList = () => {
     );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', borderRight: '1px solid #f0f0f0' }}>
+        <div style={{
+            display: 'flex', flexDirection: 'column', height: '100%',
+            // Sửa màu nền và viền Container
+            borderRight: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-color)'
+        }}>
             <div style={{ padding: '15px 10px' }}>
                 <Input
-                    placeholder="Tìm kiếm..."
-                    prefix={<SearchOutlined style={{ color: '#ccc' }} />}
-                    style={{ borderRadius: '20px', backgroundColor: '#f5f5f5', border: 'none' }}
+                    placeholder={t('searchPlaceholder')}
+                    prefix={<SearchOutlined style={{ color: 'var(--text-secondary)' }} />} // Icon màu xám
+                    style={{
+                        borderRadius: '20px',
+                        // Sửa màu ô Input: Nền input, viền, và màu chữ
+                        backgroundColor: 'var(--input-bg)', // (VD: #f5f5f5 hoặc #262626)
+                        border: 'none',
+                        color: 'var(--text-color)'
+                    }}
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     allowClear
@@ -245,26 +269,47 @@ const UserList = () => {
 
             <div style={{ flex: 1, overflowY: 'auto' }} className="custom-scroll">
                 {searchText ? (
-                    <List dataSource={searchResults} renderItem={renderUserItem} locale={{ emptyText: 'Không tìm thấy' }} />
+                    <List
+                        dataSource={searchResults}
+                        renderItem={renderUserItem}
+                        locale={{ emptyText: <span style={{color: 'var(--text-secondary)'}}>{t('noResults')}</span> }}
+                    />
                 ) : (
                     <>
                         {bot.map(u => renderUserItem(u))}
-                        <Collapse defaultActiveKey={['users', 'groups']} ghost expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}>
+                        <Collapse defaultActiveKey={['users', 'groups']} ghost expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} style={{ color: 'var(--text-secondary)' }} />}>
                             {individuals.length > 0 && (
-                                <Panel header={<Text strong type="secondary" style={{ fontSize: 12 }}>TIN NHẮN ({individuals.length})</Text>} key="users">
+                                <Panel
+                                    header={
+                                        // Sửa màu Header nhóm
+                                        <Text strong type="secondary" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                            {t('messagesHeader').replace('{{count}}', individuals.length)}
+                                        </Text>
+                                    }
+                                    key="users"
+                                >
                                     <List dataSource={individuals} renderItem={renderUserItem} split={false} />
                                 </Panel>
                             )}
                             {groups.length > 0 && (
-                                <Panel header={<Text strong type="secondary" style={{ fontSize: 12 }}>NHÓM ({groups.length})</Text>} key="groups">
+                                <Panel
+                                    header={
+                                        // Sửa màu Header nhóm
+                                        <Text strong type="secondary" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                            {t('groupsHeader').replace('{{count}}', groups.length)}
+                                        </Text>
+                                    }
+                                    key="groups"
+                                >
                                     <List dataSource={groups} renderItem={renderUserItem} split={false} />
                                 </Panel>
                             )}
                         </Collapse>
                         {individuals.length === 0 && groups.length === 0 && (
-                            <div style={{textAlign:'center', marginTop:30, color:'#bbb'}}>
+                            // Sửa màu thông báo trống
+                            <div style={{textAlign:'center', marginTop:30, color: 'var(--text-secondary)' }}>
                                 <SearchOutlined style={{fontSize:30, marginBottom:10}}/>
-                                <div>Tìm bạn bè để bắt đầu</div>
+                                <div>{t('emptyList')}</div>
                             </div>
                         )}
                     </>

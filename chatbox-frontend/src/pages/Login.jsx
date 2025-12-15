@@ -6,11 +6,13 @@ import api from '../services/api';
 import { useChat } from "../context/ChatContext.jsx";
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import PageTitle from "../components/common/PageTitle.jsx";
-
+import { useSettings } from '../context/SettingsContext'; // 1. Import
+import LanguageSelector from '../components/common/LanguageSelector'; // 2. Import Selector
 const Login = () => {
     const navigate = useNavigate();
     const { loginUser } = useChat();
     const [loading, setLoading] = useState(false);
+    const { t } = useSettings();
 
     const onFinish = async (values) => {
         setLoading(true);
@@ -40,8 +42,9 @@ const Login = () => {
     };
 
     return (
-        <AuthLayout title="Đăng nhập" subtitle="Nhập thông tin để truy cập tài khoản của bạn.">
-            <PageTitle title="Đăng nhập" />
+        <AuthLayout title={t('login')} subtitle={t('loginSubtitle')}>
+            <LanguageSelector />
+            <PageTitle title={t('login')} />
 
             <Form
                 name="login_form"
@@ -52,32 +55,32 @@ const Login = () => {
             >
                 <Form.Item
                     name="username"
-                    rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+                    rules={[{ required: true, message: t('username') + '!' }]}
                 >
-                    <Input prefix={<UserOutlined style={{ color: '#1890ff' }} />} placeholder="Tên đăng nhập" />
+                    <Input prefix={<UserOutlined style={{ color: '#1890ff' }} />} placeholder={t('username')} />
                 </Form.Item>
 
                 <Form.Item
                     name="password"
-                    rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+                    rules={[{ required: true, message: t('password') }]}
                 >
-                    <Input.Password prefix={<LockOutlined style={{ color: '#1890ff' }} />} placeholder="Mật khẩu" />
+                    <Input.Password prefix={<LockOutlined style={{ color: '#1890ff' }} />} placeholder={t('password')} />
                 </Form.Item>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
                     <Form.Item name="remember" valuePropName="checked" noStyle>
-                        <Checkbox>Ghi nhớ tôi</Checkbox>
+                        <Checkbox>{t('rememberMe')}</Checkbox>
                     </Form.Item>
-                    <Link to="/forgot-password" style={{ color: '#1890ff', fontWeight: 500 }}>Quên mật khẩu?</Link>
+                    <Link to="/forgot-password" style={{ color: '#1890ff', fontWeight: 500 }}>{t('forgotPassword')}</Link>
                 </div>
 
                 <Form.Item>
                     <Button type="primary" htmlType="submit" block loading={loading} style={{ height: '45px', borderRadius: '6px', fontSize: '16px' }}>
-                        Đăng nhập
+                        {t('login')}
                     </Button>
                 </Form.Item>
 
-                <Divider plain><span style={{ color: '#ccc', fontSize: '12px' }}>Hoặc đăng nhập với</span></Divider>
+                <Divider plain><span style={{ color: '#ccc', fontSize: '12px' }}>{t('orLoginWith')}</span></Divider>
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
                     <Button icon={<GoogleOutlined />} block>Google</Button>
@@ -85,7 +88,7 @@ const Login = () => {
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                    Chưa có tài khoản? <Link to="/register" style={{ color: '#1890ff', fontWeight: 'bold' }}>Đăng ký ngay</Link>
+                    {t('noAccount')} <Link to="/register" style={{ color: '#1890ff', fontWeight: 'bold' }}>{t('registerNow')}</Link>
                 </div>
             </Form>
         </AuthLayout>

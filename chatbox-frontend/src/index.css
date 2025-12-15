@@ -2,8 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Các style khác nếu có */
-body {
-    font-family: 'Inter', sans-serif; /* Nếu muốn font đẹp hơn */
-    background-color: #f9fafb;
+/* --- 1. MÀU MẶC ĐỊNH (LIGHT MODE - GIỮ NGUYÊN) --- */
+:root {
+    --bg-color: #ffffff; /* Nền chính trắng tinh */
+    --bg-secondary: #f0f2f5; /* Nền phụ (xám rất nhạt) */
+    --bg-hover: #e6f7ff; /* Nền khi di chuột */
+
+    --text-color: #000000; /* Chữ đen */
+    --text-secondary: #65676b; /* Chữ xám */
+
+    --border-color: #dddfe2; /* Viền xám nhạt */
+
+    /* Input */
+    --input-bg: #f0f2f5;
+
+    /* Tin nhắn */
+    --msg-sent-bg: #0084ff; /* Xanh Messenger */
+    --msg-sent-text: #ffffff;
+    --msg-received-bg: #e4e6eb; /* Xám lông chuột */
+    --msg-received-text: #050505;
+
+    --msg-highlight: #fff1b8;
+    /* Vàng nhạt
+   }
+
+   /* --- 2. MÀU CHẾ ĐỘ TỐI (SOFT DARK MODE - SỬA LẠI CHO DỊU) --- */
+
+    [data-theme='dark'] {
+        /* Thay vì đen #000, ta dùng Xám Đậm (#242526) -> Dễ nhìn hơn nhiều */
+        --bg-color: #242526; /* Nền chính (Xám đậm - Giống Facebook Dark) */
+        --bg-secondary: #18191a; /* Nền phụ (Đậm hơn nền chính để tạo chiều sâu) */
+        --bg-hover: #3a3b3c; /* Nền khi hover (Sáng hơn chút) */
+
+        --text-color: #e4e6eb; /* Chữ trắng đục (Không chói như #fff) */
+        --text-secondary: #b0b3b8; /* Chữ xám sáng */
+
+        --border-color: #393a3b; /* Viền xám tối */
+
+        /* Input */
+        --input-bg: #3a3b3c; /* Ô nhập liệu nổi lên trên nền */
+
+        /* Tin nhắn */
+        --msg-sent-bg: #0084ff; /* Giữ nguyên xanh */
+        --msg-sent-text: #ffffff;
+        --msg-received-bg: #3e4042; /* Tin người khác: Xám nổi */
+        --msg-received-text: #e4e6eb; /* Chữ trắng */
+
+        --msg-highlight: rgba(251, 197, 49, 0.25);
+    }
+
+    /* --- 3. CẤU HÌNH CHUNG --- */
+
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+
+        /* Áp dụng biến màu nền */
+        background-color: var(--bg-secondary);
+        color: var(--text-color);
+
+        /* Hiệu ứng chuyển màu mượt mà khi bấm nút đổi theme */
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Áp dụng transition cho tất cả các thẻ để không bị giật cục khi đổi màu */
+
+    div, span, p, input, textarea, button, section, header, footer {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    /* Tùy chỉnh thanh cuộn (Scrollbar) cho đẹp ở Dark Mode */
+
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--text-secondary);
+        border-radius: 4px;
+        opacity: 0.5;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Chỉnh màu nền của thanh hành động (Like/Comment) trong Card */
+
+    [data-theme='dark'] .ant-card-actions {
+        background-color: var(--bg-secondary) !important; /* Dùng màu nền tối */
+        border-top: 1px solid var(--border-color) !important; /* Đổi màu viền trên */
+    }
+
+    /* Chỉnh màu viền ngăn cách giữa các nút (Dấu gạch dọc) */
+
+    [data-theme='dark'] .ant-card-actions > li:not(:last-child) {
+        border-right: 1px solid var(--border-color) !important;
+    }
+
+    /* Chỉnh màu chữ và icon mặc định trong action */
+
+    [data-theme='dark'] .ant-card-actions li {
+        color: var(--text-secondary) !important;
+    }
+
+    /* Fix màu icon khi chưa hover */
+
+    [data-theme='dark'] .ant-card-actions .anticon {
+        color: var(--text-secondary);
+    }
+
+    /* Hiệu ứng hover cho nút */
+
+    [data-theme='dark'] .ant-card-actions li:hover {
+        color: var(--text-color) !important; /* Sáng lên khi hover */
+        background-color: var(--bg-hover); /* Nền sáng lên xíu */
+        transition: all 0.3s;
+    }
 }

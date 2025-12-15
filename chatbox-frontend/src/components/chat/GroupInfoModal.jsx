@@ -1,38 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, List, Avatar, Button, message, Tag, Popconfirm, Select, Typography, Space, Checkbox } from 'antd';
-import { UserOutlined, DeleteOutlined, UserAddOutlined, CrownOutlined } from '@ant-design/icons';
+import { UserOutlined, DeleteOutlined, UserAddOutlined, CrownOutlined, LogoutOutlined, SwapOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import { useChat } from '../../context/ChatContext';
 import { getAvatarUrl } from '../../utils/common';
+import { useSettings } from '../../context/SettingsContext';
 
 const { Text } = Typography;
 const { Option } = Select;
 
 const GroupInfoModal = ({ visible, onClose, group }) => {
     const { currentUser, refreshGroups, setRecipient, users } = useChat();
+    const { t } = useSettings(); // Lấy hàm dịch
 
     // State quản lý danh sách thành viên
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
-
-    // State quản lý thông tin nhóm chi tiết
     const [groupDetail, setGroupDetail] = useState(null);
 
-    // State quản lý Modal Thêm thành viên
+    // State Modal Thêm thành viên
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [candidates, setCandidates] = useState([]);
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [adding, setAdding] = useState(false);
+    const [shareHistory, setShareHistory] = useState(true);
 
-    // --- STATE MỚI: Tùy chọn chia sẻ lịch sử ---
-    const [shareHistory, setShareHistory] = useState(true); // Mặc định là CÓ cho xem
-    // ------------------------------------------
+    // --- STATE CHUYỂN QUYỀN ---
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [newAdmin, setNewAdmin] = useState(null);
+    const [transferring, setTransferring] = useState(false);
 
-    // 1. LOAD CHI TIẾT NHÓM
+    // 1. LOAD DATA
     useEffect(() => {
-        if (visible && group) {
-            fetchGroupDetails();
-        }
+        if (visible && group) fetchGroupDetails();
     }, [visible, group]);
 
     const fetchGroupDetails = async () => {
@@ -41,125 +41,117 @@ const GroupInfoModal = ({ visible, onClose, group }) => {
             const res = await api.get(`/groups/${group.realGroupId}`);
             setMembers(res.data.members || []);
             setGroupDetail(res.data);
-        } catch (error) {
-            console.error("Lỗi tải thông tin nhóm:", error);
-            message.error("Không thể tải thông tin nhóm");
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { message.error(t('errorLoadGroup')); }
+        finally { setLoading(false); }
     };
 
-    // 2. CHUẨN BỊ DANH SÁCH ĐỂ THÊM
+    // 2. CHUẨN BỊ LIST ADD
     const openAddMemberModal = async () => {
         try {
-            // Lọc: Chỉ lấy những người CHƯA có trong nhóm và KHÔNG phải Bot
             const existingUsernames = members.map(m => m.username);
-            const availableUsers = users.filter(u =>
-                !u.isGroup &&
-                u.username !== 'bot' &&
-                !existingUsernames.includes(u.username)
-            );
-
-            setCandidates(availableUsers);
-            setSelectedUsers([]);
-            setShareHistory(true); // Reset về mặc định mỗi khi mở modal
-            setIsAddModalOpen(true);
-        } catch (error) {
-            message.error("Lỗi tải danh sách người dùng");
-        }
+            const availableUsers = users.filter(u => !u.isGroup && u.username !== 'bot' && !existingUsernames.includes(u.username));
+            setCandidates(availableUsers); setSelectedUsers([]); setShareHistory(true); setIsAddModalOpen(true);
+        } catch (error) { message.error(t('errorLoadUsers')); }
     };
 
-    // 3. XỬ LÝ THÊM THÀNH VIÊN (CÓ GỬI KÈM shareHistory)
+    // 3. ADD MEMBERS
     const handleAddMembers = async () => {
         if (selectedUsers.length === 0) return;
         setAdding(true);
         try {
-            await api.post(`/groups/${group.realGroupId}/add`, {
-                members: selectedUsers,
-                shareHistory: shareHistory // <--- QUAN TRỌNG: Gửi tham số này xuống Backend
-            });
-
-            message.success("Đã thêm thành viên mới!");
-            setIsAddModalOpen(false);
-            fetchGroupDetails();
-        } catch (error) {
-            message.error("Lỗi thêm thành viên");
-        } finally {
-            setAdding(false);
-        }
+            await api.post(`/groups/${group.realGroupId}/add`, { members: selectedUsers, shareHistory: shareHistory });
+            message.success(t('successAddMember'));
+            setIsAddModalOpen(false); fetchGroupDetails();
+        } catch (error) { message.error(t('errorAddMember')); }
+        finally { setAdding(false); }
     };
 
-    // 4. XỬ LÝ RỜI NHÓM
-    const handleLeave = async () => {
+    // 4. LEAVE GROUP LOGIC
+    const executeLeave = async () => {
         try {
             await api.post(`/groups/${group.realGroupId}/leave`);
-            message.success("Đã rời nhóm!");
-            refreshGroups();
-            setRecipient('bot');
-            onClose();
-        } catch (error) {
-            message.error("Lỗi rời nhóm");
+            message.success(t('successLeaveGroup'));
+            refreshGroups(); setRecipient('bot'); onClose();
+        } catch (error) { message.error(t('errorLeaveGroup')); }
+    };
+
+    const onLeaveClick = () => {
+        const isAdmin = currentUser === (groupDetail?.adminUsername || group?.adminUsername);
+        if (isAdmin && members.length > 1) {
+            setNewAdmin(null); setIsTransferModalOpen(true);
+        } else {
+            Modal.confirm({
+                title: t('leaveGroup') + '?',
+                content: t('confirmLeaveGroup').replace('{{name}}', group?.displayName),
+                okText: t('leaveGroup'), okType: 'danger', cancelText: t('cancel'),
+                onOk: executeLeave
+            });
         }
     };
 
-    // 5. XỬ LÝ XÓA THÀNH VIÊN
+    const handleTransferAndLeave = async () => {
+        if (!newAdmin) return message.warning(t('selectAdminWarning'));
+        setTransferring(true);
+        try {
+            await api.put(`/groups/${group.realGroupId}/transfer-admin`, { newAdminUsername: newAdmin });
+            message.success(t('transferSuccess'));
+            await executeLeave();
+            setIsTransferModalOpen(false);
+        } catch (error) {
+            console.error(error);
+            message.error(t('transferError') + ": " + (error.response?.data || error.message));
+        } finally { setTransferring(false); }
+    };
+
+    // 5. REMOVE MEMBER
     const handleRemoveMember = async (targetUsername) => {
         try {
             await api.post(`/groups/${group.realGroupId}/remove`, { targetUsername });
-            message.success(`Đã xóa ${targetUsername} khỏi nhóm`);
+            message.success(t('successRemoveMember').replace('{{name}}', targetUsername));
             fetchGroupDetails();
-        } catch (error) {
-            message.error("Lỗi xóa thành viên (Có thể bạn không phải Admin)");
-        }
+        } catch (error) { message.error(t('errorRemoveMember')); }
     };
 
     const adminUsername = groupDetail?.adminUsername || group?.adminUsername;
     const isAdmin = currentUser === adminUsername;
+    const potentialAdmins = members.filter(m => m.username !== currentUser);
 
     return (
         <>
+            {/* MAIN MODAL */}
             <Modal
                 title={
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginRight: 30}}>
-                        <span>Thành viên: {group?.displayName}</span>
-                        <Button type="primary" size="small" icon={<UserAddOutlined />} onClick={openAddMemberModal}>
-                            Thêm người
-                        </Button>
+                        <span>{t('membersTitle').replace('{{name}}', group?.displayName)}</span>
+                        <Button type="primary" size="small" icon={<UserAddOutlined />} onClick={openAddMemberModal}>{t('addPerson')}</Button>
                     </div>
                 }
-                open={visible}
-                onCancel={onClose}
+                open={visible} onCancel={onClose}
                 footer={[
-                    <Button key="leave" danger onClick={handleLeave}>Rời nhóm</Button>,
-                    <Button key="close" onClick={onClose}>Đóng</Button>
+                    <Button key="leave" danger icon={<LogoutOutlined />} onClick={onLeaveClick}>{t('leaveGroup')}</Button>,
+                    <Button key="close" onClick={onClose}>{t('close')}</Button>
                 ]}
             >
                 <List
-                    loading={loading}
-                    itemLayout="horizontal"
-                    dataSource={members}
+                    loading={loading} itemLayout="horizontal" dataSource={members}
                     renderItem={(item) => (
                         <List.Item
-                            actions={
-                                isAdmin && item.username !== currentUser ? [
-                                    <Popconfirm
-                                        title="Xóa thành viên?"
-                                        description={`Bạn muốn mời ${item.fullName || item.username} ra khỏi nhóm?`}
-                                        onConfirm={() => handleRemoveMember(item.username)}
-                                        okText="Xóa" cancelText="Hủy" okButtonProps={{ danger: true }}
-                                    >
-                                        <Button type="text" danger icon={<DeleteOutlined />} />
-                                    </Popconfirm>
-                                ] : []
-                            }
+                            actions={isAdmin && item.username !== currentUser ? [
+                                <Popconfirm
+                                    title={t('deleteMember')} description={t('confirmDeleteMember').replace('{{name}}', item.fullName || item.username)}
+                                    onConfirm={() => handleRemoveMember(item.username)} okText={t('delete')} cancelText={t('cancel')} okButtonProps={{ danger: true }}
+                                >
+                                    <Button type="text" danger icon={<DeleteOutlined />} />
+                                </Popconfirm>
+                            ] : []}
                         >
                             <List.Item.Meta
                                 avatar={<Avatar src={getAvatarUrl(item.username, item.fullName, item.avatar)} icon={<UserOutlined />} />}
                                 title={
                                     <Space>
                                         <Text strong>{item.fullName || item.username}</Text>
-                                        {item.username === adminUsername && <Tag color="gold" icon={<CrownOutlined />}>Trưởng nhóm</Tag>}
-                                        {item.username === currentUser && <Tag color="blue">Bạn</Tag>}
+                                        {item.username === adminUsername && <Tag color="gold" icon={<CrownOutlined />}>{t('admin')}</Tag>}
+                                        {item.username === currentUser && <Tag color="blue">{t('you')}</Tag>}
                                     </Space>
                                 }
                             />
@@ -168,52 +160,81 @@ const GroupInfoModal = ({ visible, onClose, group }) => {
                 />
             </Modal>
 
-            {/* --- MODAL CON: THÊM THÀNH VIÊN --- */}
+            {/* ADD MEMBER MODAL */}
             <Modal
-                title="Thêm thành viên mới"
-                open={isAddModalOpen}
-                onCancel={() => setIsAddModalOpen(false)}
-                onOk={handleAddMembers}
-                confirmLoading={adding}
-                okText="Thêm"
-                cancelText="Hủy"
+                title={t('addMemberTitle')} open={isAddModalOpen} onCancel={() => setIsAddModalOpen(false)}
+                onOk={handleAddMembers} confirmLoading={adding} okText={t('add')} cancelText={t('cancel')}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
                     <Select
-                        mode="multiple"
-                        style={{ width: '100%' }}
-                        placeholder="Chọn người muốn thêm..."
-                        onChange={setSelectedUsers}
-                        value={selectedUsers}
-                        optionLabelProp="label"
+                        mode="multiple" style={{ width: '100%' }} placeholder={t('selectMemberPlaceholder')}
+                        onChange={setSelectedUsers} value={selectedUsers} optionLabelProp="label"
                     >
                         {candidates.map(u => (
                             <Option key={u.username} value={u.username} label={u.displayName}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Avatar src={u.avatar} size="small" />
-                                    {u.displayName}
+                                    <Avatar src={u.avatar} size="small" /> {u.displayName}
                                 </div>
                             </Option>
                         ))}
                     </Select>
-
-                    {/* --- CHECKBOX TÙY CHỌN LỊCH SỬ --- */}
-                    <div style={{ background: '#f5f5f5', padding: '10px', borderRadius: '6px' }}>
-                        <Checkbox
-                            checked={shareHistory}
-                            onChange={e => setShareHistory(e.target.checked)}
-                        >
-                            <Text>Cho phép thành viên mới xem lại tin nhắn cũ</Text>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <Checkbox checked={shareHistory} onChange={e => setShareHistory(e.target.checked)}>
+                            <Text style={{color: 'var(--text-color)'}}>{t('allowHistory')}</Text>
                         </Checkbox>
-                        <div style={{ fontSize: '12px', color: '#888', marginLeft: '24px', marginTop: '4px' }}>
-                            {shareHistory
-                                ? "Họ sẽ thấy toàn bộ cuộc trò chuyện từ trước đến nay."
-                                : "Họ chỉ thấy những tin nhắn bắt đầu từ lúc được thêm vào."}
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '24px', marginTop: '4px' }}>
+                            {shareHistory ? t('historyYes') : t('historyNo')}
                         </div>
                     </div>
-                    {/* ---------------------------------- */}
+                    {candidates.length === 0 && <div style={{color: 'var(--text-secondary)'}}>{t('noCandidates')}</div>}
+                </div>
+            </Modal>
 
-                    {candidates.length === 0 && <div style={{color: '#999'}}>Không còn ai để thêm vào nhóm này.</div>}
+            {/* TRANSFER ADMIN MODAL (ĐÃ DỊCH & DARK MODE) */}
+            <Modal
+                title={
+                    <Space>
+                        <SwapOutlined style={{ color: '#1890ff' }} />
+                        <Text strong>{t('transferAdminTitle')}</Text>
+                    </Space>
+                }
+                open={isTransferModalOpen}
+                onCancel={() => setIsTransferModalOpen(false)}
+                footer={[
+                    <Button key="cancel" onClick={() => setIsTransferModalOpen(false)}>{t('cancel')}</Button>,
+                    <Button key="submit" type="primary" danger loading={transferring} onClick={handleTransferAndLeave} disabled={!newAdmin}>
+                        {t('transferAndLeave')}
+                    </Button>
+                ]}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+                    {/* Hộp cảnh báo: Đã sửa màu để hợp Dark Mode */}
+                    <div style={{
+                        background: 'rgba(255, 77, 79, 0.1)', // Đỏ nhạt trong suốt (hợp cả 2 nền)
+                        padding: '12px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(255, 77, 79, 0.3)'
+                    }}>
+                        <Text type="danger">{t('transferWarning')}</Text>
+                    </div>
+
+                    <Text strong style={{color: 'var(--text-color)'}}>{t('selectSuccessor')}</Text>
+
+                    <Select
+                        style={{ width: '100%' }}
+                        placeholder={t('selectAdminPlaceholder')}
+                        onChange={setNewAdmin}
+                        value={newAdmin}
+                    >
+                        {potentialAdmins.map(u => (
+                            <Option key={u.username} value={u.username}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <Avatar src={getAvatarUrl(u.username, u.fullName, u.avatar)} size="small" />
+                                    <span>{u.fullName || u.username}</span>
+                                </div>
+                            </Option>
+                        ))}
+                    </Select>
                 </div>
             </Modal>
         </>

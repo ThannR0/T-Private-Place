@@ -100,6 +100,12 @@ public class ChatController {
     // --- XỬ LÝ CHAT NHÓM ---
     @MessageMapping("/chat.group")
     public void sendGroupMessage(@Payload ChatMessage message) {
+
+        String rawGroupId = message.getRecipientId().replace("GROUP_", "");
+        message.setRecipientId(rawGroupId);
+
+        // B. Gán Type cứng là GROUP (để sau này lọc cho dễ)
+        message.setType("GROUP");
         // Lưu và gửi ngay
         chatMessageRepository.save(message);
         messagingTemplate.convertAndSend("/topic/group/" + message.getRecipientId(), message);
@@ -124,7 +130,7 @@ public class ChatController {
         }
     }
 
-    // 2. API Lấy lịch sử tin nhắn (Cho chức năng sync khi online lại)
+    //API Lấy lịch sử tin nhắn (Cho chức năng sync khi online lại)
     // Lưu ý: Đường dẫn này phải khớp với Frontend gọi (/api/chat/history hoặc /api/messages/history)
     // Ở đây tôi để /api/chat/history cho đồng bộ với RequestMapping
     @GetMapping("/history")
@@ -189,5 +195,159 @@ public class ChatController {
         finalHistory.sort(Comparator.comparing(ChatMessage::getTimestamp));
 
         return ResponseEntity.ok(finalHistory);
+    }
+
+    // 1. API THU HỒI (Sửa lại để bắn socket chuẩn)
+    @PostMapping("/{msgId}/revoke")
+    public ResponseEntity<?> revokeMessage(@PathVariable String msgId) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        ChatMessage msg = chatMessageRepository.findById(msgId).orElseThrow();
+
+        if (!msg.getSenderId().equals(currentUser)) return ResponseEntity.status(403).body("Không chính chủ");
+
+        msg.setRevoked(true);
+        msg.setContent("Tin nhắn đã bị thu hồi");
+        msg.setFileUrl(null);
+        msg.setFileName(null); // Xóa luôn thông tin file
+        chatMessageRepository.save(msg);
+
+        // Bắn vào /topic/feed
+        messagingTemplate.convertAndSend("/topic/feed", Optional.of(Map.of("type", "MSG_UPDATE", "msg", msg)));
+
+        return ResponseEntity.ok(msg);
+    }
+
+    // 2. API GHIM (Sửa lại bắn socket)
+    @PostMapping("/{msgId}/pin")
+    public ResponseEntity<?> pinMessage(@PathVariable String msgId) {
+        ChatMessage msg = chatMessageRepository.findById(msgId).orElseThrow();
+
+        // --- LOGIC MỚI: BỎ GHIM CÁC TIN CŨ ---
+        // Chỉ chạy logic này nếu ta đang chuẩn bị GHIM (từ chưa ghim -> ghim)
+        if (!msg.isPinned()) {
+            List<ChatMessage> oldPinnedMessages = new java.util.ArrayList<>();
+
+            // A. Nếu là tin nhắn NHÓM
+            // (Kiểm tra bằng type hoặc ID nhóm)
+            if ("GROUP".equals(msg.getType()) || msg.getRecipientId().startsWith("GROUP_") || msg.getRecipientId().matches("\\d+")) {
+                oldPinnedMessages.addAll(chatMessageRepository.findByRecipientIdAndIsPinnedTrue(msg.getRecipientId()));
+            }
+            // B. Nếu là tin nhắn 1-1 (Cá nhân)
+            else {
+                // Tìm tin ghim chiều đi (A -> B)
+                oldPinnedMessages.addAll(chatMessageRepository.findBySenderIdAndRecipientIdAndIsPinnedTrue(msg.getSenderId(), msg.getRecipientId()));
+                // Tìm tin ghim chiều về (B -> A)
+                oldPinnedMessages.addAll(chatMessageRepository.findBySenderIdAndRecipientIdAndIsPinnedTrue(msg.getRecipientId(), msg.getSenderId()));
+            }
+
+            // Thực hiện bỏ ghim và bắn socket cập nhật ngay
+            for (ChatMessage oldMsg : oldPinnedMessages) {
+                // Trừ tin nhắn hiện tại ra (đề phòng)
+                if (!oldMsg.getId().equals(msg.getId())) {
+                    oldMsg.setPinned(false);
+                    chatMessageRepository.save(oldMsg);
+
+                    // Bắn Socket báo cho Frontend biết tin này đã bị bỏ ghim -> Mất icon ghim
+                    messagingTemplate.convertAndSend("/topic/feed", Optional.of(Map.of("type", "MSG_UPDATE", "msg", oldMsg)));
+                }
+            }
+        }
+        // -------------------------------------
+
+        // Toggle trạng thái của tin nhắn hiện tại
+        msg.setPinned(!msg.isPinned());
+        chatMessageRepository.save(msg);
+
+        // Bắn Socket báo tin này đã được ghim/bỏ ghim
+        messagingTemplate.convertAndSend("/topic/feed", Optional.of(Map.of("type", "MSG_UPDATE", "msg", msg)));
+
+        return ResponseEntity.ok(msg);
+    }
+
+    // 2. CHỈNH SỬA TIN NHẮN
+    @PutMapping("/{msgId}")
+    public ResponseEntity<?> editMessage(@PathVariable String msgId, @RequestBody Map<String, String> body) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        ChatMessage msg = chatMessageRepository.findById(msgId).orElseThrow();
+
+        if (!msg.getSenderId().equals(currentUser)) return ResponseEntity.status(403).body("Không chính chủ");
+
+        msg.setContent(body.get("content"));
+        msg.setEdited(true);
+        chatMessageRepository.save(msg);
+
+        messagingTemplate.convertAndSend("/topic/public", Optional.of(Map.of("type", "MSG_UPDATE", "msg", msg)));
+        return ResponseEntity.ok(msg);
+    }
+
+    // 3. API CHUYỂN TIẾP (Viết Mới)
+    @PostMapping("/forward")
+    public ResponseEntity<?> forwardMessage(@RequestBody Map<String, String> body) {
+        String originalMsgId = body.get("originalMsgId");
+        String rawTarget = body.get("targetUsername");
+        String currentSender = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        ChatMessage original = chatMessageRepository.findById(originalMsgId).orElseThrow();
+
+        // Xử lý ID nhóm/người nhận
+        String finalRecipientId = rawTarget.startsWith("GROUP_") ? rawTarget.replace("GROUP_", "") : rawTarget;
+        boolean isGroup = rawTarget.startsWith("GROUP_");
+
+        ChatMessage newMsg = new ChatMessage();
+        newMsg.setSenderId(currentSender);
+        newMsg.setRecipientId(finalRecipientId);
+
+        // --- LOGIC MỚI: THÊM HEADER CHUYỂN TIẾP ---
+        String forwardPrefix = "[Chuyển tiếp từ " + original.getSenderId() + "]:\n";
+        newMsg.setContent(forwardPrefix + (original.getContent() != null ? original.getContent() : ""));
+        // ------------------------------------------
+
+        newMsg.setFileUrl(original.getFileUrl());
+        newMsg.setFileName(original.getFileName());
+        newMsg.setFileType(original.getFileType());
+        newMsg.setTimestamp(java.time.LocalDateTime.now());
+        if (isGroup) newMsg.setType("GROUP");
+
+        chatMessageRepository.save(newMsg);
+
+        // Bắn Socket
+        if (isGroup) {
+            messagingTemplate.convertAndSend("/topic/group/" + finalRecipientId, newMsg);
+        } else {
+            messagingTemplate.convertAndSendToUser(finalRecipientId, "/queue/messages", newMsg);
+            messagingTemplate.convertAndSendToUser(currentSender, "/queue/messages", newMsg);
+        }
+        return ResponseEntity.ok("Đã chuyển tiếp");
+    }
+
+    // 4. API THẢ CẢM XÚC (REACTION)
+    @PostMapping("/{msgId}/react")
+    public ResponseEntity<?> reactToMessage(@PathVariable String msgId, @RequestBody Map<String, String> body) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        String emoji = body.get("emoji");
+
+        ChatMessage msg = chatMessageRepository.findById(msgId).orElseThrow();
+
+        // Logic Toggle:
+        if (msg.getReactions() == null) {
+            msg.setReactions(new java.util.HashMap<>());
+        }
+
+        String currentReaction = msg.getReactions().get(currentUser);
+
+        if (currentReaction != null && currentReaction.equals(emoji)) {
+            // Nếu đã thả icon này rồi -> Gỡ bỏ (Unlike)
+            msg.getReactions().remove(currentUser);
+        } else {
+            // Nếu chưa thả hoặc thả icon khác -> Cập nhật
+            msg.getReactions().put(currentUser, emoji);
+        }
+
+        chatMessageRepository.save(msg);
+
+        // Bắn Socket cập nhật ngay lập tức (Dùng kênh /topic/feed)
+        messagingTemplate.convertAndSend("/topic/feed", Optional.of(Map.of("type", "MSG_UPDATE", "msg", msg)));
+
+        return ResponseEntity.ok(msg);
     }
 }

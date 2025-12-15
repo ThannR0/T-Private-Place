@@ -11,6 +11,8 @@ public class Notification {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String userId;
+
     private String recipient; // Tên người nhận
     private String content;   // Nội dung
     private Long relatedPostId; // ID bài viết liên quan

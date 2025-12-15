@@ -1,99 +1,129 @@
-import React from 'react';
-import { Layout, Typography, Avatar, Dropdown, Space, message, Badge, Button, Popover, List } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined, DownOutlined, ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Layout, Typography, Avatar, Dropdown, Space, message, Badge, Button, Popover, List, Tooltip } from 'antd';
+import {
+    UserOutlined, LogoutOutlined, SettingOutlined, DownOutlined,
+    ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined,
+    DeleteOutlined, ClearOutlined
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
+import { useSettings } from '../../context/SettingsContext';
 import { getAvatarUrl } from "../../utils/common.js";
 import AppLogo from "../common/AppLogo.jsx";
+import SettingsModal from "../chat/SettingModal.jsx";
+
 const { Header } = Layout;
 const { Text } = Typography;
 
 const AppHeader = () => {
     const navigate = useNavigate();
+    const { t } = useSettings();
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // Lấy dữ liệu từ Context (Không tự kết nối socket nữa)
-    const { currentUser, currentFullName, currentAvatar, logoutUser, updateUserStatus, myStatus, notifications, unreadCount, markNotificationsRead } = useChat();
+    // Lấy thêm hàm deleteNotification và clearAllNotifications
+    const {
+        currentUser, currentFullName, currentAvatar, logoutUser, updateUserStatus, myStatus,
+        notifications, unreadCount, markNotificationsRead,
+        deleteNotification, clearAllNotifications // <--- LẤY HÀM MỚI
+    } = useChat();
 
     const displayName = (currentFullName && currentFullName !== "undefined" && currentFullName !== "null")
         ? currentFullName : currentUser;
-
     const myAvatarUrl = getAvatarUrl(currentUser, currentFullName, currentAvatar);
 
-    const handleLogout = () => {
-        logoutUser();
-        message.info("Đã đăng xuất!");
-        navigate('/login');
-    };
+    const handleLogout = () => { logoutUser(); message.info(t('logout')); navigate('/login'); };
+    const handleChangeStatus = (status) => { updateUserStatus(status); };
+    const handleProfile = () => { navigate('/profile'); };
 
-    const handleChangeStatus = (status) => {
-        updateUserStatus(status);
-    };
-
-    const handleProfile = () => {
-        navigate('/profile');
-    };
-
+    // Xử lý khi click vào thông báo (Xem chi tiết)
     const handleClickNoti = (noti) => {
         if (noti.relatedPostId) {
             navigate(`/post/${noti.relatedPostId}`);
         }
     };
 
-    // Cấu hình menu thả xuống
+    // Xử lý xóa 1 thông báo (Chặn sự kiện click để không bị nhảy trang)
+    const handleDeleteNoti = (e, id) => {
+        e.stopPropagation(); // <--- QUAN TRỌNG: Ngăn click lan ra ngoài
+        deleteNotification(id);
+    };
+
     const items = [
-        {
-            key: 'status',
-            label: 'Trạng thái',
-            children: [ // Menu con
-                { key: 's1', label: 'Online (Trực tuyến)', onClick: () => handleChangeStatus('ONLINE') },
-                { key: 's2', label: 'Busy (Đang bận)', onClick: () => handleChangeStatus('BUSY') },
-                { key: 's3', label: 'Offline (Ẩn)', onClick: () => handleChangeStatus('OFFLINE') },
-            ]
-        },
-        {
-            key: '1',
-            label: 'Hồ sơ cá nhân',
-            icon: <ProfileOutlined />,
-            onClick: handleProfile,
-        },
-        {
-            key: '2',
-            label: 'Đổi mật khẩu',   // <--- COACH SỬA: Đổi tên label
-            icon: <LockOutlined />,  // <--- COACH SỬA: Đổi icon cho hợp lý
-            onClick: () => navigate('/change-password'), // <--- COACH SỬA: Điều hướng trang
-        },
-        {
-            key: '3',
-            label: 'Cài đặt',
-            icon: <SettingOutlined />,
-            onClick: () => message.info('Tính năng đang phát triển'),
-        },
-        {
-            type: 'divider', // Dòng kẻ ngang phân cách
-        },
-        {
-            key: '4',
-            label: 'Đăng xuất',
-            icon: <LogoutOutlined />,
-            danger: true, // Màu đỏ cảnh báo
-            onClick: handleLogout,
-        },
+        { key: 'status', label: t('status'), children: [
+                { key: 's1', label: t('online'), onClick: () => handleChangeStatus('ONLINE') },
+                { key: 's2', label: t('busy'), onClick: () => handleChangeStatus('BUSY') },
+                { key: 's3', label: t('offline'), onClick: () => handleChangeStatus('OFFLINE') },
+            ]},
+        { key: '1', label: t('profile'), icon: <ProfileOutlined />, onClick: handleProfile },
+        { key: '2', label: t('changePassword'), icon: <LockOutlined />, onClick: () => navigate('/change-password') },
+        { key: '3', label: t('settings'), icon: <SettingOutlined />, onClick: () => setIsSettingsOpen(true) },
+        { type: 'divider' },
+        { key: '4', label: t('logout'), icon: <LogoutOutlined />, danger: true, onClick: handleLogout },
     ];
 
-    // Nội dung thông báo
+    // --- TITLE CỦA POPOVER (Có nút Xóa tất cả) ---
+    const popoverTitle = (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 300 }}>
+            <Text strong style={{ color: 'var(--text-color)' }}>{t('notifications')}</Text>
+            {notifications.length > 0 && (
+                <Tooltip title="Xóa tất cả">
+                    <Button
+                        type="text" size="small" icon={<ClearOutlined />} danger
+                        onClick={clearAllNotifications}
+                    >
+                        Xóa tất cả
+                    </Button>
+                </Tooltip>
+            )}
+        </div>
+    );
+
+    // --- LIST THÔNG BÁO (Logic Đậm/Nhạt) ---
     const notificationContent = (
-        <div style={{ width: 300, maxHeight: 400, overflowY: 'auto' }}>
+        <div style={{ width: 350, maxHeight: 400, overflowY: 'auto' }}>
             <List
                 dataSource={notifications}
-                locale={{ emptyText: "Không có thông báo mới" }}
+                locale={{ emptyText: <span style={{color:'var(--text-secondary)'}}>{t('noNotification')}</span> }}
                 renderItem={item => (
                     <List.Item
                         onClick={() => handleClickNoti(item)}
-                        style={{ cursor: 'pointer', background: item.read ? '#fff' : '#e6f7ff', padding: '10px' }}
+                        style={{
+                            cursor: 'pointer',
+                            // Nếu chưa đọc: Nền sáng hơn chút (var(--bg-hover)). Đã đọc: Nền thường
+                            background: item.read ? 'var(--bg-color)' : 'var(--bg-hover)',
+                            padding: '12px 15px',
+                            transition: 'all 0.2s',
+                            position: 'relative'
+                        }}
+                        // Nút xóa bên phải
+                        actions={[
+                            <Button
+                                type="text" size="small" icon={<DeleteOutlined style={{color: 'var(--text-secondary)'}} />}
+                                onClick={(e) => handleDeleteNoti(e, item.id)}
+                            />
+                        ]}
                     >
                         <List.Item.Meta
-                            title={<span style={{ fontSize: 13 }}>{item.content}</span>}
-                            description={<span style={{ fontSize: 10 }}>{new Date(item.createdAt).toLocaleString()}</span>}
+                            title={
+                                <span style={{
+                                    fontSize: 14,
+                                    // LOGIC ĐẬM NHẠT: Chưa đọc -> Bold + Màu sáng. Đã đọc -> Normal + Màu tối
+                                    fontWeight: item.read ? 'normal' : '700',
+                                    color: item.read ? 'var(--text-secondary)' : 'var(--text-color)'
+                                }}>
+                                    {item.content}
+                                </span>
+                            }
+                            description={
+                                <span style={{
+                                    fontSize: 11,
+                                    color: item.read ? 'var(--text-secondary)' : '#1890ff', // Chưa đọc thì ngày tháng màu xanh cho nổi
+                                    fontWeight: item.read ? 'normal' : '500'
+                                }}>
+                                    {new Date(item.createdAt).toLocaleString()}
+                                    {!item.read && <Badge status="processing" style={{marginLeft: 5}} />} {/* Chấm xanh nhỏ */}
+                                </span>
+                            }
                         />
                     </List.Item>
                 )}
@@ -108,29 +138,34 @@ const AppHeader = () => {
     };
 
     return (
-        <Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '0 20px', height: '60px', zIndex: 10 }}>
-            {/* LOGO */}
+        <Header style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            background: 'var(--bg-color)', borderBottom: '1px solid var(--border-color)',
+            padding: '0 20px', height: '60px', zIndex: 10, transition: 'background 0.3s'
+        }}>
             <div style={{cursor: 'pointer'}} onClick={() => navigate('/chat')}>
                 <AppLogo size={42} showText={true}/>
             </div>
 
-            {/* NAV BAR */}
             <div style={{display: 'flex', gap: '20px'}}>
-                <Button shape="circle" size="large" icon={<HomeOutlined />} onClick={() => navigate('/feed')} />
-                <Button shape="circle" size="large" icon={<MessageOutlined />} onClick={() => navigate('/chat')} />
+                <Button shape="circle" size="large" icon={<HomeOutlined />} onClick={() => navigate('/feed')}
+                        style={{ background: 'transparent', color: 'var(--text-color)', border: '1px solid var(--border-color)' }} />
+                <Button shape="circle" size="large" icon={<MessageOutlined />} onClick={() => navigate('/chat')}
+                        style={{ background: 'transparent', color: 'var(--text-color)', border: '1px solid var(--border-color)' }} />
             </div>
 
-            {/* INFO */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <Popover
                     content={notificationContent}
-                    title="Thông báo"
+                    title={popoverTitle} // Sử dụng Title tùy chỉnh có nút Xóa All
                     trigger="click"
                     placement="bottomRight"
+                    overlayInnerStyle={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}
                     onOpenChange={(open) => { if (open) markNotificationsRead(); }}
                 >
                     <Badge count={unreadCount} overflowCount={99} size="small">
-                        <Button shape="circle" icon={<BellOutlined style={{ fontSize: 20 }} />} />
+                        <Button shape="circle" icon={<BellOutlined style={{ fontSize: 20 }} />}
+                                style={{ background: 'transparent', color: 'var(--text-color)', border: 'none' }} />
                     </Badge>
                 </Popover>
 
@@ -141,16 +176,18 @@ const AppHeader = () => {
                                 <Avatar src={myAvatarUrl} />
                             </Badge>
                             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-                                <Text strong style={{ fontSize: '14px' }}>{displayName}</Text>
-                                <Text type="secondary" style={{ fontSize: '10px' }}>
-                                    {myStatus === 'ONLINE' ? 'Trực tuyến' : (myStatus === 'BUSY' ? 'Đang bận' : 'Ẩn')}
+                                <Text strong style={{ fontSize: '14px', color: 'var(--text-color)' }}>{displayName}</Text>
+                                <Text type="secondary" style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                    {myStatus === 'ONLINE' ? t('online') : (myStatus === 'BUSY' ? t('busy') : t('offline'))}
                                 </Text>
                             </div>
-                            <DownOutlined style={{ fontSize: 10 }} />
+                            <DownOutlined style={{ fontSize: 10, color: 'var(--text-secondary)' }} />
                         </Space>
                     </div>
                 </Dropdown>
             </div>
+
+            <SettingsModal visible={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </Header>
     );
 };

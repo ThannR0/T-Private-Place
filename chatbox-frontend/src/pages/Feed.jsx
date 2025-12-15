@@ -7,10 +7,12 @@ import api from '../services/api';
 import { useChat } from '../context/ChatContext';
 import PageTitle from "../components/common/PageTitle.jsx";
 const { Content } = Layout;
+import { useSettings } from "../context/SettingsContext.jsx";
 
 const Feed = () => {
     const [posts, setPosts] = useState([]);
     const { feedUpdate } = useChat(); // Lấy tín hiệu Real-time
+    const { t } = useSettings();
 
     // Hàm tải danh sách bài viết
     const fetchPosts = async () => {
@@ -83,8 +85,8 @@ const Feed = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
-            <PageTitle title= "Bảng tin"></PageTitle>
+        <Layout style={{ minHeight: '100vh', background: 'var(--bg-color)' }}>
+            <PageTitle title= {t('newsfeed')}></PageTitle>
 
             <Content style={{ maxWidth: '700px', width: '100%', margin: '20px auto', padding: '0 15px' }}>
 

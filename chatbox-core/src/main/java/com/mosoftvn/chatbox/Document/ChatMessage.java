@@ -6,6 +6,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Setter
 @Getter
@@ -25,6 +27,14 @@ public class ChatMessage {
     private String fileType; // Loại file (image/png, application/pdf...)
     private String fileName;
 
+    private String type;
+
+    // Trong Entity ChatMessage
+    private boolean isEdited = false;
+    private boolean isRevoked = false; // Thu hồi
+    private boolean isPinned = false;  // Ghim
+
+    private Map<String, String> reactions = new HashMap<>();
     // Constructor
     public ChatMessage() {
     }

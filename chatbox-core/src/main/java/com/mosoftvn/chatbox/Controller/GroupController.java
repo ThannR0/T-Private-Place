@@ -42,7 +42,7 @@ public class GroupController {
                 req.getMembers()
         );
 
-        // --- 3. Bắn Socket báo có nhóm mới (NEW_GROUP_CREATED) ---
+        // Bắn Socket báo có nhóm mới (NEW_GROUP_CREATED) ---
         // Để người tạo và các thành viên thấy nhóm ngay lập tức
         Map<String, Object> socketMsg = new HashMap<>();
         socketMsg.put("type", "NEW_GROUP_CREATED");
@@ -59,7 +59,7 @@ public class GroupController {
         return groupService.getMyGroups(getCurrentUser());
     }
 
-    // --- 4. NÂNG CẤP API THÊM THÀNH VIÊN ---
+    //  NÂNG CẤP API THÊM THÀNH VIÊN ---
     @PostMapping("/{groupId}/add")
     public ResponseEntity<?> addMembers(@PathVariable Long groupId, @RequestBody GroupRequest req) {
         // A. Gọi Service xử lý logic lưu vào DB (Code cũ)
@@ -99,6 +99,13 @@ public class GroupController {
     public ResponseEntity<?> leaveGroup(@PathVariable Long groupId) {
         groupService.leaveGroup(groupId, getCurrentUser());
         return ResponseEntity.ok("Đã rời nhóm");
+    }
+
+    @PutMapping("/{groupId}/transfer-admin")
+    public ResponseEntity<?> transferAdmin(@PathVariable Long groupId, @RequestBody Map<String, String> body) {
+        String newAdmin = body.get("newAdminUsername");
+        groupService.transferAdmin(groupId, getCurrentUser(), newAdmin);
+        return ResponseEntity.ok("Đã chuyển quyền trưởng nhóm");
     }
 
     @PutMapping("/{groupId}/rename")

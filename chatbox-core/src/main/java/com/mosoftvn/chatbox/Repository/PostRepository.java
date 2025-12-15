@@ -7,4 +7,5 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
     // Lấy tất cả bài viết, sắp xếp mới nhất lên đầu
     List<Post> findAllByOrderByCreatedAtDesc();
+
 }

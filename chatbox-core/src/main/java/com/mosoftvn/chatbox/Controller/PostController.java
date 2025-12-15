@@ -1,17 +1,24 @@
 package com.mosoftvn.chatbox.Controller;
 
 import com.mosoftvn.chatbox.DTO.PostResponse;
+import com.mosoftvn.chatbox.Entity.Post;
+import com.mosoftvn.chatbox.Repository.PostRepository;
 import com.mosoftvn.chatbox.Repository.UserRepository;
 import com.mosoftvn.chatbox.Service.CloudinaryService;
 import com.mosoftvn.chatbox.Service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -24,6 +31,11 @@ public class PostController {
     // (Nếu không dùng UserRepository ở đây thì có thể xóa dòng này cho gọn)
     // @Autowired
     // private UserRepository userRepository;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private CloudinaryService cloudinaryService;
@@ -63,6 +75,34 @@ public class PostController {
     public void deletePost(@PathVariable Long postId) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         postService.deletePost(postId, currentUsername);
+    }
+
+    @PostMapping("/{postId}/react")
+    public ResponseEntity<?> reactToPost(@PathVariable Long postId, @RequestBody Map<String, String> body) {
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        String type = body.get("type");
+
+        Post post = postRepository.findById(postId).orElseThrow();
+
+        if (post.getReactions() == null) post.setReactions(new HashMap<>());
+
+        String currentReaction = post.getReactions().get(currentUser);
+        if (currentReaction != null && currentReaction.equals(type)) {
+            post.getReactions().remove(currentUser);
+        } else {
+            post.getReactions().put(currentUser, type);
+        }
+
+
+        postRepository.save(post);
+
+        // Bắn Socket
+        messagingTemplate.convertAndSend("/topic/feed",
+                // post.getLikeCount() sẽ tự động gọi hàm @Transient
+                Optional.of(Map.of("type", "POST_REACTION_UPDATE", "postId", postId, "reactions", post.getReactions(), "likeCount", post.getLikeCount()))
+        );
+
+        return ResponseEntity.ok(post);
     }
 
     // --- PHẦN SỬA ĐỔI QUAN TRỌNG ---

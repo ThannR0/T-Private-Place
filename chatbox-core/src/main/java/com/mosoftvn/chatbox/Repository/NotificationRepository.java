@@ -13,4 +13,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // Tìm thông báo chưa đọc (để đánh dấu đã đọc)
     List<Notification> findByRecipientAndIsReadFalse(String recipient);
+
+    void deleteById(String recipient);
+    void deleteAllByUserId(String userId);
 }

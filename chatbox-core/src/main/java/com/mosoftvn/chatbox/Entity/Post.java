@@ -4,10 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 @Entity
 @Table(name = "posts")
@@ -45,6 +42,20 @@ public class Post {
     @CollectionTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "user_id")
     private Set<Long> likedUserIds = new HashSet<>();
+
+    // Cấu hình để lưu Map<String, String> vào bảng phụ "post_reactions"
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "post_reactions", joinColumns = @JoinColumn(name = "post_id"))
+    @MapKeyColumn(name = "username") // Cột lưu Key (Tên người dùng)
+    @Column(name = "reaction_type")  // Cột lưu Value (Loại cảm xúc)
+    private Map<String, String> reactions = new HashMap<>();
+
+    // Tạo hàm ảo để lấy số lượng like từ reactions
+    // @Transient nghĩa là không lưu cột này vào DB, chỉ tính toán lúc chạy
+    @Transient
+    public int getLikeCount() {
+        return reactions != null ? reactions.size() : 0;
+    }
 
     // Tự động gán thời gian khi tạo
     @PrePersist

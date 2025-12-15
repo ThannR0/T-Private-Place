@@ -17,6 +17,7 @@ import dayjs from 'dayjs';
 import PostCard from '../components/feed/PostCard';
 import CreatePost from '../components/feed/CreatePost';
 import PageTitle from "../components/common/PageTitle.jsx";
+import {useSettings} from "../context/SettingsContext.jsx";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -45,7 +46,7 @@ const Profile = () => {
     const fileInputRef = useRef(null);
 
     const pageTitleName = userInfo ? (userInfo.fullName || userInfo.username) : "Hồ sơ";
-
+    const { t } = useSettings();
     // 2. LOGIC TÍNH TOÁN TRẠNG THÁI (STATUS) REALTIME
     // - Nếu là mình: Lấy myStatus (đồng bộ với Header)
     // - Nếu là người khác: Tìm trong list 'users' (danh sách online từ socket)
@@ -250,25 +251,25 @@ const Profile = () => {
     };
 
     return (
-
-        <div style={{ minHeight: '100vh', background: '#f0f2f5', paddingBottom: 50 }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-color)', paddingBottom: 50, transition: 'background 0.3s' }}>
             <PageTitle title={`${pageTitleName}`} />
 
-            {/* --- 1. COVER PHOTO (GRADIENT) --- */}
+            {/* --- 1. COVER PHOTO (GRADIENT ĐẸP HƠN) --- */}
             <div style={{
                 height: '240px',
-                background: 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
+                // Gradient chuyển động nhẹ, hợp cả sáng và tối
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 position: 'relative',
                 marginBottom: '80px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
             }}>
                 {!isMyProfile && (
                     <Button
                         type="text" icon={<ArrowLeftOutlined />}
-                        style={{ position: 'absolute', top: 20, left: 20, color: '#333', fontWeight: 600, background: 'rgba(255,255,255,0.6)' }}
+                        style={{ position: 'absolute', top: 20, left: 20, color: '#fff', fontWeight: 600, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
                         onClick={() => navigate(-1)}
                     >
-                        Quay lại
+                        {t('back')}
                     </Button>
                 )}
             </div>
@@ -284,23 +285,21 @@ const Profile = () => {
                             size={180}
                             src={displayAvatar}
                             style={{
-                                border: '6px solid #fff',
+                                // Viền Avatar: Trong Dark mode là màu nền tối, Light mode là trắng
+                                border: '6px solid var(--bg-color)',
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                background: '#fff'
+                                background: 'var(--bg-secondary)'
                             }}
                         />
 
-                        {/* Nút thay avatar: Đưa lên GÓC TRÊN PHẢI để không che status */}
                         {isMyProfile && (
-                            <Tooltip title="Đổi ảnh đại diện">
+                            <Tooltip title={t('uploadAvatar')}>
                                 <Button
-                                    shape="circle"
-                                    icon={<CameraOutlined />}
+                                    shape="circle" icon={<CameraOutlined />}
                                     style={{
-                                        position: 'absolute',
-                                        top: 10, right: 10, // <-- VỊ TRÍ MỚI
-                                        zIndex: 10,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                        position: 'absolute', top: 10, right: 10, zIndex: 10,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                        border: 'none', background: 'var(--bg-color)', color: 'var(--text-color)'
                                     }}
                                     onClick={() => fileInputRef.current.click()}
                                 />
@@ -308,12 +307,12 @@ const Profile = () => {
                         )}
                         <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
 
-                        {/* Status Dot: Góc DƯỚI PHẢI */}
+                        {/* Status Dot */}
                         <div style={{
                             position: 'absolute', bottom: 25, right: 25,
                             width: 24, height: 24, borderRadius: '50%',
                             background: realtimeStatus === 'ONLINE' ? '#52c41a' : (realtimeStatus === 'BUSY' ? '#ff4d4f' : '#bfbfbf'),
-                            border: '4px solid #fff',
+                            border: '4px solid var(--bg-color)', // Viền trùng màu nền
                             zIndex: 5
                         }} title={realtimeStatus} />
                     </div>
@@ -322,11 +321,11 @@ const Profile = () => {
                     <div style={{ flex: 1, marginBottom: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                             <div>
-                                <Title level={2} style={{ margin: 0, fontWeight: 700 }}>
+                                <Title level={2} style={{ margin: 0, fontWeight: 700, color: 'var(--text-color)' }}>
                                     {userInfo.fullName || userInfo.username}
                                 </Title>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
-                                    <Text type="secondary" style={{ fontSize: 16 }}>@{userInfo.username}</Text>
+                                    <Text style={{ fontSize: 16, color: 'var(--text-secondary)' }}>@{userInfo.username}</Text>
                                     {userInfo.position && (
                                         <Tag color={getPositionColor(userInfo.position)} style={{ fontWeight: 'bold' }}>
                                             {userInfo.position}
@@ -339,11 +338,11 @@ const Profile = () => {
                             <div style={{ display: 'flex', gap: 10 }}>
                                 {isMyProfile ? (
                                     <Button type="primary" icon={<EditOutlined />} onClick={openEditModal} size="large" style={{ borderRadius: 6 }}>
-                                        Chỉnh sửa hồ sơ
+                                        {t('editProfile')}
                                     </Button>
                                 ) : (
-                                    <Button type="primary" icon={<MessageOutlined />} onClick={handleMessageClick} size="large" style={{ borderRadius: 6, background: '#1890ff' }}>
-                                        Nhắn tin
+                                    <Button type="primary" icon={<MessageOutlined />} onClick={handleMessageClick} size="large" style={{ borderRadius: 6 }}>
+                                        {t('messsage')}
                                     </Button>
                                 )}
                             </div>
@@ -356,13 +355,21 @@ const Profile = () => {
 
                     {/* LEFT: INFO CARD */}
                     <Col xs={24} md={8}>
-                        <Card title="Thông tin cá nhân" bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', marginBottom: 20 }}>
+                        <Card
+                            title={<span style={{ color: 'var(--text-color)' }}>{t('personalInfo')}</span>}
+                            bordered={false}
+                            style={{
+                                borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', marginBottom: 20,
+                                background: 'var(--bg-secondary)' // Card nền tối
+                            }}
+                            headStyle={{ borderBottom: '1px solid var(--border-color)' }}
+                        >
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                                 <InfoItem icon={<MailOutlined />} label="Email" value={userInfo.email} />
-                                <InfoItem icon={<PhoneOutlined />} label="Điện thoại" value={userInfo.phone} />
-                                <InfoItem icon={<CalendarOutlined />} label="Ngày sinh" value={userInfo.dob ? moment(userInfo.dob).format('DD/MM/YYYY') : null} />
-                                <InfoItem icon={<EnvironmentOutlined />} label="Quê quán" value={userInfo.hometown} />
-                                <InfoItem icon={<IdcardOutlined />} label="Chức vụ" value={userInfo.position} />
+                                <InfoItem icon={<PhoneOutlined />} label={t('phone')} value={userInfo.phone} />
+                                <InfoItem icon={<CalendarOutlined />} label={t('dob')} value={userInfo.dob ? moment(userInfo.dob).format('DD/MM/YYYY') : null} />
+                                <InfoItem icon={<EnvironmentOutlined />} label={t('hometown')} value={userInfo.hometown} />
+                                <InfoItem icon={<IdcardOutlined />} label={t('position')} value={userInfo.position} />
                             </div>
                         </Card>
                     </Col>
@@ -371,7 +378,9 @@ const Profile = () => {
                     <Col xs={24} md={16}>
                         {isMyProfile && <CreatePost onPostCreated={handleNewPostLocal} />}
 
-                        <Divider orientation="left">Bài viết cá nhân ({userPosts.length})</Divider>
+                        <Divider orientation="left" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }}>
+                            {t('thisProfile')} - {userPosts.length} posts
+                        </Divider>
 
                         {userPosts.map(post => (
                             <PostCard
@@ -384,54 +393,39 @@ const Profile = () => {
                 </Row>
             </div>
 
-            {/* --- 4. MODAL EDIT PROFILE --- */}
+            {/* --- 4. MODAL EDIT --- */}
             <Modal
-                title="Chỉnh sửa thông tin cá nhân"
+                title={t('editProfile')}
                 open={isEditModalOpen}
                 onCancel={() => setIsEditModalOpen(false)}
                 footer={null}
                 centered
             >
                 <Form layout="vertical" form={form} onFinish={handleEditSubmit}>
-                    <Form.Item label="Email (Không thể thay đổi)" name="email">
-                        <Input disabled prefix={<MailOutlined />} style={{ background: '#f5f5f5', color: '#888' }} />
+                    <Form.Item label="Email" name="email">
+                        <Input disabled prefix={<MailOutlined />} style={{ background: 'var(--input-bg)', color: 'var(--text-secondary)' }} />
                     </Form.Item>
-
-                    <Form.Item label="Họ và tên" name="fullName" rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}>
+                    <Form.Item label={t('fullName')} name="fullName" rules={[{ required: true }]}>
                         <Input prefix={<UserOutlined />} />
                     </Form.Item>
-
-                    <Form.Item label="Số điện thoại" name="phone">
-                        <Input prefix={<PhoneOutlined />} placeholder="Nhập số điện thoại" />
-                    </Form.Item>
-
+                    <Form.Item label={t('phone')} name="phone"><Input prefix={<PhoneOutlined />} /></Form.Item>
                     <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item label="Ngày sinh" name="dob">
-                                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày" />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item label="Quê quán" name="hometown">
-                                <Input prefix={<EnvironmentOutlined />} placeholder="Nhập quê quán" />
-                            </Form.Item>
-                        </Col>
+                        <Col span={12}><Form.Item label={t('dob')} name="dob"><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
+                        <Col span={12}><Form.Item label={t('hometown')} name="hometown"><Input prefix={<EnvironmentOutlined />} /></Form.Item></Col>
                     </Row>
-
-                    <Form.Item label="Chức vụ tại T-Private Place" name="position">
-                        <Select placeholder="Chọn chức vụ">
-                            <Option value="MANAGER">Quản Lý (Manager)</Option>
-                            <Option value="PM">Project Manager (PM)</Option>
-                            <Option value="BA">Business Analyst (BA)</Option>
-                            <Option value="DEV">Developer (DEV)</Option>
-                            <Option value="TESTER">Tester / QA</Option>
-                            <Option value="NHANVIEN">Nhân viên</Option>
+                    <Form.Item label={t('position')} name="position">
+                        <Select>
+                            <Option value="MANAGER">Manager</Option>
+                            <Option value="PM">Project Manager</Option>
+                            <Option value="BA">Business Analyst</Option>
+                            <Option value="DEV">Developer</Option>
+                            <Option value="TESTER">Tester</Option>
+                            <Option value="NHANVIEN">Employee</Option>
                         </Select>
                     </Form.Item>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                        <Button onClick={() => setIsEditModalOpen(false)}>Hủy</Button>
-                        <Button type="primary" htmlType="submit">Lưu thay đổi</Button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                        <Button onClick={() => setIsEditModalOpen(false)}>{t('cancel')}</Button>
+                        <Button type="primary" htmlType="submit">{t('saveChanges')}</Button>
                     </div>
                 </Form>
             </Modal>
@@ -439,13 +433,15 @@ const Profile = () => {
     );
 };
 
-// Component nhỏ hiển thị dòng thông tin cho gọn
+// Component con hiển thị Info (Đã chỉnh màu)
 const InfoItem = ({ icon, label, value }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ fontSize: 18, color: '#8c8c8c' }}>{icon}</div>
+        <div style={{ fontSize: 18, color: 'var(--text-secondary)' }}>{icon}</div>
         <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>{label}</Text>
-            <div style={{ fontWeight: 500, color: value ? '#333' : '#bbb' }}>{value || 'Chưa cập nhật'}</div>
+            <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</Text>
+            <div style={{ fontWeight: 500, color: value ? 'var(--text-color)' : 'var(--text-secondary)' }}>
+                {value || '---'}
+            </div>
         </div>
     </div>
 );

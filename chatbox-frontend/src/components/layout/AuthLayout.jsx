@@ -1,9 +1,10 @@
 import React from 'react';
 import { Layout, Typography } from 'antd';
 import AppLogo from '../common/AppLogo'; // <--- 1. Import Logo
+import { useSettings } from "../../context/SettingsContext.jsx";
 
 const { Title, Text } = Typography;
-
+const { t } = useSettings;
 const AuthLayout = ({ children, title, subtitle }) => {
     return (
         <div style={{ display: 'flex', minHeight: '100vh', overflow: 'hidden' }}>

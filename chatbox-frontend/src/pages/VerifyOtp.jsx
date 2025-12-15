@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import AuthLayout from "../components/layout/AuthLayout.jsx";
 import PageTitle from "../components/common/PageTitle.jsx";
+import {useSettings} from "../context/SettingsContext.jsx";
 
 const { Text } = Typography;
 
@@ -14,6 +15,8 @@ const VerifyOtp = () => {
     const emailFromUrl = searchParams.get('email');
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+
+    const { t } = useSettings()
 
     useEffect(() => {
         if (emailFromUrl) {
@@ -37,8 +40,8 @@ const VerifyOtp = () => {
     };
 
     return (
-        <AuthLayout title="Xác thực OTP" subtitle="Mã xác minh đã được gửi đến email của bạn.">
-            <PageTitle title="Verify OTP" />
+        <AuthLayout title={t('verifyTitle')} subtitle={t('verifySubtitle')}>
+            <PageTitle title={t('verifyTitle')} />
 
             <Form form={form} name="verify" onFinish={onFinish} layout="vertical" size="large">
                 <Form.Item name="email" rules={[{ required: true, message: 'Cần có email!' }]}>
@@ -48,7 +51,7 @@ const VerifyOtp = () => {
                 <Form.Item name="otp" rules={[{ required: true, message: 'Nhập mã OTP!' }]}>
                     <Input
                         prefix={<NumberOutlined style={{ color: '#1890ff' }} />}
-                        placeholder="Mã OTP (6 số)"
+                        placeholder={t('otpPlaceholder')}
                         maxLength={6}
                         style={{ textAlign: 'center', letterSpacing: '8px', fontWeight: 'bold', fontSize: '18px' }}
                     />
@@ -56,12 +59,12 @@ const VerifyOtp = () => {
 
                 <Form.Item>
                     <Button type="primary" htmlType="submit" block loading={loading} style={{ height: '45px' }}>
-                        Kích hoạt tài khoản
+                        {t('activateAccount')}
                     </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Link to="/login">Quay lại đăng nhập</Link>
+                    <Link to="/login">{t('backToLogin')}</Link>
                 </div>
             </Form>
         </AuthLayout>

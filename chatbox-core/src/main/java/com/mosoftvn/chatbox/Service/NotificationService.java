@@ -5,6 +5,7 @@ import com.mosoftvn.chatbox.Repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,5 +40,14 @@ public class NotificationService {
         List<Notification> list = notificationRepository.findByRecipientAndIsReadFalse(username);
         list.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(list);
+    }
+    @Transactional
+    public void deleteNotification(String id) {
+        notificationRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void deleteAllNotifications(String userId) {
+        notificationRepository.deleteAllByUserId(userId);
     }
 }
