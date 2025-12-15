@@ -165,6 +165,11 @@ export const ChatProvider = ({ children }) => {
             // 1. Chat riêng
             client.subscribe(`/user/${currentUser}/queue/messages`, (payload) => {
                 addMessageUnique(JSON.parse(payload.body));
+                const isSoundOn = localStorage.getItem('soundEnabled') === 'true';
+                if (isSoundOn) {
+                    const audio = new Audio('/sounds/notification.mp3');
+                    audio.play().catch(e => {});
+                }
             });
 
             // 2. Status & Feed
@@ -216,8 +221,12 @@ export const ChatProvider = ({ children }) => {
                         if (data.newAvatar) { setCurrentAvatar(data.newAvatar); localStorage.setItem('avatar', data.newAvatar); }
                     }
                 }
-                if (data.type === 'POST_REACTION_UPDATE') {
-
+                if (feedUpdate.type === 'POST_REACTION_UPDATE') {
+                    setPosts(prev => prev.map(p =>
+                        String(p.id) === String(feedUpdate.postId)
+                            ? { ...p, reactions: feedUpdate.reactions, likeCount: feedUpdate.likeCount }
+                            : p
+                    ));
                 }
 
             });
@@ -229,6 +238,16 @@ export const ChatProvider = ({ children }) => {
                 processedNotiIdsRef.current.add(newNoti.id);
                 setNotifications(prev => [newNoti, ...prev]);
                 setUnreadCount(prev => prev + 1);
+                const isSoundOn = localStorage.getItem('soundEnabled') === 'true';
+                if (isSoundOn) {
+                    try {
+                        // Phát âm thanh
+                        const audio = new Audio('/sounds/notification.mp3');
+                        audio.play().catch(err => console.log("Audio play failed:", err));
+                    } catch (e) {
+                        console.error("Sound error", e);
+                    }
+                }
                 message.info(newNoti.content);
             });
 

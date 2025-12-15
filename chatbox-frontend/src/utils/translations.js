@@ -117,6 +117,21 @@ export const translations = {
         writeComment: "Viết bình luận dưới tên {{name}}...",
         viewMoreComments: "Xem thêm {{count}} bình luận...",
         messsage: "Nhắn tin",
+        commented: "Đã comment",
+
+        // --- REACTIONS (PostCard) ---
+        love: "Yêu thích",
+        haha: "Haha",
+        wow: "Wow",
+        sad: "Buồn",
+        angry: "Phẫn nộ",
+
+        // Tooltip
+        and: "và",
+        others: "người khác",
+        commentedBy: "Đã bình luận:",
+        noCommentYet: "Chưa có bình luận",
+
 
 
         // --- PROFILE & SETTINGS ---
@@ -140,6 +155,50 @@ export const translations = {
         postNotFound: "Không tìm thấy bài viết",
         postDeletedDesc: "Bài viết này có thể đã bị xóa hoặc không tồn tại.",
         goHome: "Về trang chủ",
+
+        // --- POST DETAIL ---
+        postNotFoundDesc: "Bài viết này có thể đã bị xóa hoặc không tồn tại.",
+        backToHome: "Về trang chủ",
+        postDeletedWarning: "Bài viết này đã bị xóa!",
+
+        // --- PROFILE ---
+        profileDefaultTitle: "Hồ sơ",
+        userNotFound: "Không tìm thấy người dùng!",
+        updateProfileSuccess: "Cập nhật hồ sơ thành công!",
+        updateProfileFailed: "Cập nhật thất bại.",
+        uploadingPhoto: "Đang tải ảnh...",
+        uploadPhotoSuccess: "Đổi ảnh đại diện thành công!",
+        uploadPhotoError: "Lỗi upload ảnh",
+        positionPlaceholder: "Chọn chức vụ",
+        posManager: "Quản Lý (Manager)",
+        posPM: "Project Manager (PM)",
+        posBA: "Business Analyst (BA)",
+        posDev: "Developer (DEV)",
+        posTester: "Tester / QA",
+        posEmployee: "Nhân viên",
+        notUpdated: "Chưa cập nhật",
+
+        // --- CHAT WINDOW ---
+        msgPinnedTooFar: "Tin nhắn ghim ở quá xa, vui lòng lướt tìm.",
+        msgRevokedSuccess: "Đã thu hồi",
+        selectUserWarning: "Chọn người",
+        forwardSuccess: "Đã chuyển tiếp",
+        reactError: "Lỗi thả cảm xúc",
+        unpin: "Bỏ ghim",
+        pin: "Ghim tin nhắn",
+        forward: "Chuyển tiếp",
+        edit: "Chỉnh sửa",
+        revoke: "Thu hồi",
+        msgRevoked: "Tin nhắn đã bị thu hồi",
+        download: "Tải xuống",
+        edited: "(đã chỉnh sửa)",
+        typeMessagePlaceholder: "Nhắn tin tới {{name}}...",
+        forwardModalTitle: "Chuyển tiếp tin nhắn",
+        contentLabel: "Nội dung:",
+        send: "Gửi",
+
+        // --- POST DETAIL & FEED ---
+        feedLoadError: "Lỗi tải Newsfeed!",
 
         // --- AUTH (Đăng nhập/Ký) ---
         login: "Đăng nhập",
@@ -192,6 +251,45 @@ export const translations = {
         //Chat windown
         choosePersonOrGroup: "Chọn người hoặc nhóm để chuyển tiếp",
 
+// --- AI FEATURES (MỚI) ---
+        aiButton: "AI Viết hộ",
+        aiTooltip: "AI giúp bạn viết nội dung nhanh chóng",
+        aiTitle: "Trợ lý AI Sáng tạo",
+        aiGenerating: "AI đang suy nghĩ và viết bài...",
+        aiWait: "(Sẽ mất khoảng vài giây)",
+        aiSelectStyle: "Bạn muốn bài viết phong cách nào?",
+
+        // Styles
+        styleFunny: "Vui vẻ, Hài hước",
+        descFunny: "Bắt trend, dùng nhiều icon, giọng văn thân thiện.",
+        styleSerious: "Sâu sắc, Chiêm nghiệm",
+        descSerious: "Phù hợp chia sẻ quan điểm cá nhân, triết lý.",
+        styleProfessional: "Chuyên nghiệp",
+        descProfessional: "Lịch sự, chia sẻ kiến thức, phù hợp công việc.",
+        styleCustom: "Tùy chỉnh (Nhập prompt)",
+        descCustom: "Bạn tự ra đề bài cho AI.",
+
+        // Custom Input
+        customLabel: "Nhập yêu cầu của bạn:",
+        customPlaceholder: "VD: Viết bài thơ tặng mẹ, Review quán cafe...",
+
+        // Actions & Messages
+        btnGenerate: "Tạo ngay",
+        msgAIEmpty: "Vui lòng nhập chủ đề bạn muốn viết!",
+        msgAISuccess: "AI đã hoàn thành tác vụ!",
+        msgAIError: "AI đang bận, vui lòng thử lại sau.",
+
+        // Prompts (Gửi xuống AI) - Dùng để AI hiểu ngữ cảnh ngôn ngữ
+        promptFunny: "chủ đề cuộc sống vui vẻ, hài hước",
+        promptSerious: "chủ đề suy ngẫm cuộc sống, sâu sắc",
+        promptProfessional: "chủ đề kiến thức công việc, chuyên nghiệp",
+
+        // --- FORMAT TOOLBAR ---
+        fmtBold: "In đậm (Bôi đen trước)",
+        fmtItalic: "In nghiêng (Bôi đen trước)",
+        fmtStrike: "Gạch ngang (Bôi đen trước)",
+        fmtEmoji: "Chèn biểu cảm",
+        fmtWarn: "Vui lòng bôi đen văn bản cần định dạng!",
     },
     en: {
         settings: "Settings",
@@ -294,6 +392,7 @@ export const translations = {
         fileTooLarge: "File too large! Please select under 50MB.",
         emptyPostWarning: "Please write something or select a file!",
 
+
         // Post Actions
         like: "Like",
         liked: "{{count}} Likes",
@@ -312,6 +411,21 @@ export const translations = {
         writeComment: "Write a comment as {{name}}...",
         viewMoreComments: "View {{count}} more comments...",
         messsage: "Message",
+        commented: "Commented: {{name}}",
+
+        // --- REACTIONS ---
+        love: "Love",
+        haha: "Haha",
+        wow: "Wow",
+        sad: "Sad",
+        angry: "Angry",
+
+        // Tooltip
+        and: "and",
+        others: "others",
+        commentedBy: "Commented by:",
+        noCommentYet: "No comments yet",
+
 
         // --- PROFILE & SETTINGS ---
         editProfile: "Edit Profile",
@@ -384,8 +498,89 @@ export const translations = {
         resetSuccess: "Password reset successful! Login now.",
 
         //Chat windown
-        choosePersonOrGroup: "Chọn người hoặc nhóm để chuyển tiếp",
+        choosePersonOrGroup: "Select the person or group to forward",
 
+        // --- AI FEATURES (NEW) ---
+        aiButton: "AI Writer",
+        aiTooltip: "Let AI help you write content faster",
+        aiTitle: "Creative AI Assistant",
+        aiGenerating: "AI is thinking and writing...",
+        aiWait: "(This may take a few seconds)",
+        aiSelectStyle: "Choose a writing style:",
+
+        // Styles
+        styleFunny: "Funny, Humorous",
+        descFunny: "Trendy, using icons, friendly tone.",
+        styleSerious: "Deep, Serious",
+        descSerious: "For sharing personal views, philosophy.",
+        styleProfessional: "Professional",
+        descProfessional: "Polite, knowledge sharing, work-appropriate.",
+        styleCustom: "Custom (Enter prompt)",
+        descCustom: "You define the topic for AI.",
+
+        // Custom Input
+        customLabel: "Enter your request:",
+        customPlaceholder: "Ex: Write a poem for mom, Cafe review...",
+
+        // Actions & Messages
+        btnGenerate: "Generate",
+        msgAIEmpty: "Please enter a topic!",
+        msgAISuccess: "AI has finished!",
+        msgAIError: "AI is busy, please try again later.",
+
+        // Prompts (Sent to AI)
+        promptFunny: "topic about happy life, funny",
+        promptSerious: "topic about life reflection, deep",
+        promptProfessional: "topic about professional knowledge",
+
+        // --- PROFILE ---
+        profileDefaultTitle: "Profile",
+        userNotFound: "User not found!",
+        updateProfileSuccess: "Profile updated successfully!",
+        updateProfileFailed: "Update failed.",
+        uploadingPhoto: "Uploading photo...",
+        uploadPhotoSuccess: "Avatar updated successfully!",
+        uploadPhotoError: "Error uploading photo",
+        positionPlaceholder: "Select Position",
+        posManager: "Manager",
+        posPM: "Project Manager (PM)",
+        posBA: "Business Analyst (BA)",
+        posDev: "Developer (DEV)",
+        posTester: "Tester / QA",
+        posEmployee: "Employee",
+        notUpdated: "Not updated",
+
+        // --- CHAT WINDOW ---
+        msgPinnedTooFar: "Pinned message is too far, please scroll.",
+        msgRevokedSuccess: "Message revoked",
+        selectUserWarning: "Select a user",
+        forwardSuccess: "Forwarded successfully",
+        reactError: "Reaction error",
+        unpin: "Unpin",
+        pin: "Pin message",
+        forward: "Forward",
+        edit: "Edit",
+        revoke: "Revoke",
+        msgRevoked: "Message revoked",
+        download: "Download",
+        edited: "(edited)",
+        typeMessagePlaceholder: "Message to {{name}}...",
+        forwardModalTitle: "Forward Message",
+        contentLabel: "Content:",
+        send: "Send",
+
+        // --- POST DETAIL & FEED ---
+        postDeletedWarning: "This post has been deleted!",
+        postNotFoundDesc: "This post may have been deleted or does not exist.",
+        backToHome: "Back to Home",
+        feedLoadError: "Error loading Newsfeed!",
+
+        // --- FORMAT TOOLBAR ---
+        fmtBold: "Bold (Select text first)",
+        fmtItalic: "Italic (Select text first)",
+        fmtStrike: "Strikethrough (Select text first)",
+        fmtEmoji: "Insert Emoji",
+        fmtWarn: "Please select text to format!",
 
     }
 };

@@ -82,27 +82,10 @@ public class PostController {
         String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
         String type = body.get("type");
 
-        Post post = postRepository.findById(postId).orElseThrow();
+        // Gọi hàm mới bên Service (Nơi đã có đủ logic thông báo)
+        postService.reactToPost(postId, currentUser, type);
 
-        if (post.getReactions() == null) post.setReactions(new HashMap<>());
-
-        String currentReaction = post.getReactions().get(currentUser);
-        if (currentReaction != null && currentReaction.equals(type)) {
-            post.getReactions().remove(currentUser);
-        } else {
-            post.getReactions().put(currentUser, type);
-        }
-
-
-        postRepository.save(post);
-
-        // Bắn Socket
-        messagingTemplate.convertAndSend("/topic/feed",
-                // post.getLikeCount() sẽ tự động gọi hàm @Transient
-                Optional.of(Map.of("type", "POST_REACTION_UPDATE", "postId", postId, "reactions", post.getReactions(), "likeCount", post.getLikeCount()))
-        );
-
-        return ResponseEntity.ok(post);
+        return ResponseEntity.ok("Success");
     }
 
     // --- PHẦN SỬA ĐỔI QUAN TRỌNG ---

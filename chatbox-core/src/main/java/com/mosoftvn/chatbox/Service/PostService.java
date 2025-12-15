@@ -42,7 +42,6 @@ public class PostService {
         post.setContent(content);
         post.setUser(user);
 
-        // --- SỬA LỖI TẠI ĐÂY ---
         // Dùng LocalDateTime.now() thay cho new Date()
         post.setCreatedAt(LocalDateTime.now());
         // -----------------------
@@ -56,7 +55,7 @@ public class PostService {
         }
 
         Post savedPost = postRepository.save(post);
-        PostResponse response = mapToDTO(savedPost, user.getId());
+        PostResponse response = mapToDTO(savedPost, username);
 
         // Bắn Socket báo bài mới
         try {
@@ -64,7 +63,7 @@ public class PostService {
             messagingTemplate.convertAndSend("/topic/feed", (Object) updateMsg);
         } catch (Exception e) { e.printStackTrace(); }
 
-        return response;
+        return mapToDTO(savedPost, username);
     }
 
     // 2. Lấy danh sách bài viết
@@ -73,7 +72,7 @@ public class PostService {
         Long currentUserId = (currentUser != null) ? currentUser.getId() : null;
 
         return postRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(post -> mapToDTO(post, currentUserId))
+                .map(post -> mapToDTO(post, currentUsername))
                 .collect(Collectors.toList());
     }
 
@@ -198,15 +197,77 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
         Long currentUserId = (currentUser != null) ? currentUser.getId() : null;
-        return mapToDTO(post, currentUserId);
+        return mapToDTO(post, currentUsername);
+    }
+
+    public void reactToPost(Long postId, String username, String reactionType) {
+        Post post = postRepository.findById(postId).orElseThrow();
+        User user = userRepository.findByUsername(username).orElseThrow();
+
+        if (post.getReactions() == null) post.setReactions(new HashMap<>());
+
+        String currentReaction = post.getReactions().get(username);
+        boolean isAdding = false;
+
+        // Logic Toggle:
+        if (currentReaction != null && currentReaction.equals(reactionType)) {
+            post.getReactions().remove(username); // Gỡ bỏ
+        } else {
+            post.getReactions().put(username, reactionType); // Thêm mới hoặc đổi icon
+            isAdding = true;
+        }
+
+        postRepository.save(post);
+
+        // 1. Bắn Socket cập nhật giao diện (PostCard tự nhảy số)
+        try {
+            messagingTemplate.convertAndSend("/topic/feed",
+                    Optional.of(Map.of("type", "POST_REACTION_UPDATE", "postId", postId, "reactions", post.getReactions(), "likeCount", post.getLikeCount()))
+            );
+        } catch (Exception e) { e.printStackTrace(); }
+
+        // 2. TẠO THÔNG BÁO (Đây là phần bạn đang thiếu!)
+        // Chỉ báo nếu là hành động Thêm/Đổi (isAdding = true) và người thả không phải chủ bài viết
+        if (isAdding && !post.getUser().getUsername().equals(username)) {
+            String emoji = getEmojiIcon(reactionType);
+            String content = user.getFullName() + " đã thả cảm xúc " + emoji + " vào bài viết của bạn.";
+
+            // Gọi NotificationService để lưu DB và bắn Socket thông báo
+            notificationService.createNotification(post.getUser().getUsername(), content, post.getId());
+        }
+    }
+
+    // Hàm phụ để lấy icon đẹp (Optional)
+    private String getEmojiIcon(String type) {
+        switch (type) {
+            case "LIKE": return "👍";
+            case "LOVE": return "❤️";
+            case "HAHA": return "😆";
+            case "WOW": return "😮";
+            case "SAD": return "😢";
+            case "ANGRY": return "😡";
+            default: return "bày tỏ cảm xúc";
+        }
     }
 
     // Helper map DTO
-    private PostResponse mapToDTO(Post post, Long currentUserId) {
-        Set<Long> likes = post.getLikedUserIds();
-        int likeCount = (likes != null) ? likes.size() : 0;
-        boolean isLiked = (likes != null && currentUserId != null) && likes.contains(currentUserId);
+    // Helper map DTO (ĐÃ SỬA: Dùng logic Reactions thay vì Like cũ)
+    private PostResponse mapToDTO(Post post, String currentUsername) { // <--- 1. Đổi tham số từ Long ID sang String Username
 
+        // --- LOGIC MỚI: Lấy thông tin từ Map reactions ---
+        Map<String, String> reactions = post.getReactions();
+
+        // Lấy số lượng (Hàm getLikeCount @Transient trong Entity đã tự tính size của map reactions)
+        int likeCount = post.getLikeCount();
+
+        // Kiểm tra xem user hiện tại có trong map reactions không
+        boolean isLiked = false;
+        if (currentUsername != null && reactions != null) {
+            isLiked = reactions.containsKey(currentUsername);
+        }
+        // ------------------------------------------------
+
+        // --- LOGIC CŨ: Mapping Comment (Giữ nguyên) ---
         List<Comment> comments = post.getComments();
         List<PostResponse.CommentDTO> commentDTOS = new ArrayList<>();
 
@@ -218,22 +279,29 @@ public class PostService {
                             c.getUser().getUsername(),
                             c.getUser().getFullName() != null ? c.getUser().getFullName() : c.getUser().getUsername(),
                             c.getUser().getAvatar(),
-                            c.getCreatedAt() // Hibernate sẽ tự map LocalDateTime ra đúng kiểu
+                            c.getCreatedAt()
                     )).collect(Collectors.toList());
         }
 
-        return new PostResponse(
-                post.getId(),
-                post.getContent(),
-                post.getImageUrl(),
-                post.getMediaType(),
-                post.getCreatedAt(),
-                post.getUser().getUsername(),
-                post.getUser().getFullName() != null ? post.getUser().getFullName() : post.getUser().getUsername(),
-                post.getUser().getAvatar(),
-                likeCount,
-                isLiked,
-                commentDTOS
-        );
+        // --- TRẢ VỀ DÙNG BUILDER (An toàn hơn dùng Constructor) ---
+        return PostResponse.builder()
+                .id(post.getId())
+                .content(post.getContent())
+                .imageUrl(post.getImageUrl())
+                .mediaType(post.getMediaType())
+                .createdAt(post.getCreatedAt())
+
+                // User Info
+                .username(post.getUser().getUsername())
+                .fullName(post.getUser().getFullName() != null ? post.getUser().getFullName() : post.getUser().getUsername())
+                .userAvatar(post.getUser().getAvatar())
+
+                // DATA MỚI QUAN TRỌNG
+                .reactions(reactions) // Trả về Map reactions để Frontend hiển thị icon
+                .likeCount(likeCount) // Trả về tổng số lượng
+                .likedByMe(isLiked)   // Trả về trạng thái đã like hay chưa
+
+                .comments(commentDTOS)
+                .build();
     }
 }

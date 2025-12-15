@@ -5,6 +5,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import PostCard from '../components/feed/PostCard';
 import api from '../services/api';
 import { useChat } from '../context/ChatContext';
+import { useSettings } from '../context/SettingsContext'; // 1. Import Settings
 
 const { Content } = Layout;
 
@@ -12,6 +13,7 @@ const PostDetail = () => {
     const { postId } = useParams(); // ID từ URL (Cố định)
     const navigate = useNavigate();
     const { feedUpdate } = useChat();
+    const { t } = useSettings(); // 2. Lấy hàm dịch
 
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -35,29 +37,35 @@ const PostDetail = () => {
         if (postId) fetchPost();
     }, [postId]);
 
-    // --- LOGIC REAL-TIME (ĐÃ FIX LỖI LẶP) ---
+    // --- LOGIC REAL-TIME (GIỮ NGUYÊN) ---
     useEffect(() => {
-        // Chỉ chạy khi có tin mới và tin đó liên quan đến bài viết này
-        if (feedUpdate && feedUpdate.postId == postId) {
+        if (feedUpdate && String(feedUpdate.postId) === String(postId)) {
 
             setPost(prev => {
-                if (!prev) return prev; // Nếu chưa load xong thì thôi
+                if (!prev) return prev;
 
-                // A. Xử lý COMMENT (Có check trùng để an toàn tuyệt đối)
+                // A. Xử lý COMMENT
                 if (feedUpdate.type === 'COMMENT_UPDATE') {
-                    // Kiểm tra xem comment này đã có trong list chưa (tránh duplicate)
                     const exists = prev.comments.some(c => c.id === feedUpdate.comment.id);
                     if (exists) return prev;
-
                     return { ...prev, comments: [...prev.comments, feedUpdate.comment] };
                 }
 
-                // B. Xử lý LIKE
+                // B. Xử lý REACTION (Thả tim/Haha...)
+                if (feedUpdate.type === 'POST_REACTION_UPDATE') {
+                    return {
+                        ...prev,
+                        reactions: feedUpdate.reactions,
+                        likeCount: feedUpdate.likeCount
+                    };
+                }
+
+                // C. Xử lý LIKE (Cũ - backup)
                 if (feedUpdate.type === 'LIKE_UPDATE') {
                     return { ...prev, likeCount: feedUpdate.likeCount };
                 }
 
-                // C. Xử lý SỬA BÀI
+                // D. Xử lý SỬA BÀI
                 if (feedUpdate.type === 'POST_UPDATED') {
                     return { ...prev, content: feedUpdate.newContent };
                 }
@@ -65,39 +73,55 @@ const PostDetail = () => {
                 return prev;
             });
 
-            // D. Xử lý XÓA BÀI (Xử lý ngoài setPost để chuyển trang)
+            // E. Xử lý XÓA BÀI
             if (feedUpdate.type === 'POST_DELETED') {
-                message.warning("Bài viết này đã bị xóa!");
+                message.warning(t('postDeletedWarning')); // Dùng t()
                 navigate('/feed');
             }
         }
-    }, [feedUpdate, postId, navigate]); // <--- QUAN TRỌNG: Bỏ 'post' ra khỏi đây
-    // -------------------------------------
+    }, [feedUpdate, postId, navigate, t]);
 
     const handleRemoveSelf = () => {
         navigate('/feed');
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+        <Layout style={{
+            minHeight: '100vh',
+            background: 'var(--bg-color)', // 3. Sửa nền theo Theme
+            transition: 'background 0.3s'
+        }}>
             <Content style={{ maxWidth: '700px', margin: '20px auto', width: '100%', padding: '0 15px' }}>
                 <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => navigate('/feed')}
-                    style={{ marginBottom: 15, border: 'none', background: 'transparent', boxShadow: 'none' }}
+                    style={{
+                        marginBottom: 15,
+                        border: 'none',
+                        background: 'transparent',
+                        boxShadow: 'none',
+                        color: 'var(--text-color)', // 4. Sửa màu chữ nút Back
+                        fontSize: '16px'
+                    }}
                 >
-                    Quay lại Newsfeed
+                    {t('backToFeed')}
                 </Button>
 
                 {loading && <div style={{ textAlign: 'center', padding: 50 }}><Spin size="large" /></div>}
 
                 {!loading && error && (
-                    <Result
-                        status="404"
-                        title="Không tìm thấy bài viết"
-                        subTitle="Bài viết này có thể đã bị xóa hoặc không tồn tại."
-                        extra={<Button type="primary" onClick={() => navigate('/feed')}>Về trang chủ</Button>}
-                    />
+                    <div style={{ marginTop: 50 }}>
+                        <Result
+                            status="404"
+                            title={<span style={{color: 'var(--text-color)'}}>{t('postNotFound')}</span>}
+                            subTitle={<span style={{color: 'var(--text-secondary)'}}>{t('postNotFoundDesc')}</span>}
+                            extra={
+                                <Button type="primary" onClick={() => navigate('/feed')}>
+                                    {t('backToHome')}
+                                </Button>
+                            }
+                        />
+                    </div>
                 )}
 
                 {!loading && !error && post && (

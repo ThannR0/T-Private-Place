@@ -127,4 +127,28 @@
         background-color: var(--bg-hover); /* Nền sáng lên xíu */
         transition: all 0.3s;
     }
+    /* Hiệu ứng 3 chấm đang soạn tin */
+    .typing-indicator {
+        display: flex;
+        gap: 3px;
+        padding: 5px 8px;
+        align-items: center;
+        height: 20px;
+    }
+
+    .typing-dot {
+        width: 6px;
+        height: 6px;
+        background-color: var(--text-secondary); /* Màu xám */
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typingBounce {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
 }

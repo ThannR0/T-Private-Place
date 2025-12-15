@@ -13,15 +13,7 @@ import { useSettings } from "../../context/SettingsContext.jsx";
 const { Text, Paragraph } = Typography;
 const { confirm } = Modal;
 
-// --- ĐỊNH NGHĨA BỘ ICON CẢM XÚC ---
-const REACTION_ICONS = {
-    LIKE: { icon: "👍", label: "Thích", color: "#1890ff" },
-    LOVE: { icon: "❤️", label: "Yêu thích", color: "#f5222d" },
-    HAHA: { icon: "😆", label: "Haha", color: "#faad14" },
-    WOW:  { icon: "😮", label: "Wow", color: "#faad14" },
-    SAD:  { icon: "😢", label: "Buồn", color: "#faad14" },
-    ANGRY:{ icon: "😡", label: "Phẫn nộ", color: "#f5222d" }
-};
+
 
 const PostCard = ({ post, onRemove }) => {
     const navigate = useNavigate();
@@ -42,6 +34,15 @@ const PostCard = ({ post, onRemove }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
     const inputRef = useRef(null);
+
+    const REACTION_ICONS = useMemo(() => ({
+        LIKE: { icon: "👍", label: t('like'), color: "#1890ff" },
+        LOVE: { icon: "❤️", label: t('love'), color: "#f5222d" },
+        HAHA: { icon: "😆", label: t('haha'), color: "#faad14" },
+        WOW:  { icon: "😮", label: t('wow'), color: "#faad14" },
+        SAD:  { icon: "😢", label: t('sad'), color: "#faad14" },
+        ANGRY:{ icon: "😡", label: t('angry'), color: "#f5222d" }
+    }), [t]);
 
     // --- ĐỒNG BỘ REALTIME ---
     useEffect(() => {
@@ -117,7 +118,6 @@ const PostCard = ({ post, onRemove }) => {
     const handleViewProfile = () => navigate(`/profile/${post.username}`);
     const handleChat = () => { setRecipient(post.username); navigate('/chat'); };
 
-    // --- HELPER RENDERS ---
 
     // 1. THANH CHỌN CẢM XÚC (POPOVER)
     const reactionSelector = (
@@ -146,7 +146,7 @@ const PostCard = ({ post, onRemove }) => {
 
         if (names.length === 0) return null;
         if (names.length <= 5) return names.join(', ');
-        return `${names.slice(0, 5).join(', ')} và ${names.length - 5} người khác`;
+        return `${names.slice(0, 5).join(', ')} ${t('and')} ${names.length - 5} ${t('others')}`;
     }, [reactions, users, currentUser, t]);
 
     // 3. TOOLTIP NGƯỜI BÌNH LUẬN (WHO COMMENTED?)
@@ -264,7 +264,11 @@ const PostCard = ({ post, onRemove }) => {
                 </Popover>,
 
                 // --- NÚT BÌNH LUẬN VỚI TOOLTIP ---
-                <Tooltip title={commentTooltipContent ? `Đã bình luận: ${commentTooltipContent}` : "Chưa có bình luận"}>
+                <Tooltip title={
+                    commentTooltipContent
+                        ? `${t('commentedBy')} ${commentTooltipContent}`
+                        : t('noCommentYet')
+                }>
                     <Button type="text" key="comment" icon={<CommentOutlined />} onClick={handleFocusComment} style={{ color: 'var(--text-secondary)' }}>
                         {post.comments.length > 0 ? t('commentCount').replace('{{count}}', post.comments.length) : t('comment')}
                     </Button>

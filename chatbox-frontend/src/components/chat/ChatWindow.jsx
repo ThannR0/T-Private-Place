@@ -27,6 +27,7 @@ const ChatWindow = () => {
     const [inputValue, setInputValue] = useState("");
     const [showEmoji, setShowEmoji] = useState(false);
     const [showTimeIds, setShowTimeIds] = useState({});
+    const [isTyping, setIsTyping] = useState(false);
 
     // State File
     const [selectedFile, setSelectedFile] = useState(null);
@@ -42,6 +43,7 @@ const ChatWindow = () => {
 
     const messagesEndRef = useRef(null);
     const messageRefs = useRef({});
+
 
     const currentTarget = users.find(u => u.username === recipient);
     const displayRecipientName = currentTarget
@@ -63,7 +65,16 @@ const ChatWindow = () => {
 
     const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); };
 
-    useEffect(() => { scrollToBottom(); }, [messages.length, recipient, showEmoji, previewUrl]);
+    useEffect(() => { scrollToBottom();
+        if (messages.length > 0) {
+            const lastMsg = messages[messages.length - 1];
+            // Nếu tin nhắn cuối cùng KHÔNG PHẢI của mình (tức là của Bot hoặc người kia)
+            if (lastMsg.senderId !== currentUser) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setIsTyping(false); // Tắt loading
+            }
+        }
+        }, [messages.length, recipient, showEmoji, previewUrl]);
 
     const scrollToMessage = (msgId) => {
         const element = messageRefs.current[msgId];
@@ -92,6 +103,9 @@ const ChatWindow = () => {
             fileData = { name: selectedFile.name, type: selectedFile.type, url: URL.createObjectURL(selectedFile), fileObject: selectedFile };
         }
         sendMessage(inputValue, fileData);
+        if (recipient === 'bot') {
+            setIsTyping(true);
+        }
         setInputValue(""); setShowEmoji(false); removeSelectedFile();
     };
 
@@ -130,7 +144,7 @@ const ChatWindow = () => {
                         <span
                             key={emoji}
                             style={{ fontSize: '20px', cursor: 'pointer', transition: 'transform 0.2s' }}
-                            className="emoji-hover" // Bạn có thể thêm CSS hover { transform: scale(1.2) } vào index.css
+                            className="emoji-hover" //{ transform: scale(1.2) } vào index.css
                             onClick={() => { handleReact(msg.id, emoji); }}
                             title="Thả cảm xúc"
                         >
@@ -144,15 +158,15 @@ const ChatWindow = () => {
         items.push({ type: 'divider' });
 
         items.push(
-            { key: 'pin', icon: <PushpinOutlined />, label: msg.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn', onClick: () => handlePin(msg.id) },
-            { key: 'forward', icon: <ShareAltOutlined />, label: 'Chuyển tiếp', onClick: () => { setMsgToForward(msg); setIsForwardModalOpen(true); } }
+            { key: 'pin', icon: <PushpinOutlined />, label: msg.pinned ? t('unpin') : t('pin'), onClick: () => handlePin(msg.id) },
+            { key: 'forward', icon: <ShareAltOutlined />, label: t('forward'), onClick: () => { setMsgToForward(msg); setIsForwardModalOpen(true); } }
         );
 
         if (isMyMessage) {
             items.push(
                 { type: 'divider' },
-                { key: 'edit', icon: <EditOutlined />, label: 'Chỉnh sửa', onClick: () => startEdit(msg) },
-                { key: 'revoke', icon: <DeleteOutlined />, label: 'Thu hồi', danger: true, onClick: () => handleRevoke(msg.id) }
+                { key: 'edit', icon: <EditOutlined />, label: t('edit'), onClick: () => startEdit(msg) },
+                { key: 'revoke', icon: <DeleteOutlined />, label: t('revoke'), danger: true, onClick: () => handleRevoke(msg.id) }
             );
         }
         return { items };
@@ -237,6 +251,9 @@ const ChatWindow = () => {
                     const isMyMessage = msg.senderId === currentUser;
                     const avatarSrc = getUserAvatar(msg.senderId);
 
+                    const senderObj = users.find(u => u.username === msg.senderId);
+                    const senderName = senderObj ? (senderObj.displayName || senderObj.fullName) : msg.senderId;
+
                     return (
                         <div key={index} ref={el => messageRefs.current[msg.id] = el} className="message-row" style={{ display: 'flex', justifyContent: isMyMessage ? 'flex-end' : 'flex-start', alignItems: 'flex-start', gap: '10px' }}>
                             {!isMyMessage && <Tooltip title={msg.senderId}><Avatar src={avatarSrc} size="large" /></Tooltip>}
@@ -249,7 +266,11 @@ const ChatWindow = () => {
                             )}
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMyMessage ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
-                                {!isMyMessage && currentTarget?.isGroup && <Text strong style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>{msg.senderId}</Text>}
+                                {!isMyMessage && currentTarget?.isGroup && (
+                                    <Text strong style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px', marginBottom: '2px', display: 'block' }}>
+                                        {senderName}
+                                    </Text>
+                                )}
 
                                 <div onClick={() => toggleTime(index)}
                                      style={{
@@ -288,6 +309,26 @@ const ChatWindow = () => {
                         </div>
                     );
                 })}
+                {isTyping && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                        {/* Avatar của người đang chat / Bot */}
+                        <Avatar src={getUserAvatar(recipient)} size="large" />
+
+                        <div style={{
+                            backgroundColor: 'var(--msg-received-bg)', // Màu nền giống tin nhắn người khác
+                            padding: '10px 15px',
+                            borderRadius: '18px',
+                            borderBottomLeftRadius: '4px', // Bo góc nhọn giống chat bubble
+                            display: 'inline-block'
+                        }}>
+                            <div className="typing-indicator">
+                                <div className="typing-dot"></div>
+                                <div className="typing-dot"></div>
+                                <div className="typing-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div ref={messagesEndRef} />
             </div>
 

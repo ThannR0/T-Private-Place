@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Switch, Select, Typography, Divider, Radio } from 'antd';
+import { Modal, Switch, Select, Typography, Divider, Radio, Space } from 'antd';
 import { useSettings } from '../../context/SettingsContext';
 import { GlobalOutlined, BulbOutlined, SoundOutlined } from '@ant-design/icons';
 
@@ -7,7 +7,8 @@ const { Text, Title } = Typography;
 const { Option } = Select;
 
 const SettingsModal = ({ visible, onClose }) => {
-    const { language, changeLanguage, theme, toggleTheme, t } = useSettings();
+    const { language, changeLanguage, theme, toggleTheme, t , soundEnabled, toggleSound } = useSettings();
+
 
     return (
         <Modal
@@ -59,11 +60,15 @@ const SettingsModal = ({ visible, onClose }) => {
                 <Divider style={{ margin: '5px 0' }} />
 
                 {/* 3. ÂM THANH (Gợi ý thêm) */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <SoundOutlined /> <Text strong>{t('sound')}</Text>
-                    </div>
-                    <Switch defaultChecked />
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <Space>
+                        <SoundOutlined style={{fontSize: 20, color: 'var(--text-secondary)'}}/>
+                        <Text strong style={{color: 'var(--text-color)'}}>{t('soundNotification')}</Text>
+                    </Space>
+                    <Switch
+                        checked={soundEnabled}
+                        onChange={toggleSound} // Gọi hàm toggleSound khi bấm
+                    />
                 </div>
 
             </div>

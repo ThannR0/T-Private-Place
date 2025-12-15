@@ -43,6 +43,13 @@ const Feed = () => {
                     return [feedUpdate.post, ...prev];
                 });
             }
+            if (feedUpdate.type === 'POST_REACTION_UPDATE') {
+                setPosts(prev => prev.map(p =>
+                    String(p.id) === String(feedUpdate.postId)
+                        ? { ...p, reactions: feedUpdate.reactions, likeCount: feedUpdate.likeCount }
+                        : p
+                ));
+            }
             else if (feedUpdate.type === 'POST_DELETED') {
                 setPosts(prev => prev.filter(p => p.id !== feedUpdate.postId));
             }

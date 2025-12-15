@@ -1,11 +1,18 @@
 package com.mosoftvn.chatbox.DTO;
 
+import jdk.jshell.Snippet;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
+@Builder
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class PostResponse {
     private Long id;
@@ -20,15 +27,19 @@ public class PostResponse {
     private String userAvatar;
 
     // Thông tin tương tác MỚI
+    private Map<String, String> reactions;
     private int likeCount;
     private boolean likedByMe; // Để hiện nút Like màu xanh
     private List<CommentDTO> comments; // Danh sách comment
 
 
 
+
     // Inner class DTO cho Comment
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
     public static class CommentDTO {
         private Long id;
         private String content;

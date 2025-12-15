@@ -144,6 +144,18 @@ const Profile = () => {
                 String(p.id) === String(feedUpdate.postId) ? { ...p, likeCount: feedUpdate.likeCount } : p
             ));
         }
+        else if (feedUpdate.type === 'POST_REACTION_UPDATE') {
+            setUserPosts(prev => prev.map(p =>
+                // Tìm đúng bài viết đang được thả tim để cập nhật
+                String(p.id) === String(feedUpdate.postId)
+                    ? {
+                        ...p,
+                        reactions: feedUpdate.reactions, // Cập nhật map reactions mới
+                        likeCount: feedUpdate.likeCount  // Cập nhật số lượng
+                    }
+                    : p
+            ));
+        }
         else if (feedUpdate.type === 'COMMENT_UPDATE') {
             setUserPosts(prev => prev.map(p => {
                 if (String(p.id) === String(feedUpdate.postId)) {
@@ -414,13 +426,13 @@ const Profile = () => {
                         <Col span={12}><Form.Item label={t('hometown')} name="hometown"><Input prefix={<EnvironmentOutlined />} /></Form.Item></Col>
                     </Row>
                     <Form.Item label={t('position')} name="position">
-                        <Select>
-                            <Option value="MANAGER">Manager</Option>
-                            <Option value="PM">Project Manager</Option>
-                            <Option value="BA">Business Analyst</Option>
-                            <Option value="DEV">Developer</Option>
-                            <Option value="TESTER">Tester</Option>
-                            <Option value="NHANVIEN">Employee</Option>
+                        <Select placeholder={t('positionPlaceholder')}>
+                            <Option value="MANAGER">{t('posManager')}</Option>
+                            <Option value="PM">{t('posPM')}</Option>
+                            <Option value="BA">{t('posBA')}</Option>
+                            <Option value="DEV">{t('posDev')}</Option>
+                            <Option value="TESTER">{t('posTester')}</Option>
+                            <Option value="NHANVIEN">{t('posEmployee')}</Option>
                         </Select>
                     </Form.Item>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
@@ -434,16 +446,19 @@ const Profile = () => {
 };
 
 // Component con hiển thị Info (Đã chỉnh màu)
-const InfoItem = ({ icon, label, value }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ fontSize: 18, color: 'var(--text-secondary)' }}>{icon}</div>
-        <div>
-            <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</Text>
-            <div style={{ fontWeight: 500, color: value ? 'var(--text-color)' : 'var(--text-secondary)' }}>
-                {value || '---'}
+const InfoItem = ({ icon, label, value }) => {
+    const { t } = useSettings();
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 18, color: 'var(--text-secondary)' }}>{icon}</div>
+            <div>
+                <Text style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</Text>
+                <div style={{ fontWeight: 500, color: value ? 'var(--text-color)' : 'var(--text-secondary)' }}>
+                    {value || t('notUpdated')}
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 export default Profile;

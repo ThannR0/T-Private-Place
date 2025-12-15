@@ -25,6 +25,7 @@ public class GeminiService {
     private String apiKey;
 
     private final String MODEL_ID = "gemini-2.5-flash"; // Model này hỗ trợ đa phương tiện tốt
+//    private final String MODEL_ID = "gemini-1.5-flash";
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String UPLOAD_DIR = "uploads/chat/";
@@ -77,7 +78,6 @@ public class GeminiService {
         }
     }
 
-    // --- CÁC HÀM BỔ TRỢ ---
 
     // 1. Xác định loại file dựa vào đuôi link Cloudinary
     private String getMimeTypeFromUrl(String url) {
@@ -104,25 +104,39 @@ public class GeminiService {
 
     // --- CORE: GỬI REQUEST (Giữ nguyên) ---
     private String sendToGemini(Map<String, Object> body) {
-        try {
-            String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL_ID + ":generateContent?key=" + apiKey;
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        int maxRetries = 3; // Thử tối đa 3 lần
+        int waitTime = 2000; // Chờ 2 giây mỗi lần
 
-            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL_ID + ":generateContent?key=" + apiKey;
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            if (rootNode.has("error")) {
-                return "Lỗi từ Google: " + rootNode.path("error").path("message").asText();
+                ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
+                JsonNode rootNode = objectMapper.readTree(response.getBody());
+
+                if (rootNode.has("error")) {
+                    return "Lỗi từ Google: " + rootNode.path("error").path("message").asText();
+                }
+
+                return rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
+
+            } catch (Exception e) {
+                // Nếu là lỗi 503 (Quá tải) và chưa hết số lần thử -> Chờ rồi thử lại
+                if (e.getMessage().contains("503") || e.getMessage().contains("429")) {
+                    if (i < maxRetries - 1) {
+                        System.out.println("Google AI quá tải, đang thử lại lần " + (i + 2) + "...");
+                        try { Thread.sleep(waitTime); } catch (InterruptedException ignored) {}
+                        continue; // Quay lại vòng lặp
+                    }
+                }
+                e.printStackTrace();
+                return "AI đang quá tải, vui lòng thử lại sau vài phút!";
             }
-
-            return rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Lỗi xử lý AI: " + e.getMessage();
         }
+        return "Lỗi kết nối AI.";
     }
 
     // --- TẠO BODY JSON ---
