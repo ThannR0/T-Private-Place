@@ -95,6 +95,7 @@ public class PostController {
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "backgroundTheme", required = false) String backgroundTheme
     ) {
+        System.out.println("👉 CONTROLLER NHẬN ĐƯỢC THEME: " + backgroundTheme);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 

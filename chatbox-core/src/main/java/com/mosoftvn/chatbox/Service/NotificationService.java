@@ -50,4 +50,14 @@ public class NotificationService {
     public void deleteAllNotifications(String userId) {
         notificationRepository.deleteAllByUserId(userId);
     }
+
+    public void markAsRead(Long id) {
+        Notification noti = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (!noti.isRead()) {
+            noti.setRead(true);
+            notificationRepository.save(noti);
+        }
+    }
 }

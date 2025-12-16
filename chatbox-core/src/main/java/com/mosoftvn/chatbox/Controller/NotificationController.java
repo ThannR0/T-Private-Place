@@ -18,8 +18,6 @@ import java.util.List;
 public class NotificationController {
     @Autowired private NotificationService notificationService;
 
-
-
     @GetMapping
     public List<Notification> getNotifications() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -46,5 +44,11 @@ public class NotificationController {
         String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
         notificationService.deleteAllNotifications(currentUser);
         return ResponseEntity.ok("Deleted All");
+    }
+
+    @PutMapping("/{id}/read")
+    public ResponseEntity<?> markOneRead(@PathVariable Long id) {
+        notificationService.markAsRead(id);
+        return ResponseEntity.ok("Success");
     }
 }

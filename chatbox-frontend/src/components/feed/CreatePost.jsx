@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Card, Input, Button, message, Avatar, Tooltip, Modal, Radio, Space, Typography, Spin, Divider, Popover } from 'antd';
+import { Card, Input, Button, message, Avatar, Tooltip, Modal, Radio, Space, Typography, Spin, Divider, Popover, Image } from 'antd';
 import {
     FileImageOutlined, SendOutlined, CloseCircleOutlined, RobotOutlined,
     LoadingOutlined, SmileOutlined, BoldOutlined, ItalicOutlined, StrikethroughOutlined, BgColorsOutlined,
@@ -14,14 +14,27 @@ const { TextArea } = Input;
 const { Text } = Typography;
 
 const POST_THEMES = [
-    { id: 'default', style: { background: 'transparent', color: 'var(--text-color)' } },
-    { id: 'ocean',   style: { background: 'linear-gradient(to right, #00c6ff, #0072ff)', color: '#fff' } },
-    { id: 'sunset',  style: { background: 'linear-gradient(to right, #f12711, #f5af19)', color: '#fff' } },
-    { id: 'love',    style: { background: 'linear-gradient(to right, #fc466b, #3f5efb)', color: '#fff' } },
-    { id: 'forest',  style: { background: 'linear-gradient(to right, #11998e, #38ef7d)', color: '#fff' } },
-    { id: 'dark',    style: { background: 'linear-gradient(to right, #232526, #414345)', color: '#fff' } },
-    { id: 'gold',    style: { background: 'linear-gradient(to right, #CAC531, #F3F9A7)', color: '#333' } },
+    { id: 'default', style: { background: 'transparent', color: 'var(--text-color)' }, icon: 'fa-pen' },
+
+    // 🌊 Nature & Mood
+    { id: 'ocean',   style: { background: 'linear-gradient(to right, #00c6ff, #0072ff)', color: '#fff' }, icon: 'fa-water' },
+    { id: 'sunset',  style: { background: 'linear-gradient(to right, #f12711, #f5af19)', color: '#fff' }, icon: 'fa-sun' },
+    { id: 'love',    style: { background: 'linear-gradient(to right, #fc466b, #3f5efb)', color: '#fff' }, icon: 'fa-heart' },
+    { id: 'forest',  style: { background: 'linear-gradient(to right, #11998e, #38ef7d)', color: '#fff' }, icon: 'fa-tree' },
+    { id: 'dark',    style: { background: 'linear-gradient(to right, #232526, #414345)', color: '#fff' }, icon: 'fa-moon' },
+    { id: 'gold',    style: { background: 'linear-gradient(to right, #CAC531, #F3F9A7)', color: '#333' }, icon: 'fa-crown' },
+
+    // 📘 Social Media Style
+    { id: 'facebook', style: { background: 'linear-gradient(to right, #1877F2, #42A5F5)', color: '#fff' }, icon: 'fa-facebook' },
+    { id: 'instagram', style: { background: 'linear-gradient(45deg, #F58529, #DD2A7B, #8134AF, #515BD4)', color: '#fff' }, icon: 'fa-instagram' },
+    { id: 'messenger', style: { background: 'linear-gradient(to right, #00B2FF, #006AFF)', color: '#fff' }, icon: 'fa-facebook-messenger' },
+    { id: 'twitter', style: { background: 'linear-gradient(to right, #1DA1F2, #0d8ddb)', color: '#fff' }, icon: 'fa-twitter' },
+    { id: 'tiktok', style: { background: 'linear-gradient(to right, #000000, #25F4EE, #FE2C55)', color: '#fff' }, icon: 'fa-music' },
+
+    // 💎 Modern UI
+    { id: 'neon', style: { background: 'linear-gradient(to right, #12c2e9, #c471ed, #f64f59)', color: '#fff' }, icon: 'fa-bolt' }
 ];
+
 // --- HÀM HELPER: CHUYỂN ĐỔI FONT UNICODE (ĐÃ SỬA LỖI LOGIC) ---
 const textConverter = {
     // 1. IN ĐẬM (Bold)
@@ -105,9 +118,11 @@ const CreatePost = ({ onPostCreated }) => {
         try {
             const formData = new FormData();
             formData.append('content', content);
+
+            formData.append('backgroundTheme', selectedTheme);
             if (mediaFile) formData.append('file', mediaFile);
 
-            const res = await api.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            const res = await api.post('/posts', formData);
             message.success(t('postSuccess'));
             setContent(''); removeMedia();
             if (onPostCreated) onPostCreated(res.data);

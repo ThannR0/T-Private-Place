@@ -3,7 +3,7 @@ import { Layout, Typography, Avatar, Dropdown, Space, message, Badge, Button, Po
 import {
     UserOutlined, LogoutOutlined, SettingOutlined, DownOutlined,
     ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined,
-    DeleteOutlined, ClearOutlined
+    DeleteOutlined, ClearOutlined, CheckOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
@@ -20,11 +20,10 @@ const AppHeader = () => {
     const { t } = useSettings();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // Lấy thêm hàm deleteNotification và clearAllNotifications
     const {
         currentUser, currentFullName, currentAvatar, logoutUser, updateUserStatus, myStatus,
         notifications, unreadCount, markNotificationsRead,
-        deleteNotification, clearAllNotifications // <--- LẤY HÀM MỚI
+        deleteNotification, clearAllNotifications, markOneRead
     } = useChat();
 
     const displayName = (currentFullName && currentFullName !== "undefined" && currentFullName !== "null")
@@ -35,16 +34,20 @@ const AppHeader = () => {
     const handleChangeStatus = (status) => { updateUserStatus(status); };
     const handleProfile = () => { navigate('/profile'); };
 
-    // Xử lý khi click vào thông báo (Xem chi tiết)
+    // --- XỬ LÝ CLICK VÀO THÔNG BÁO ---
     const handleClickNoti = (noti) => {
+        // 1. Nếu chưa đọc thì gọi hàm markOneRead để đổi màu RIÊNG cái này
+        if (!noti.read) {
+            markOneRead(noti.id);
+        }
+        // 2. Chuyển trang
         if (noti.relatedPostId) {
             navigate(`/post/${noti.relatedPostId}`);
         }
     };
 
-    // Xử lý xóa 1 thông báo (Chặn sự kiện click để không bị nhảy trang)
     const handleDeleteNoti = (e, id) => {
-        e.stopPropagation(); // <--- QUAN TRỌNG: Ngăn click lan ra ngoài
+        e.stopPropagation();
         deleteNotification(id);
     };
 
@@ -61,24 +64,40 @@ const AppHeader = () => {
         { key: '4', label: t('logout'), icon: <LogoutOutlined />, danger: true, onClick: handleLogout },
     ];
 
-    // --- TITLE CỦA POPOVER (Có nút Xóa tất cả) ---
+    // --- TITLE CỦA POPOVER ---
     const popoverTitle = (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 300 }}>
             <Text strong style={{ color: 'var(--text-color)' }}>{t('notifications')}</Text>
-            {notifications.length > 0 && (
-                <Tooltip title="Xóa tất cả">
-                    <Button
-                        type="text" size="small" icon={<ClearOutlined />} danger
-                        onClick={clearAllNotifications}
-                    >
-                        Xóa tất cả
-                    </Button>
-                </Tooltip>
-            )}
+            <div style={{ display: 'flex', gap: 5 }}>
+                {/* THÊM: Nút đánh dấu tất cả đã đọc thủ công (để tắt số đỏ nếu muốn) */}
+                {unreadCount > 0 && (
+                    <Tooltip title="Đánh dấu tất cả đã đọc">
+                        <Button
+                            type="text" size="small" icon={<CheckOutlined />}
+                            style={{ color: '#1890ff', fontSize: 12 }}
+                            onClick={markNotificationsRead}
+                        >
+                            Đã đọc
+                        </Button>
+                    </Tooltip>
+                )}
+
+                {/* Nút xóa tất cả */}
+                {notifications.length > 0 && (
+                    <Tooltip title="Xóa tất cả">
+                        <Button
+                            type="text" size="small" icon={<ClearOutlined />} danger
+                            onClick={clearAllNotifications}
+                        >
+                            Xóa hết
+                        </Button>
+                    </Tooltip>
+                )}
+            </div>
         </div>
     );
 
-    // --- LIST THÔNG BÁO (Logic Đậm/Nhạt) ---
+    // --- LIST THÔNG BÁO ---
     const notificationContent = (
         <div style={{ width: 350, maxHeight: 400, overflowY: 'auto' }}>
             <List
@@ -89,13 +108,11 @@ const AppHeader = () => {
                         onClick={() => handleClickNoti(item)}
                         style={{
                             cursor: 'pointer',
-                            // Nếu chưa đọc: Nền sáng hơn chút (var(--bg-hover)). Đã đọc: Nền thường
                             background: item.read ? 'var(--bg-color)' : 'var(--bg-hover)',
                             padding: '12px 15px',
                             transition: 'all 0.2s',
                             position: 'relative'
                         }}
-                        // Nút xóa bên phải
                         actions={[
                             <Button
                                 type="text" size="small" icon={<DeleteOutlined style={{color: 'var(--text-secondary)'}} />}
@@ -107,7 +124,6 @@ const AppHeader = () => {
                             title={
                                 <span style={{
                                     fontSize: 14,
-                                    // LOGIC ĐẬM NHẠT: Chưa đọc -> Bold + Màu sáng. Đã đọc -> Normal + Màu tối
                                     fontWeight: item.read ? 'normal' : '700',
                                     color: item.read ? 'var(--text-secondary)' : 'var(--text-color)'
                                 }}>
@@ -117,11 +133,11 @@ const AppHeader = () => {
                             description={
                                 <span style={{
                                     fontSize: 11,
-                                    color: item.read ? 'var(--text-secondary)' : '#1890ff', // Chưa đọc thì ngày tháng màu xanh cho nổi
+                                    color: item.read ? 'var(--text-secondary)' : '#1890ff',
                                     fontWeight: item.read ? 'normal' : '500'
                                 }}>
                                     {new Date(item.createdAt).toLocaleString()}
-                                    {!item.read && <Badge status="processing" style={{marginLeft: 5}} />} {/* Chấm xanh nhỏ */}
+                                    {!item.read && <Badge status="processing" style={{marginLeft: 5}} />}
                                 </span>
                             }
                         />
@@ -157,11 +173,11 @@ const AppHeader = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <Popover
                     content={notificationContent}
-                    title={popoverTitle} // Sử dụng Title tùy chỉnh có nút Xóa All
+                    title={popoverTitle}
                     trigger="click"
                     placement="bottomRight"
                     overlayInnerStyle={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}
-                    onOpenChange={(open) => { if (open) markNotificationsRead(); }}
+                    // --- ĐÃ XÓA DÒNG onOpenChange Ở ĐÂY ĐỂ SỬA LỖI ---
                 >
                     <Badge count={unreadCount} overflowCount={99} size="small">
                         <Button shape="circle" icon={<BellOutlined style={{ fontSize: 20 }} />}

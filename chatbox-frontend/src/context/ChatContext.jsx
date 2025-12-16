@@ -181,6 +181,10 @@ export const ChatProvider = ({ children }) => {
             client.subscribe('/topic/feed', (payload) => {
                 const data = JSON.parse(payload.body);
 
+                if (!data || !data.type) {
+                    return;
+                }
+
                 if (data.type === 'MSG_UPDATE') {
                     setMessages(prev => prev.map(m =>
                         m.id === data.msg.id ? { ...m, ...data.msg } : m
@@ -323,6 +327,31 @@ export const ChatProvider = ({ children }) => {
         } catch (e) { message.error("Gửi tin lỗi!"); }
     };
 
+    const markOneRead = async (notificationId) => {
+        // 1. Cập nhật giao diện ngay lập tức (cho mượt)
+        setNotifications(prev => prev.map(noti => {
+            if (noti.id === notificationId && !noti.read) {
+                // Nếu tìm thấy và chưa đọc -> Đánh dấu đã đọc
+                return { ...noti, read: true };
+            }
+            return noti;
+        }));
+
+        // 2. Giảm số lượng chưa đọc đi 1 (nếu > 0)
+        // Lưu ý: Phải kiểm tra xem tin đó trước đấy đã đọc chưa để tránh trừ nhầm
+        const targetNoti = notifications.find(n => n.id === notificationId);
+        if (targetNoti && !targetNoti.read) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+
+        // 3. Gọi Backend để lưu lại (Backend xử lý ngầm)
+        try {
+            await api.put(`/notifications/${notificationId}/read`);
+        } catch (error) {
+            console.error("Lỗi đánh dấu đã đọc:", error);
+        }
+    };
+
     const loginUser = (data) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
@@ -397,7 +426,7 @@ export const ChatProvider = ({ children }) => {
         isConnected, loginUser, logoutUser,
         users, getUserAvatar, refreshGroups, leaveGroup,
         myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers,
-        deleteNotification, clearAllNotifications
+        deleteNotification, clearAllNotifications, markOneRead
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

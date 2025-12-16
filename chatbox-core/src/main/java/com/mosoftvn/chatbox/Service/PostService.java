@@ -223,9 +223,13 @@ public class PostService {
 
         // 1. Bắn Socket cập nhật giao diện (PostCard tự nhảy số)
         try {
-            messagingTemplate.convertAndSend("/topic/feed",
-                    Optional.of(Map.of("type", "POST_REACTION_UPDATE", "postId", postId, "reactions", post.getReactions(), "likeCount", post.getLikeCount()))
-            );
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "POST_REACTION_UPDATE");
+            payload.put("postId", postId);
+            payload.put("reactions", post.getReactions());
+            payload.put("likeCount", post.getLikeCount());
+
+            messagingTemplate.convertAndSend("/topic/feed", (Object) (payload));
         } catch (Exception e) { e.printStackTrace(); }
 
         // 2. TẠO THÔNG BÁO (Đây là phần bạn đang thiếu!)
