@@ -92,7 +92,8 @@ public class PostController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public PostResponse createPost(
             @RequestParam("content") String content,
-            @RequestParam(value = "file", required = false) MultipartFile file
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "backgroundTheme", required = false) String backgroundTheme
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
@@ -106,6 +107,6 @@ public class PostController {
 
         // 2. Gọi Service và truyền LINK ẢNH (String) thay vì file gốc
         // LƯU Ý: Bạn cần qua file PostService sửa lại tham số đầu vào nhé!
-        return postService.createPost(username, content, imageUrl);
+        return postService.createPost(username, content, imageUrl, backgroundTheme);
     }
 }

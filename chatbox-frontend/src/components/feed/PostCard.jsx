@@ -13,28 +13,23 @@ import { useSettings } from "../../context/SettingsContext.jsx";
 const { Text, Paragraph } = Typography;
 const { confirm } = Modal;
 
-
+// --- 1. DANH SÁCH THEME (COPY TỪ CREATE POST ĐỂ ĐỒNG BỘ) ---
+const POST_THEMES = [
+    { id: 'default', style: {} },
+    { id: 'ocean',   style: { background: 'linear-gradient(to right, #00c6ff, #0072ff)', color: '#fff' } },
+    { id: 'sunset',  style: { background: 'linear-gradient(to right, #f12711, #f5af19)', color: '#fff' } },
+    { id: 'love',    style: { background: 'linear-gradient(to right, #fc466b, #3f5efb)', color: '#fff' } },
+    { id: 'forest',  style: { background: 'linear-gradient(to right, #11998e, #38ef7d)', color: '#fff' } },
+    { id: 'dark',    style: { background: 'linear-gradient(to right, #232526, #414345)', color: '#fff' } },
+    { id: 'gold',    style: { background: 'linear-gradient(to right, #CAC531, #F3F9A7)', color: '#333' } },
+];
 
 const PostCard = ({ post, onRemove }) => {
     const navigate = useNavigate();
     const { setRecipient, currentUser, currentFullName, currentAvatar, feedUpdate, users } = useChat();
     const { t } = useSettings();
 
-    // --- STATE ---
-    // reactions: Map { "username": "TYPE" }
-    const [reactions, setReactions] = useState(post.reactions || {});
-    const [likeCount, setLikeCount] = useState(post.likeCount || 0);
-
-    // Tìm reaction của mình
-    const myReactionType = reactions[currentUser];
-
-    const [showAllComments, setShowAllComments] = useState(false);
-    const [commentInput, setCommentInput] = useState("");
-    const [loadingComment, setLoadingComment] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editContent, setEditContent] = useState(post.content);
-    const inputRef = useRef(null);
-
+    // --- REACTION ICONS ---
     const REACTION_ICONS = useMemo(() => ({
         LIKE: { icon: "👍", label: t('like'), color: "#1890ff" },
         LOVE: { icon: "❤️", label: t('love'), color: "#f5222d" },
@@ -44,16 +39,29 @@ const PostCard = ({ post, onRemove }) => {
         ANGRY:{ icon: "😡", label: t('angry'), color: "#f5222d" }
     }), [t]);
 
-    // --- ĐỒNG BỘ REALTIME ---
+    // --- STATE ---
+    const [reactions, setReactions] = useState(post.reactions || {});
+    const [likeCount, setLikeCount] = useState(post.likeCount || 0);
+    const myReactionType = reactions[currentUser];
+
+    const [showAllComments, setShowAllComments] = useState(false);
+    const [commentInput, setCommentInput] = useState("");
+    const [loadingComment, setLoadingComment] = useState(false);
+
+    // State Edit
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(post.content);
+
+    const inputRef = useRef(null);
+
+    // --- EFFECTS ---
     useEffect(() => {
-        // Cập nhật từ Props ban đầu
         setReactions(post.reactions || {});
         setLikeCount(post.likeCount || 0);
         if (!isEditing) setEditContent(post.content);
     }, [post]);
 
     useEffect(() => {
-        // Cập nhật từ Socket (Feed Update)
         if (feedUpdate && String(feedUpdate.postId) === String(post.id)) {
             if (feedUpdate.type === 'POST_REACTION_UPDATE') {
                 setReactions(feedUpdate.reactions || {});
@@ -62,29 +70,21 @@ const PostCard = ({ post, onRemove }) => {
         }
     }, [feedUpdate, post.id]);
 
-    // --- HANDLERS ---
+    // --- HANDLERS (Like, Comment, Delete...) ---
     const handleReact = async (type) => {
-        // Optimistic UI: Cập nhật giao diện ngay lập tức
         const oldReactions = { ...reactions };
-        const oldMyReaction = myReactionType;
-
         const newReactions = { ...reactions };
-        if (oldMyReaction === type) {
-            delete newReactions[currentUser]; // Gỡ
-        } else {
-            newReactions[currentUser] = type; // Cập nhật/Thêm mới
-        }
+        if (myReactionType === type) delete newReactions[currentUser];
+        else newReactions[currentUser] = type;
 
         setReactions(newReactions);
         setLikeCount(Object.keys(newReactions).length);
 
-        try {
-            await api.post(`/posts/${post.id}/react`, { type });
-        } catch (error) {
-            // Rollback nếu lỗi
+        try { await api.post(`/posts/${post.id}/react`, { type }); }
+        catch (error) {
             setReactions(oldReactions);
             setLikeCount(Object.keys(oldReactions).length);
-            message.error("Lỗi kết nối!");
+            message.error(t('connectionError') || "Lỗi kết nối!");
         }
     };
 
@@ -94,7 +94,7 @@ const PostCard = ({ post, onRemove }) => {
         try {
             await api.post(`/posts/${post.id}/comments`, { content: commentInput });
             setCommentInput(""); setShowAllComments(true);
-        } catch (e) { message.error("Lỗi bình luận"); }
+        } catch (e) { message.error(t('errorComment') || "Lỗi bình luận"); }
         finally { setLoadingComment(false); }
     };
 
@@ -118,15 +118,70 @@ const PostCard = ({ post, onRemove }) => {
     const handleViewProfile = () => navigate(`/profile/${post.username}`);
     const handleChat = () => { setRecipient(post.username); navigate('/chat'); };
 
+    // --- 2. HÀM RENDER NỘI DUNG BÀI VIẾT (QUAN TRỌNG NHẤT) ---
+    const renderPostContent = () => {
+        // A. CHẾ ĐỘ CHỈNH SỬA
+        if (isEditing) {
+            return (
+                <div>
+                    <Input.TextArea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        autoSize={{ minRows: 2, maxRows: 6 }}
+                        style={{ marginBottom: 10, backgroundColor: 'var(--input-bg)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}
+                    />
+                    <div style={{ textAlign: 'right', gap: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button size="small" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
+                        <Button type="primary" size="small" onClick={handleUpdate}>{t('update')}</Button>
+                    </div>
+                </div>
+            );
+        }
 
-    // 1. THANH CHỌN CẢM XÚC (POPOVER)
+        // B. CHẾ ĐỘ HIỂN THỊ (THEME)
+        // Tìm style tương ứng với themeId được lưu trong post
+        const themeId = post.backgroundTheme;
+        const theme = POST_THEMES.find(t => t.id === themeId);
+
+        // Nếu có Theme và KHÔNG phải Default -> Render khối màu
+        if (theme && themeId !== 'default') {
+            return (
+                <div style={{
+                    ...theme.style, // Áp dụng background gradient và màu chữ
+                    padding: '60px 20px', // Khoảng cách rộng như Facebook
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    fontSize: '24px',  // Chữ to
+                    fontWeight: 'bold',
+                    minHeight: '220px', // Chiều cao tối thiểu
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '10px',
+                    whiteSpace: 'pre-wrap', // Giữ xuống dòng
+                    boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)' // Hiệu ứng chiều sâu nhẹ
+                }}>
+                    {post.content}
+                </div>
+            );
+        }
+
+        // C. MẶC ĐỊNH (TEXT THƯỜNG)
+        return (
+            <Paragraph style={{ fontSize: '15px', whiteSpace: 'pre-wrap', color: 'var(--text-color)' }}>
+                {post.content}
+            </Paragraph>
+        );
+    };
+
+    // --- HELPER RENDERS (Tooltip, Icon...) ---
     const reactionSelector = (
         <div style={{ display: 'flex', gap: 10, padding: '5px' }}>
             {Object.keys(REACTION_ICONS).map(type => (
                 <Tooltip key={type} title={REACTION_ICONS[type].label}>
                     <div
                         style={{ fontSize: '24px', cursor: 'pointer', transition: 'transform 0.2s' }}
-                        className="emoji-hover" // Class hover phóng to (cần thêm vào css)
+                        className="emoji-hover"
                         onClick={() => handleReact(type)}
                     >
                         {REACTION_ICONS[type].icon}
@@ -136,11 +191,10 @@ const PostCard = ({ post, onRemove }) => {
         </div>
     );
 
-    // 2. TOOLTIP NGƯỜI THẢ TIM (WHO REACTED?)
     const reactionTooltipContent = useMemo(() => {
         const names = Object.keys(reactions).map(uname => {
             if (uname === currentUser) return t('you');
-            const u = users.find(x => x.username === uname); // Tìm trong list users online để lấy tên đẹp
+            const u = users.find(x => x.username === uname);
             return u ? u.displayName : uname;
         });
 
@@ -149,17 +203,13 @@ const PostCard = ({ post, onRemove }) => {
         return `${names.slice(0, 5).join(', ')} ${t('and')} ${names.length - 5} ${t('others')}`;
     }, [reactions, users, currentUser, t]);
 
-    // 3. TOOLTIP NGƯỜI BÌNH LUẬN (WHO COMMENTED?)
     const commentTooltipContent = useMemo(() => {
         if (!post.comments || post.comments.length === 0) return null;
-        // Lấy danh sách người comment (unique)
         const uniqueCommenters = [...new Set(post.comments.map(c => c.fullName || c.username))];
-
         if (uniqueCommenters.length <= 5) return uniqueCommenters.join(', ');
         return `${uniqueCommenters.slice(0, 5).join(', ')}...`;
     }, [post.comments]);
 
-    // 4. HIỂN THỊ ICON ĐÃ CHỌN TRÊN NÚT LIKE
     const currentReactionIcon = myReactionType ? (
         <span style={{ marginRight: 5 }}>{REACTION_ICONS[myReactionType].icon}</span>
     ) : <LikeOutlined />;
@@ -170,10 +220,8 @@ const PostCard = ({ post, onRemove }) => {
         </span>
     ) : t('like');
 
-    // 5. HIỂN THỊ TỔNG HỢP ICON (Góc trái dưới bài viết)
     const reactionSummary = useMemo(() => {
         if (likeCount === 0) return null;
-        // Lấy top 3 loại icon nhiều nhất
         const counts = {};
         Object.values(reactions).forEach(type => { counts[type] = (counts[type] || 0) + 1; });
         const topTypes = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 3);
@@ -194,10 +242,8 @@ const PostCard = ({ post, onRemove }) => {
                 </Tooltip>
             </div>
         );
-    }, [reactions, likeCount, reactionTooltipContent]);
+    }, [reactions, likeCount, reactionTooltipContent, REACTION_ICONS]);
 
-
-    // --- RENDER CHÍNH ---
     const menuItems = [
         { key: 'edit', label: t('editPost'), icon: <EditOutlined />, onClick: () => setIsEditing(true) },
         { key: 'delete', label: t('deletePost'), icon: <DeleteOutlined />, danger: true, onClick: handleDelete },
@@ -221,11 +267,11 @@ const PostCard = ({ post, onRemove }) => {
 
     const cardTitle = (
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <Popover content={userPopoverContent} title={null} trigger="hover" overlayInnerStyle={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}>
+            <Popover content={userPopoverContent} title={null} trigger="hover" styles={{ body: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' } }}>
                 <Avatar size={40} src={getAvatarUrl(post.username, post.fullName, post.userAvatar)} style={{ cursor: 'pointer', border: '1px solid var(--border-color)' }} onClick={handleViewProfile} />
             </Popover>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-                <Popover content={userPopoverContent} title={null} trigger="hover" overlayInnerStyle={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}>
+                <Popover content={userPopoverContent} title={null} trigger="hover" styles={{ body: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' } }}>
                     <Text strong style={{ fontSize: '15px', cursor: 'pointer', color: 'var(--text-color)' }} onClick={handleViewProfile}>
                         {post.fullName || post.username}
                     </Text>
@@ -239,6 +285,7 @@ const PostCard = ({ post, onRemove }) => {
 
     const commentsToShow = showAllComments ? post.comments : post.comments.slice(0, 2);
 
+    // --- MAIN RENDER ---
     return (
         <Card
             style={{ marginBottom: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
@@ -250,57 +297,33 @@ const PostCard = ({ post, onRemove }) => {
                 </Dropdown>
             )}
             actions={[
-                // --- NÚT LIKE VỚI POPOVER CẢM XÚC ---
-                <Popover content={reactionSelector} title={null} trigger="hover" overlayInnerStyle={{ borderRadius: '20px', padding: '5px' }}>
-                    <Button
-                        type="text"
-                        key="like"
-                        onClick={() => handleReact(myReactionType ? myReactionType : 'LIKE')} // Click thường -> Like/Unlike
-                        style={{ color: 'var(--text-secondary)' }}
-                    >
-                        {currentReactionIcon}
-                        {currentReactionText}
+                <Popover content={reactionSelector} title={null} trigger="hover" styles={{ body: { borderRadius: '20px', padding: '5px' } }}>
+                    <Button type="text" key="like" onClick={() => handleReact(myReactionType ? myReactionType : 'LIKE')} style={{ color: 'var(--text-secondary)' }}>
+                        {currentReactionIcon} {currentReactionText}
                     </Button>
                 </Popover>,
 
-                // --- NÚT BÌNH LUẬN VỚI TOOLTIP ---
-                <Tooltip title={
-                    commentTooltipContent
-                        ? `${t('commentedBy')} ${commentTooltipContent}`
-                        : t('noCommentYet')
-                }>
+                <Tooltip title={commentTooltipContent ? `${t('commentedBy')} ${commentTooltipContent}` : t('noCommentYet')}>
                     <Button type="text" key="comment" icon={<CommentOutlined />} onClick={handleFocusComment} style={{ color: 'var(--text-secondary)' }}>
                         {post.comments.length > 0 ? t('commentCount').replace('{{count}}', post.comments.length) : t('comment')}
                     </Button>
                 </Tooltip>
             ]}
         >
-            {/* NỘI DUNG */}
+            {/* 3. GỌI HÀM RENDER NỘI DUNG (ĐÃ BAO GỒM THEME VÀ EDIT) */}
             <div style={{ marginTop: '5px', marginBottom: '10px' }}>
-                {isEditing ? (
-                    <div>
-                        <Input.TextArea value={editContent} onChange={(e) => setEditContent(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} style={{ marginBottom: 10, backgroundColor: 'var(--input-bg)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }} />
-                        <div style={{ textAlign: 'right', gap: 10, display: 'flex', justifyContent: 'flex-end' }}>
-                            <Button size="small" onClick={() => setIsEditing(false)}>{t('cancel')}</Button>
-                            <Button type="primary" size="small" onClick={handleUpdate}>{t('update')}</Button>
-                        </div>
-                    </div>
-                ) : (
-                    <Paragraph style={{ fontSize: '15px', whiteSpace: 'pre-wrap', color: 'var(--text-color)' }}>{post.content}</Paragraph>
-                )}
+                {renderPostContent()}
             </div>
 
-            {/* ẢNH/VIDEO */}
+            {/* ẢNH/VIDEO (Sẽ không hiện nếu đã có Theme - Logic bên CreatePost) */}
             {post.imageUrl && (
                 <div style={{ borderRadius: '8px', overflow: 'hidden', marginBottom: '15px', border: '1px solid var(--border-color)', background: '#000', display: 'flex', justifyContent: 'center' }}>
                     {post.mediaType === 'VIDEO' ? <video src={post.imageUrl} controls style={{ maxWidth: '100%', maxHeight: '500px' }} /> : <Image src={post.imageUrl} style={{ width: '100%', maxHeight: '500px', objectFit: 'cover' }} />}
                 </div>
             )}
 
-            {/* --- HIỂN THỊ TỔNG HỢP REACTION (MỚI) --- */}
             {reactionSummary}
 
-            {/* KHU VỰC BÌNH LUẬN */}
             <div style={{ background: 'var(--bg-secondary)', margin: '0 -15px', padding: '10px 15px', borderTop: '1px solid var(--border-color)' }}>
                 <List
                     dataSource={commentsToShow} split={false} locale={{ emptyText: <span /> }}

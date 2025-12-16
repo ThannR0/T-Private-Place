@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Card, Input, Button, message, Avatar, Tooltip, Modal, Radio, Space, Typography, Spin, Divider, Popover } from 'antd';
 import {
     FileImageOutlined, SendOutlined, CloseCircleOutlined, RobotOutlined,
-    LoadingOutlined, SmileOutlined, BoldOutlined, ItalicOutlined, StrikethroughOutlined
+    LoadingOutlined, SmileOutlined, BoldOutlined, ItalicOutlined, StrikethroughOutlined, BgColorsOutlined,
 } from '@ant-design/icons';
 import EmojiPicker from 'emoji-picker-react';
 import api from '../../services/api';
@@ -13,6 +13,15 @@ import { getAvatarUrl } from '../../utils/common';
 const { TextArea } = Input;
 const { Text } = Typography;
 
+const POST_THEMES = [
+    { id: 'default', style: { background: 'transparent', color: 'var(--text-color)' } },
+    { id: 'ocean',   style: { background: 'linear-gradient(to right, #00c6ff, #0072ff)', color: '#fff' } },
+    { id: 'sunset',  style: { background: 'linear-gradient(to right, #f12711, #f5af19)', color: '#fff' } },
+    { id: 'love',    style: { background: 'linear-gradient(to right, #fc466b, #3f5efb)', color: '#fff' } },
+    { id: 'forest',  style: { background: 'linear-gradient(to right, #11998e, #38ef7d)', color: '#fff' } },
+    { id: 'dark',    style: { background: 'linear-gradient(to right, #232526, #414345)', color: '#fff' } },
+    { id: 'gold',    style: { background: 'linear-gradient(to right, #CAC531, #F3F9A7)', color: '#333' } },
+];
 // --- HÀM HELPER: CHUYỂN ĐỔI FONT UNICODE (ĐÃ SỬA LỖI LOGIC) ---
 const textConverter = {
     // 1. IN ĐẬM (Bold)
@@ -63,6 +72,9 @@ const CreatePost = ({ onPostCreated }) => {
     const textAreaRef = useRef(null);
     const myAvatarSrc = getAvatarUrl(currentUser, currentFullName, currentAvatar);
 
+    const [selectedTheme, setSelectedTheme] = useState('default');
+    const [showThemePicker, setShowThemePicker] = useState(false);
+
     // --- LOGIC CŨ (File & Submit) ---
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -77,6 +89,14 @@ const CreatePost = ({ onPostCreated }) => {
     const removeMedia = () => {
         setMediaFile(null); setPreviewUrl(null); setFileType(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleSelectTheme = (themeId) => {
+        setSelectedTheme(themeId);
+        // Nếu chọn màu -> Phải bỏ ảnh (Facebook logic)
+        if (themeId !== 'default') {
+            removeMedia();
+        }
     };
 
     const handleSubmit = async () => {
@@ -156,6 +176,10 @@ const CreatePost = ({ onPostCreated }) => {
         } finally { setIsGenerating(false); }
     };
 
+    // Lấy style hiện tại
+    const currentThemeStyle = POST_THEMES.find(t => t.id === selectedTheme)?.style || POST_THEMES[0].style;
+    const isStyled = selectedTheme !== 'default';
+
     // --- MODAL AI UI ---
     const renderAIModal = () => (
         <Modal
@@ -218,14 +242,21 @@ const CreatePost = ({ onPostCreated }) => {
                         <div style={{ position: 'relative' }}>
                             <TextArea
                                 ref={textAreaRef}
-                                rows={3}
+                                rows={isStyled ? 6 : 3} // Nếu có màu thì ô to hơn
                                 placeholder={t('whatsOnYourMind').replace('{{name}}', currentFullName || currentUser)}
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                                 style={{
-                                    border: 'none', resize: 'none', background: 'transparent',
-                                    color: 'var(--text-color)', fontSize: '16px', lineHeight: '1.5',
-                                    padding: '5px 0', minHeight: '80px'
+                                    border: 'none', resize: 'none',
+                                    padding: isStyled ? '40px 20px' : '5px 0',
+                                    minHeight: '80px',
+                                    borderRadius: '8px',
+                                    // Áp dụng Style từ Theme
+                                    ...currentThemeStyle,
+                                    fontSize: isStyled ? '22px' : '16px', // Chữ to nếu có nền
+                                    fontWeight: isStyled ? 'bold' : 'normal',
+                                    textAlign: isStyled ? 'center' : 'left',
+                                    lineHeight: isStyled ? '1.4' : '1.5',
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.ctrlKey) {
@@ -234,81 +265,93 @@ const CreatePost = ({ onPostCreated }) => {
                                     }
                                 }}
                             />
+
+                            {/* Nút đóng Theme (X) nằm góc phải nếu đang chọn màu */}
+                            {isStyled && (
+                                <Button
+                                    shape="circle" size="small" icon={<CloseCircleOutlined />}
+                                    onClick={() => handleSelectTheme('default')}
+                                    style={{ position: 'absolute', top: 10, right: 10, border: 'none', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
+                                />
+                            )}
                         </div>
+
+                        {/* Theme Picker Area (Hiện ra khi bấm nút) */}
+                        {showThemePicker && (
+                            <div style={{ display: 'flex', gap: 8, padding: '10px 0', overflowX: 'auto' }}>
+                                <Tooltip title="Mặc định">
+                                    <div
+                                        onClick={() => handleSelectTheme('default')}
+                                        style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        <CloseCircleOutlined style={{fontSize: 12, color: 'var(--text-secondary)'}} />
+                                    </div>
+                                </Tooltip>
+                                {POST_THEMES.filter(t => t.id !== 'default').map(theme => (
+                                    <div
+                                        key={theme.id}
+                                        onClick={() => handleSelectTheme(theme.id)}
+                                        style={{
+                                            minWidth: 30, height: 30, borderRadius: 8, cursor: 'pointer',
+                                            ...theme.style,
+                                            border: selectedTheme === theme.id ? '2px solid var(--text-color)' : 'none',
+                                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
                         {previewUrl && (
                             <div style={{ marginTop: 10, position: 'relative', display: 'inline-block', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                                {fileType === 'video' ? (
-                                    <video controls src={previewUrl} style={{ maxWidth: '100%', maxHeight: 300, display: 'block' }} />
-                                ) : (
-                                    <img src={previewUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: 300, display: 'block' }} />
-                                )}
-                                <Button
-                                    type="text" shape="circle"
-                                    icon={<CloseCircleOutlined style={{ fontSize: 20, color: '#ff4d4f' }} />}
-                                    onClick={removeMedia}
-                                    style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(255,255,255,0.8)' }}
-                                />
+                                {fileType === 'video' ? <video controls src={previewUrl} style={{ maxWidth: '100%', maxHeight: 300, display: 'block' }} /> : <Image src={previewUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: 300, display: 'block' }} />}
+                                <Button type="text" shape="circle" icon={<CloseCircleOutlined style={{ fontSize: 20, color: '#ff4d4f' }} />} onClick={removeMedia} style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(255,255,255,0.8)' }} />
                             </div>
                         )}
 
                         <Divider style={{ margin: '8px 0', borderColor: 'var(--border-color)' }} />
 
-                        {/* --- THANH CÔNG CỤ (ĐÃ DỊCH & SỬA LỖI) --- */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-
                             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                                 {/* Nút Ảnh */}
                                 <Tooltip title={t('photoVideo')}>
                                     <Button
-                                        type="text"
-                                        icon={<FileImageOutlined style={{ color: '#4CAF50', fontSize: 20 }} />}
+                                        type="text" icon={<FileImageOutlined style={{ color: '#4CAF50', fontSize: 20 }} />}
                                         onClick={() => fileInputRef.current.click()}
+                                        disabled={isStyled} // Không cho chọn ảnh nếu đang dùng Theme
+                                        style={{ color: isStyled ? 'var(--text-secondary)' : 'var(--text-color)', opacity: isStyled ? 0.5 : 1 }}
+                                    />
+                                </Tooltip>
+
+                                {/* Nút Theme (MỚI) */}
+                                <Tooltip title={t('bgTheme')}>
+                                    <Button
+                                        type="text"
+                                        icon={<BgColorsOutlined style={{ color: '#ff4d4f', fontSize: 20 }} />}
+                                        onClick={() => setShowThemePicker(!showThemePicker)}
                                         style={{ color: 'var(--text-secondary)' }}
                                     />
                                 </Tooltip>
 
                                 {/* Nút AI */}
                                 <Tooltip title={t('aiTooltip')}>
-                                    <Button
-                                        type="text"
-                                        icon={<RobotOutlined style={{ color: '#722ed1', fontSize: 20 }} />}
-                                        onClick={() => setIsAIModalOpen(true)}
-                                        style={{ color: 'var(--text-secondary)' }}
-                                    />
+                                    <Button type="text" icon={<RobotOutlined style={{ color: '#722ed1', fontSize: 20 }} />} onClick={() => setIsAIModalOpen(true)} style={{ color: 'var(--text-secondary)' }} />
                                 </Tooltip>
 
-                                {/* Ngăn cách */}
                                 <div style={{ width: 1, height: 20, background: 'var(--border-color)', margin: '0 5px' }}></div>
 
-                                {/* Nút Emoji */}
-                                <Popover
-                                    content={<EmojiPicker onEmojiClick={onEmojiClick} width={300} height={400} theme="auto" />}
-                                    trigger="click" open={showEmoji} onOpenChange={setShowEmoji} placement="bottom"
-                                >
-                                    <Tooltip title={t('fmtEmoji')}>
-                                        <Button type="text" icon={<SmileOutlined style={{fontSize: 20, color: '#faad14'}} />} style={{ color: 'var(--text-secondary)' }} />
-                                    </Tooltip>
+                                {/* Emoji & Format (Giữ nguyên) */}
+                                <Popover content={<EmojiPicker onEmojiClick={onEmojiClick} width={300} height={400} theme="auto" />} trigger="click" open={showEmoji} onOpenChange={setShowEmoji} placement="bottom">
+                                    <Tooltip title={t('fmtEmoji')}><Button type="text" icon={<SmileOutlined style={{fontSize: 20, color: '#faad14'}} />} style={{ color: 'var(--text-secondary)' }} /></Tooltip>
                                 </Popover>
-
-                                {/* Nút Format (Đã sửa logic Bold/Italic) */}
-                                <Tooltip title={t('fmtBold')}>
-                                    <Button type="text" icon={<BoldOutlined />} onClick={() => applyFormat('bold')} style={{ color: 'var(--text-secondary)' }} />
-                                </Tooltip>
-                                <Tooltip title={t('fmtItalic')}>
-                                    <Button type="text" icon={<ItalicOutlined />} onClick={() => applyFormat('italic')} style={{ color: 'var(--text-secondary)' }} />
-                                </Tooltip>
-                                <Tooltip title={t('fmtStrike')}>
-                                    <Button type="text" icon={<StrikethroughOutlined />} onClick={() => applyFormat('strike')} style={{ color: 'var(--text-secondary)' }} />
-                                </Tooltip>
+                                <Tooltip title={t('fmtBold')}><Button type="text" icon={<BoldOutlined />} onClick={() => applyFormat('bold')} style={{ color: 'var(--text-secondary)' }} /></Tooltip>
+                                <Tooltip title={t('fmtItalic')}><Button type="text" icon={<ItalicOutlined />} onClick={() => applyFormat('italic')} style={{ color: 'var(--text-secondary)' }} /></Tooltip>
+                                <Tooltip title={t('fmtStrike')}><Button type="text" icon={<StrikethroughOutlined />} onClick={() => applyFormat('strike')} style={{ color: 'var(--text-secondary)' }} /></Tooltip>
                             </div>
 
                             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*,video/*" onChange={handleFileSelect} />
 
-                            <Button
-                                type="primary" icon={<SendOutlined />} loading={loading} onClick={handleSubmit} disabled={!content.trim() && !mediaFile}
-                                shape="round" style={{ padding: '0 25px', fontWeight: 600 }}
-                            >
+                            <Button type="primary" icon={<SendOutlined />} loading={loading} onClick={handleSubmit} disabled={!content.trim() && !mediaFile} shape="round" style={{ padding: '0 25px', fontWeight: 600 }}>
                                 {t('post')}
                             </Button>
                         </div>

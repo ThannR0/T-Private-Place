@@ -195,7 +195,16 @@ export const ChatProvider = ({ children }) => {
                 if (data.eventId) processedFeedIdsRef.current.add(data.eventId);
                 // ----------------------------------------------
 
-                setFeedUpdate(data);
+                try {
+                    const data = JSON.parse(payload.body);
+
+
+                    if (!data || !data.type) return;
+
+                    setFeedUpdate(data);
+                } catch (e) {
+                    console.warn("Lỗi parse feed socket:", e);
+                }
 
                 if (data.type === 'NEW_GROUP_CREATED') {
                     if (data.group.members.includes(currentUser)) fetchUsers();
@@ -234,6 +243,7 @@ export const ChatProvider = ({ children }) => {
             // 3. Notification (Cũng lọc trùng)
             client.subscribe(`/user/${currentUser}/queue/notifications`, (payload) => {
                 const newNoti = JSON.parse(payload.body);
+                if (!newNoti) return;
                 if (processedNotiIdsRef.current.has(newNoti.id)) return;
                 processedNotiIdsRef.current.add(newNoti.id);
                 setNotifications(prev => [newNoti, ...prev]);

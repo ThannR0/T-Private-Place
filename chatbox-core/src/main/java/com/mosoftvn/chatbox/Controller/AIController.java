@@ -35,9 +35,9 @@ public class AIController {
     private String buildPrompt(String userPrompt, String tone) {
         String styleInstruction = "";
         switch (tone) {
-            case "funny": styleInstruction = "hài hước, vui nhộn, bắt trend, dùng nhiều icon sinh động."; break;
-            case "serious": styleInstruction = "nghiêm túc, sâu sắc, có tính triết lý, giọng văn trầm ổn."; break;
-            case "professional": styleInstruction = "chuyên nghiệp, lịch sự, dùng từ ngữ công sở/doanh nhân."; break;
+            case "funny": styleInstruction = "hài hước, vui nhộn, bắt trend, dùng nhiều icon sinh động. Không cần chào hỏi hay mở đầu vào vấn đề chính luôn "; break;
+            case "serious": styleInstruction = "nghiêm túc, sâu sắc, có tính triết lý, giọng văn trầm ổn. Không cần chào hỏi hay mở đầu vào vấn đề chính luôn"; break;
+            case "professional": styleInstruction = "chuyên nghiệp, lịch sự, dùng từ ngữ công sở/doanh nhân. Không cần chào hỏi hay mở đầu vào vấn đề chính luôn"; break;
             default: styleInstruction = "tự nhiên, thân thiện như một người bạn.";
         }
 

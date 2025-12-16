@@ -57,6 +57,9 @@ public class Post {
         return reactions != null ? reactions.size() : 0;
     }
 
+    @Column(name = "background_theme")
+    private String backgroundTheme;
+
     // Tự động gán thời gian khi tạo
     @PrePersist
     protected void onCreate() {

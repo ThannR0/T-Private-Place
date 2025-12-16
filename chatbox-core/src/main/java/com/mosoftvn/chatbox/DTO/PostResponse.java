@@ -1,6 +1,5 @@
 package com.mosoftvn.chatbox.DTO;
 
-import jdk.jshell.Snippet;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,10 +25,12 @@ public class PostResponse {
     private String fullName;
     private String userAvatar;
 
+    private String backgroundTheme;
+
     // Thông tin tương tác MỚI
     private Map<String, String> reactions;
     private int likeCount;
-    private boolean likedByMe; // Để hiện nút Like màu xanh
+    private boolean likedByMe;
     private List<CommentDTO> comments; // Danh sách comment
 
 

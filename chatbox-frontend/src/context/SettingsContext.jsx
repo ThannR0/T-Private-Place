@@ -80,8 +80,14 @@ export const SettingsProvider = ({ children }) => {
 
     return (
         <SettingsContext.Provider value={{
-            language, setLanguage, t,
-            soundEnabled, toggleSound, playNotificationSound // Xuất các hàm này ra
+            language,
+            theme,
+            changeLanguage,
+            toggleTheme,
+            t,
+            soundEnabled,
+            toggleSound,
+            playNotificationSound
         }}>
             {children}
         </SettingsContext.Provider>

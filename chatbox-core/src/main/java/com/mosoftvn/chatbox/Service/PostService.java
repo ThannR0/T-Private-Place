@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime; // <--- DÙNG THƯ VIỆN NÀY THAY CHO java.util.Date
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,8 +33,9 @@ public class PostService {
     @Autowired
     private NotificationService notificationService;
 
+
     // 1. Đăng bài mới
-    public PostResponse createPost(String username, String content, String imageUrl) {
+    public PostResponse createPost(String username, String content, String imageUrl, String backgroundTheme) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -44,9 +45,11 @@ public class PostService {
 
         // Dùng LocalDateTime.now() thay cho new Date()
         post.setCreatedAt(LocalDateTime.now());
-        // -----------------------
+
+        post.setBackgroundTheme(backgroundTheme != null ? backgroundTheme : "default");
 
         post.setLikedUserIds(new HashSet<>());
+
 
         // XỬ LÝ ẢNH CLOUD
         if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -122,7 +125,6 @@ public class PostService {
         comment.setUser(user);
         comment.setPost(post);
 
-        // --- SỬA LỖI TẠI ĐÂY CẢ CHO COMMENT ---
         comment.setCreatedAt(LocalDateTime.now());
         // --------------------------------------
 
@@ -250,11 +252,11 @@ public class PostService {
         }
     }
 
+
     // Helper map DTO
-    // Helper map DTO (ĐÃ SỬA: Dùng logic Reactions thay vì Like cũ)
     private PostResponse mapToDTO(Post post, String currentUsername) { // <--- 1. Đổi tham số từ Long ID sang String Username
 
-        // --- LOGIC MỚI: Lấy thông tin từ Map reactions ---
+        // Lấy thông tin từ Map reactions ---
         Map<String, String> reactions = post.getReactions();
 
         // Lấy số lượng (Hàm getLikeCount @Transient trong Entity đã tự tính size của map reactions)
@@ -267,7 +269,6 @@ public class PostService {
         }
         // ------------------------------------------------
 
-        // --- LOGIC CŨ: Mapping Comment (Giữ nguyên) ---
         List<Comment> comments = post.getComments();
         List<PostResponse.CommentDTO> commentDTOS = new ArrayList<>();
 
@@ -283,7 +284,7 @@ public class PostService {
                     )).collect(Collectors.toList());
         }
 
-        // --- TRẢ VỀ DÙNG BUILDER (An toàn hơn dùng Constructor) ---
+        // DÙNG BUILDER (An toàn hơn dùng Constructor)
         return PostResponse.builder()
                 .id(post.getId())
                 .content(post.getContent())
@@ -296,10 +297,11 @@ public class PostService {
                 .fullName(post.getUser().getFullName() != null ? post.getUser().getFullName() : post.getUser().getUsername())
                 .userAvatar(post.getUser().getAvatar())
 
-                // DATA MỚI QUAN TRỌNG
-                .reactions(reactions) // Trả về Map reactions để Frontend hiển thị icon
-                .likeCount(likeCount) // Trả về tổng số lượng
-                .likedByMe(isLiked)   // Trả về trạng thái đã like hay chưa
+                .reactions(reactions)
+                .likeCount(likeCount)
+                .likedByMe(isLiked)
+
+                .backgroundTheme(post.getBackgroundTheme())
 
                 .comments(commentDTOS)
                 .build();

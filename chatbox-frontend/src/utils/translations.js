@@ -98,6 +98,7 @@ export const translations = {
         postError: "Đăng bài thất bại: {{error}}",
         fileTooLarge: "File quá lớn! Vui lòng chọn dưới 50MB.",
         emptyPostWarning: "Hãy viết gì đó hoặc chọn file!",
+        bgTheme: "Phông nền",
 
         // Post Actions
         like: "Thích",
@@ -391,6 +392,7 @@ export const translations = {
         postError: "Failed to post: {{error}}",
         fileTooLarge: "File too large! Please select under 50MB.",
         emptyPostWarning: "Please write something or select a file!",
+        bgTheme: "Background Theme",
 
 
         // Post Actions

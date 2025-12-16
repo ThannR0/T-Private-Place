@@ -36,6 +36,7 @@ const Feed = () => {
             if (feedUpdate.type === 'NEW_POST') {
                 // Nếu có bài mới -> Thêm vào đầu danh sách
                 // Kiểm tra trùng để tránh hiện 2 lần (do Optimistic UI)
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setPosts(prev => {
                     // Nếu bài đã có (do handleNewPostLocal thêm trước) -> Bỏ qua
                     if (prev.some(p => p.id === feedUpdate.post.id)) return prev;

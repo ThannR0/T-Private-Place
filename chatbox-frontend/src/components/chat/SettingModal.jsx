@@ -37,7 +37,6 @@ const SettingsModal = ({ visible, onClose }) => {
 
                 <Divider style={{ margin: '5px 0' }} />
 
-                {/* 2. GIAO DIỆN (THEME) */}
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                         <BulbOutlined /> <Text strong>{t('appearance')}</Text>
@@ -63,7 +62,7 @@ const SettingsModal = ({ visible, onClose }) => {
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <Space>
                         <SoundOutlined style={{fontSize: 20, color: 'var(--text-secondary)'}}/>
-                        <Text strong style={{color: 'var(--text-color)'}}>{t('soundNotification')}</Text>
+                        <Text strong style={{color: 'var(--text-color)'}}>{t('sound')}</Text>
                     </Space>
                     <Switch
                         checked={soundEnabled}
