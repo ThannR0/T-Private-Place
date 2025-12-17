@@ -22,6 +22,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import EventsPage from "./components/events/EventPage.jsx";
 import EventDetailPage from "./pages/EventDetailPage.jsx";
 import ErrorBoundary from "antd/es/alert/ErrorBoundary.js";
+import SchedulePage from "./pages/SchedulePage.jsx";
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
@@ -87,6 +88,17 @@ function App() {
                             }
                         />
                         <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
+
+                        <Route
+                            path="/schedule"
+                            element={
+                                <ProtectedRoute>
+                                    <ErrorBoundary>
+                                        <SchedulePage />
+                                    </ErrorBoundary>
+                                </ProtectedRoute>
+                            }
+                        />
 
                         {/* Chi tiết bài viết */}
                         <Route path="/post/:postId" element={<PostDetail />} />

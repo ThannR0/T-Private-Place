@@ -3,14 +3,16 @@ import { Layout, Typography, Avatar, Dropdown, Space, message, Badge, Button, Po
 import {
     UserOutlined, LogoutOutlined, SettingOutlined, DownOutlined,
     ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined,
-    DeleteOutlined, ClearOutlined, CheckOutlined, CalendarOutlined
+    DeleteOutlined, ClearOutlined, CheckOutlined, CalendarOutlined, CompassOutlined, // Icon mới cho Sự kiện (Nhìn giống khám phá hơn)
+    ScheduleOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
 import { useSettings } from '../../context/SettingsContext';
 import { getAvatarUrl } from "../../utils/common.js";
 import AppLogo from "../common/AppLogo.jsx";
 import SettingsModal from "../chat/SettingModal.jsx";
+import {useLocale} from "antd/es/locale/index.js";
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -19,6 +21,8 @@ const AppHeader = () => {
     const navigate = useNavigate();
     const { t } = useSettings();
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    const locale = useLocale();
 
     const {
         currentUser, currentFullName, currentAvatar, logoutUser, updateUserStatus, myStatus,
@@ -44,6 +48,18 @@ const AppHeader = () => {
         if (noti.relatedPostId) {
             navigate(`/post/${noti.relatedPostId}`);
         }
+    };
+
+    const getBtnStyle = (path) => {
+        const isActive = location.pathname === path;
+        return {
+            background: isActive ? 'rgba(24, 144, 255, 0.1)' : 'transparent', // Nền xanh nhạt khi active
+            color: isActive ? '#1890ff' : 'var(--text-color)', // Icon xanh đậm khi active
+            border: isActive ? '1px solid #1890ff' : '1px solid var(--border-color)',
+            boxShadow: isActive ? '0 2px 8px rgba(24, 144, 255, 0.25)' : 'none',
+            transition: 'all 0.3s ease',
+            transform: isActive ? 'scale(1.05)' : 'scale(1)'
+        };
     };
 
     const handleDeleteNoti = (e, id) => {
@@ -163,34 +179,48 @@ const AppHeader = () => {
                 <AppLogo size={42} showText={true}/>
             </div>
 
-            <div style={{display: 'flex', gap: '20px'}}>
+            <div style={{display: 'flex', gap: '15px'}}> {/* Giảm gap chút cho gọn */}
+
                 <Tooltip title="Trang chủ">
-                    <Button shape="circle" size="large" icon={<HomeOutlined/>} onClick={() => navigate('/feed')}
-                            style={{
-                                background: 'transparent',
-                                color: 'var(--text-color)',
-                                border: '1px solid var(--border-color)'
-                            }}/>
+                    <Button
+                        shape="circle"
+                        size="large"
+                        icon={<HomeOutlined/>}
+                        onClick={() => navigate('/feed')}
+                        style={getBtnStyle('/feed')}
+                    />
                 </Tooltip>
 
-                {/* --- THÊM NÚT SỰ KIỆN VÀO ĐÂY --- */}
-                <Tooltip title="Sự kiện">
-                    <Button shape="circle" size="large" icon={<CalendarOutlined/>} onClick={() => navigate('/events')}
-                            style={{
-                                background: 'transparent',
-                                color: 'var(--text-color)',
-                                border: '1px solid var(--border-color)'
-                            }}/>
+                <Tooltip title="Khám phá Sự kiện">
+                    {/* Đổi sang CompassOutlined nhìn 'phiêu lưu' hơn cho Events */}
+                    <Button
+                        shape="circle"
+                        size="large"
+                        icon={<CompassOutlined/>}
+                        onClick={() => navigate('/events')}
+                        style={getBtnStyle('/events')}
+                    />
                 </Tooltip>
-                {/* -------------------------------- */}
+
+                {/* --- LỊCH TRÌNH MỚI  --- */}
+                <Tooltip title="Lịch trình & Kế hoạch">
+                    <Button
+                        shape="circle"
+                        size="large"
+                        icon={<ScheduleOutlined/>}
+                        onClick={() => navigate('/schedule')}
+                        style={getBtnStyle('/schedule')}
+                    />
+                </Tooltip>
 
                 <Tooltip title="Tin nhắn">
-                    <Button shape="circle" size="large" icon={<MessageOutlined/>} onClick={() => navigate('/chat')}
-                            style={{
-                                background: 'transparent',
-                                color: 'var(--text-color)',
-                                border: '1px solid var(--border-color)'
-                            }}/>
+                    <Button
+                        shape="circle"
+                        size="large"
+                        icon={<MessageOutlined/>}
+                        onClick={() => navigate('/chat')}
+                        style={getBtnStyle('/chat')}
+                    />
                 </Tooltip>
             </div>
 
@@ -210,24 +240,24 @@ const AppHeader = () => {
                 </Popover>
 
                 <Dropdown menu={{items}} trigger={['click']}>
-                    <div style={{cursor: 'pointer', padding: '5px', borderRadius: '6px' }}>
+                    <div style={{cursor: 'pointer', padding: '5px', borderRadius: '6px'}}>
                         <Space>
                             <Badge dot status={getStatusColor(myStatus)} offset={[-2, 30]}>
-                                <Avatar src={myAvatarUrl} />
+                                <Avatar src={myAvatarUrl}/>
                             </Badge>
-                            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-                                <Text strong style={{ fontSize: '14px', color: 'var(--text-color)' }}>{displayName}</Text>
-                                <Text type="secondary" style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                            <div style={{display: 'flex', flexDirection: 'column', lineHeight: '1.2'}}>
+                                <Text strong style={{fontSize: '14px', color: 'var(--text-color)'}}>{displayName}</Text>
+                                <Text type="secondary" style={{fontSize: '10px', color: 'var(--text-secondary)'}}>
                                     {myStatus === 'ONLINE' ? t('online') : (myStatus === 'BUSY' ? t('busy') : t('offline'))}
                                 </Text>
                             </div>
-                            <DownOutlined style={{ fontSize: 10, color: 'var(--text-secondary)' }} />
+                            <DownOutlined style={{fontSize: 10, color: 'var(--text-secondary)'}}/>
                         </Space>
                     </div>
                 </Dropdown>
             </div>
 
-            <SettingsModal visible={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+            <SettingsModal visible={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}/>
         </Header>
     );
 };
