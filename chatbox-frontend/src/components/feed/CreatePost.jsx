@@ -88,7 +88,7 @@ const CreatePost = ({ onPostCreated }) => {
     const [selectedTheme, setSelectedTheme] = useState('default');
     const [showThemePicker, setShowThemePicker] = useState(false);
 
-    // --- LOGIC CŨ (File & Submit) ---
+    // (File & Submit) ---
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {

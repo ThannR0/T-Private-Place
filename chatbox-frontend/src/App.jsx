@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import VerifyOtp from "./pages/VerifyOtp";
 import Chat from './pages/Chat';
 import Feed from "./pages/Feed";
+
 import PostDetail from "./pages/PostDetail";
 import Profile from "./pages/Profile"; // File Profile bạn đã sửa ở bước trước
 import ForgotPassword from "./pages/ForgotPassword.jsx";
@@ -18,6 +19,9 @@ import AppHeader from './components/layout/AppHeader';
 import ResetPassword from "./pages/ResetPassword.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx"; // Đảm bảo đường dẫn đúng
 import { SettingsProvider } from './context/SettingsContext';
+import EventsPage from "./components/events/EventPage.jsx";
+import EventDetailPage from "./pages/EventDetailPage.jsx";
+import ErrorBoundary from "antd/es/alert/ErrorBoundary.js";
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
@@ -72,6 +76,17 @@ function App() {
 
                         <Route path="/feed" element={<Feed />} />
                         <Route path="/chat" element={<Chat />} />
+                        <Route
+                            path="/events"
+                            element={
+                                <ProtectedRoute>
+                                    <ErrorBoundary>
+                                    <EventsPage />
+                                    </ErrorBoundary>
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
 
                         {/* Chi tiết bài viết */}
                         <Route path="/post/:postId" element={<PostDetail />} />

@@ -3,7 +3,7 @@ import { Layout, Typography, Avatar, Dropdown, Space, message, Badge, Button, Po
 import {
     UserOutlined, LogoutOutlined, SettingOutlined, DownOutlined,
     ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined,
-    DeleteOutlined, ClearOutlined, CheckOutlined
+    DeleteOutlined, ClearOutlined, CheckOutlined, CalendarOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
@@ -164,29 +164,53 @@ const AppHeader = () => {
             </div>
 
             <div style={{display: 'flex', gap: '20px'}}>
-                <Button shape="circle" size="large" icon={<HomeOutlined />} onClick={() => navigate('/feed')}
-                        style={{ background: 'transparent', color: 'var(--text-color)', border: '1px solid var(--border-color)' }} />
-                <Button shape="circle" size="large" icon={<MessageOutlined />} onClick={() => navigate('/chat')}
-                        style={{ background: 'transparent', color: 'var(--text-color)', border: '1px solid var(--border-color)' }} />
+                <Tooltip title="Trang chủ">
+                    <Button shape="circle" size="large" icon={<HomeOutlined/>} onClick={() => navigate('/feed')}
+                            style={{
+                                background: 'transparent',
+                                color: 'var(--text-color)',
+                                border: '1px solid var(--border-color)'
+                            }}/>
+                </Tooltip>
+
+                {/* --- THÊM NÚT SỰ KIỆN VÀO ĐÂY --- */}
+                <Tooltip title="Sự kiện">
+                    <Button shape="circle" size="large" icon={<CalendarOutlined/>} onClick={() => navigate('/events')}
+                            style={{
+                                background: 'transparent',
+                                color: 'var(--text-color)',
+                                border: '1px solid var(--border-color)'
+                            }}/>
+                </Tooltip>
+                {/* -------------------------------- */}
+
+                <Tooltip title="Tin nhắn">
+                    <Button shape="circle" size="large" icon={<MessageOutlined/>} onClick={() => navigate('/chat')}
+                            style={{
+                                background: 'transparent',
+                                color: 'var(--text-color)',
+                                border: '1px solid var(--border-color)'
+                            }}/>
+                </Tooltip>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
                 <Popover
                     content={notificationContent}
                     title={popoverTitle}
                     trigger="click"
                     placement="bottomRight"
-                    overlayInnerStyle={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    overlayInnerStyle={{backgroundColor: 'var(--bg-color)', color: 'var(--text-color)'}}
                     // --- ĐÃ XÓA DÒNG onOpenChange Ở ĐÂY ĐỂ SỬA LỖI ---
                 >
                     <Badge count={unreadCount} overflowCount={99} size="small">
-                        <Button shape="circle" icon={<BellOutlined style={{ fontSize: 20 }} />}
-                                style={{ background: 'transparent', color: 'var(--text-color)', border: 'none' }} />
+                        <Button shape="circle" icon={<BellOutlined style={{fontSize: 20}}/>}
+                                style={{background: 'transparent', color: 'var(--text-color)', border: 'none'}}/>
                     </Badge>
                 </Popover>
 
-                <Dropdown menu={{ items }} trigger={['click']}>
-                    <div style={{ cursor: 'pointer', padding: '5px', borderRadius: '6px' }}>
+                <Dropdown menu={{items}} trigger={['click']}>
+                    <div style={{cursor: 'pointer', padding: '5px', borderRadius: '6px' }}>
                         <Space>
                             <Badge dot status={getStatusColor(myStatus)} offset={[-2, 30]}>
                                 <Avatar src={myAvatarUrl} />

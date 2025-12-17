@@ -222,7 +222,6 @@ public class ChatController {
     public ResponseEntity<?> pinMessage(@PathVariable String msgId) {
         ChatMessage msg = chatMessageRepository.findById(msgId).orElseThrow();
 
-        // --- LOGIC MỚI: BỎ GHIM CÁC TIN CŨ ---
         // Chỉ chạy logic này nếu ta đang chuẩn bị GHIM (từ chưa ghim -> ghim)
         if (!msg.isPinned()) {
             List<ChatMessage> oldPinnedMessages = new java.util.ArrayList<>();

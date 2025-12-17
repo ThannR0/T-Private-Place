@@ -78,7 +78,7 @@ public class UserController {
             user.setAvatar(fileUrl);
             userRepository.save(user);
 
-            // 4. Bắn Socket báo cập nhật (Giữ nguyên logic cũ)
+            // 4. Bắn Socket báo cập nhật
             Map<String, Object> updateMsg = Map.of(
                     "type", "USER_UPDATE",
                     "username", username,

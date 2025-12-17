@@ -60,7 +60,7 @@ const PostDetail = () => {
                     };
                 }
 
-                // C. Xử lý LIKE (Cũ - backup)
+                // C. Xử lý LIKE
                 if (feedUpdate.type === 'LIKE_UPDATE') {
                     return { ...prev, likeCount: feedUpdate.likeCount };
                 }

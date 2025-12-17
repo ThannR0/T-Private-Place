@@ -13,5 +13,5 @@ public class GroupDetailDTO {
     private String name;
     private String avatar;
     private String adminUsername;
-    private List<UserSummary> members; // Tái sử dụng UserSummary cũ
+    private List<UserSummary> members; // Tái sử dụng UserSummary
 }
