@@ -58,9 +58,7 @@
             stompClient.subscribe('/user/' + username + '/queue/messages', function (msg) {
                 var messageBody = JSON.parse(msg.body);
 
-                // --- ĐOẠN SỬA ĐỂ CHỐNG DUPLICATE ---
-                // Nếu tin nhắn đến từ chính mình -> Bỏ qua (Vì đã hiện lúc bấm gửi rồi)
-                // Trừ trường hợp đặc biệt: Nếu là bot thì vẫn hiện (để debug) hoặc xử lý riêng
+
                 if (messageBody.senderId === username && username !== 'bot') {
                     return;
                 }

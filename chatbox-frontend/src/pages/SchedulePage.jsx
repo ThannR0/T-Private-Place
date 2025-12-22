@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
     Calendar, Row, Col, Card, Typography, Button,
-    message, Spin, Modal, FloatButton, Divider, Tag, Avatar
+    message, Spin, Modal, Divider, Tag, Avatar
 } from 'antd';
 import {
-    PlusOutlined, RobotOutlined, LeftOutlined, RightOutlined,
+    PlusOutlined, RobotOutlined,
     ClockCircleOutlined, EnvironmentOutlined, BulbFilled,
     FireFilled, CoffeeOutlined, ReadOutlined
 } from '@ant-design/icons';
@@ -13,12 +13,15 @@ import 'dayjs/locale/vi';
 import scheduleApi from '../services/scheduleApi';
 import ScheduleModal from '../components/schedule/ScheduleModal';
 import TimeGrid from '../components/schedule/TimeGrid';
+import { useSettings } from '../context/SettingsContext'; // Import hook ngôn ngữ
 
-dayjs.locale('vi');
-const { Title, Text, Paragraph } = Typography;
+// Thiết lập locale cho dayjs tùy theo ngôn ngữ (ở đây tạm để vi hoặc en theo logic app của bạn)
+// dayjs.locale('vi');
 
-// --- COMPONENT CON: RENDER AI UI CỰC ĐẸP ---
+const { Title, Text } = Typography;
+
 const AiSummaryRenderer = ({ rawText }) => {
+    const { t } = useSettings(); // Dùng t() trong component con
     if (!rawText) return null;
 
     // Xử lý trường hợp rỗng
@@ -26,9 +29,9 @@ const AiSummaryRenderer = ({ rawText }) => {
         const parts = rawText.split("|");
         return (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                <Avatar size={100} icon={<CoffeeOutlined />} style={{ background: '#f6ffed', color: '#52c41a', marginBottom: 20 }} />
+                <Avatar size={100} icon={<CoffeeOutlined />} style={{ background: 'var(--bg-secondary)', color: '#52c41a', marginBottom: 20 }} />
                 <Title level={3} style={{ color: '#52c41a' }}>{parts[1]}</Title>
-                <Text type="secondary" style={{ fontSize: 16 }}>{parts[2]}</Text>
+                <Text style={{ fontSize: 16, color: 'var(--text-secondary)' }}>{parts[2]}</Text>
             </div>
         );
     }
@@ -51,7 +54,7 @@ const AiSummaryRenderer = ({ rawText }) => {
                             color: '#fff',
                             textAlign: 'center'
                         }}>
-                            <div style={{ textTransform: 'uppercase', letterSpacing: 2, fontSize: 12, opacity: 0.8 }}>AI Assistant Report</div>
+                            <div style={{ textTransform: 'uppercase', letterSpacing: 2, fontSize: 12, opacity: 0.8 }}>{t('aiReportHeader') || "AI Assistant Report"}</div>
                             <Title level={2} style={{ color: '#fff', margin: '5px 0 0 0' }}>{parts[1]}</Title>
                             <div style={{ fontSize: 16, opacity: 0.9 }}>{parts[2]}</div>
                         </div>
@@ -61,7 +64,7 @@ const AiSummaryRenderer = ({ rawText }) => {
                 // 2. SECTION TITLE
                 if (type === "SECTION_TITLE") {
                     return (
-                        <Divider key={index} orientation="left" style={{ borderColor: '#e0e0e0' }}>
+                        <Divider key={index} orientation="left" style={{ borderColor: 'var(--border-color)' }}>
                             <span style={{ color: '#764ba2', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
                                 {parts[1]}
                             </span>
@@ -88,10 +91,10 @@ const AiSummaryRenderer = ({ rawText }) => {
                         <div key={index} style={{
                             display: 'flex',
                             marginBottom: 15,
-                            background: '#fff',
+                            background: 'var(--card-bg)', // Đổi thành biến CSS
                             borderRadius: 12,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                            border: '1px solid #f0f0f0',
+                            border: '1px solid var(--border-color)', // Đổi thành biến CSS
                             overflow: 'hidden'
                         }}>
                             {/* Dải màu bên trái */}
@@ -99,19 +102,19 @@ const AiSummaryRenderer = ({ rawText }) => {
 
                             <div style={{ padding: '12px 16px', flex: 1 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                    <Text strong style={{ fontSize: 16 }}>{title}</Text>
+                                    <Text strong style={{ fontSize: 16, color: 'var(--text-color)' }}>{title}</Text>
                                     <Tag color={timeOfDay === 'MORNING' ? 'orange' : (timeOfDay === 'AFTERNOON' ? 'blue' : 'purple')} style={{ borderRadius: 10, border: 'none', margin: 0 }}>
                                         {timeRange}
                                     </Tag>
                                 </div>
 
                                 {location && (
-                                    <div style={{ color: '#888', fontSize: 13, marginBottom: 4 }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 4 }}>
                                         <EnvironmentOutlined style={{ marginRight: 5 }} /> {location}
                                     </div>
                                 )}
                                 {desc && (
-                                    <div style={{ background: '#f9f9f9', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: '#555', marginTop: 6, fontStyle: 'italic' }}>
+                                    <div style={{ background: 'var(--bg-secondary)', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: 'var(--text-secondary)', marginTop: 6, fontStyle: 'italic' }}>
                                         "{desc}"
                                     </div>
                                 )}
@@ -122,7 +125,6 @@ const AiSummaryRenderer = ({ rawText }) => {
 
                 // 4. STATS
                 if (type === "STATS") {
-                    // STATS|Sáng:1|Chiều:2|Tối:0
                     return (
                         <Row gutter={16} key={index} style={{ marginBottom: 20 }}>
                             {[parts[1], parts[2], parts[3]].map((stat, i) => {
@@ -130,11 +132,11 @@ const AiSummaryRenderer = ({ rawText }) => {
                                 return (
                                     <Col span={8} key={i}>
                                         <div style={{
-                                            textAlign: 'center', background: '#f7f9fc',
+                                            textAlign: 'center', background: 'var(--bg-secondary)',
                                             borderRadius: 12, padding: '10px 0'
                                         }}>
                                             <div style={{ fontSize: 24, fontWeight: 800, color: '#764ba2' }}>{count}</div>
-                                            <div style={{ fontSize: 12, color: '#888' }}>{label}</div>
+                                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</div>
                                         </div>
                                     </Col>
                                 );
@@ -147,12 +149,13 @@ const AiSummaryRenderer = ({ rawText }) => {
                 if (type === "ADVICE") {
                     return (
                         <div key={index} style={{
-                            background: 'linear-gradient(to right, #fff1eb 0%, #ace0f9 100%)',
-                            padding: 20, borderRadius: 12, display: 'flex', gap: 15, alignItems: 'center'
+                            background: 'linear-gradient(to right, #fff1eb 0%, #ace0f9 100%)', // Gradient này khá sáng, có thể giữ nguyên làm điểm nhấn
+                            padding: 20, borderRadius: 12, display: 'flex', gap: 15, alignItems: 'center',
+                            border: '1px solid var(--border-color)'
                         }}>
                             <BulbFilled style={{ fontSize: 24, color: '#faad14' }} />
                             <div>
-                                <div style={{ fontWeight: 700, color: '#333', marginBottom: 2 }}>Lời khuyên</div>
+                                <div style={{ fontWeight: 700, color: '#333', marginBottom: 2 }}>{t('advice') || "Lời khuyên"}</div>
                                 <div style={{ color: '#555', lineHeight: 1.4 }}>{parts[1]}</div>
                             </div>
                         </div>
@@ -168,6 +171,8 @@ const AiSummaryRenderer = ({ rawText }) => {
 
 
 const SchedulePage = () => {
+    const { t } = useSettings();
+
     // --- STATE ---
     const [currentDate, setCurrentDate] = useState(dayjs());
     const [viewMonth, setViewMonth] = useState(dayjs());
@@ -225,15 +230,15 @@ const SchedulePage = () => {
         try {
             if (payload.id) {
                 await scheduleApi.update(payload);
-                message.success("Cập nhật thành công!");
+                message.success(t('updateScheduleSuccess') || "Cập nhật thành công!");
             } else {
                 await scheduleApi.create(payload);
-                message.success("Tạo lịch thành công!");
+                message.success(t('createScheduleSuccess') || "Tạo lịch thành công!");
             }
             setModalVisible(false);
             fetchSchedules(viewMonth);
         } catch (error) {
-            message.error("Lỗi: " + (error.response?.data?.message || "Error"));
+            message.error("Error: " + (error.response?.data?.message || "Error"));
         } finally {
             setSaveLoading(false);
         }
@@ -241,13 +246,14 @@ const SchedulePage = () => {
 
     const handleDelete = async (id) => {
         Modal.confirm({
-            title: 'Xóa lịch trình?',
-            content: 'Hành động này không thể hoàn tác.',
+            title: t('deleteScheduleTitle') || 'Xóa lịch trình?',
+            content: t('deletePostDesc') || 'Hành động này không thể hoàn tác.',
             okType: 'danger',
+            // Sử dụng class overrides trong index.css để style Modal
             onOk: async () => {
                 try {
                     await scheduleApi.delete(id);
-                    message.success("Đã xóa!");
+                    message.success(t('deleteSuccess') || "Đã xóa!");
                     fetchSchedules(viewMonth);
                 } catch (e) { message.error("Lỗi xóa"); }
             }
@@ -276,7 +282,7 @@ const SchedulePage = () => {
                 startTime: newStart.format('YYYY-MM-DDTHH:mm:ss'),
                 endTime: newEnd.format('YYYY-MM-DDTHH:mm:ss'),
             });
-            message.success("Đã di chuyển lịch trình!");
+            message.success(t('moveScheduleSuccess') || "Đã di chuyển lịch trình!");
         } catch (error) {
             message.error("Lỗi di chuyển: " + error.message);
             fetchSchedules(viewMonth);
@@ -310,13 +316,13 @@ const SchedulePage = () => {
                         <div style={{textAlign: 'center', marginBottom: 20}}>
                             <Button type="primary" size="large" icon={<PlusOutlined />} block onClick={() => openCreateModal()}
                                     style={{borderRadius: 8, height: 45, fontSize: 16, fontWeight: 600}}>
-                                Tạo kế hoạch
+                                {t('createSchedule') || "Tạo kế hoạch"}
                             </Button>
                         </div>
                         <Calendar fullscreen={false} value={currentDate} onSelect={onSelectDate} cellRender={dateCellRender} />
                         <Divider />
                         <div style={{textAlign: 'center'}}>
-                            <Text type="secondary">Bạn đang xem lịch ngày:</Text>
+                            <Text style={{color: 'var(--text-secondary)'}}>{t('viewingDate') || "Bạn đang xem lịch ngày"}:</Text>
                             <Title level={4} style={{margin: '5px 0', color: '#1890ff'}}>
                                 {currentDate.format('DD/MM/YYYY')}
                             </Title>
@@ -326,16 +332,22 @@ const SchedulePage = () => {
 
                 {/* CỘT PHẢI */}
                 <Col xs={24} lg={18}>
-                    <Card style={{ borderRadius: 16, height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Thêm style để Card bung chiều cao và đổi nền theo theme */}
+                    <Card
+                        style={{ borderRadius: 16, height: '100%', display: 'flex', flexDirection: 'column' }}
+                        bodyStyle={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column' }}
+                    >
+                        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <Title level={4} style={{ margin: 0 }}>
-                                    {currentDate.format('dddd')}, ngày {currentDate.format('D')} tháng {currentDate.format('M')}
+                                <Title level={4} style={{ margin: 0, color: 'var(--text-color)' }}>
+                                    {currentDate.format('dddd')}, {currentDate.format('D')} / {currentDate.format('M')}
                                 </Title>
-                                <Text type="secondary">Có {dailyEvents.length} sự kiện trong ngày</Text>
+                                <Text style={{color: 'var(--text-secondary)'}}>
+                                    {t('eventsToday')?.replace('{{count}}', dailyEvents.length) || `Có ${dailyEvents.length} sự kiện`}
+                                </Text>
                             </div>
-                            <Button type="dashed" icon={<RobotOutlined />} onClick={handleAiSummary} style={{ color: '#722ed1', borderColor: '#722ed1', background: '#f9f0ff' }}>
-                                AI Tóm tắt
+                            <Button type="dashed" icon={<RobotOutlined />} onClick={handleAiSummary} style={{ color: '#722ed1', borderColor: '#722ed1', background: 'var(--bg-secondary)' }}>
+                                {t('aiSummaryBtn') || "AI Tóm tắt"}
                             </Button>
                         </div>
 
@@ -362,7 +374,7 @@ const SchedulePage = () => {
                 selectedDate={selectedSlotTime}
             />
 
-            {/* MODAL AI PRO MAX (Sử dụng component renderer riêng) */}
+            {/* MODAL AI PRO MAX */}
             <Modal
                 open={aiModalVisible}
                 onCancel={() => setAiModalVisible(false)}
@@ -374,7 +386,9 @@ const SchedulePage = () => {
                 {aiLoading ? (
                     <div style={{textAlign: 'center', padding: '60px 20px'}}>
                         <Spin size="large" />
-                        <div style={{marginTop: 20, color: '#667eea', fontWeight: 600}}>AI đang phân tích dữ liệu...</div>
+                        <div style={{marginTop: 20, color: '#667eea', fontWeight: 600}}>
+                            {t('aiAnalyzing') || "AI đang phân tích dữ liệu..."}
+                        </div>
                     </div>
                 ) : (
                     <AiSummaryRenderer rawText={aiSummary} />

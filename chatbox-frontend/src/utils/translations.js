@@ -26,7 +26,7 @@ export const translations = {
         groupChat: "Nhóm chat",
         active: "Đang hoạt động",
         recentAccess: "Truy cập gần đây",
-        membersCount: "{{count}} thành viên", // Dạng có tham số
+        membersCount: "{{count}} thành viên",
         alwaysReady: "Luôn sẵn sàng",
         leaveGroup: "Rời nhóm",
         createGroup: "Tạo nhóm chat",
@@ -79,7 +79,7 @@ export const translations = {
         errorLoadGroup: "Không thể tải thông tin nhóm",
         errorLoadUsers: "Lỗi tải danh sách người dùng",
 
-        // Transfer Admin (Mới thêm)
+        // Transfer Admin
         transferAdminTitle: "Chuyển quyền Trưởng nhóm",
         transferAndLeave: "Chuyển quyền & Rời nhóm",
         transferWarning: "Bạn đang là Trưởng nhóm. Để rời nhóm, bạn cần chỉ định một thành viên khác thay thế vị trí này.",
@@ -120,7 +120,7 @@ export const translations = {
         messsage: "Nhắn tin",
         commented: "Đã comment",
 
-        // --- REACTIONS (PostCard) ---
+        // Reactions
         love: "Yêu thích",
         haha: "Haha",
         wow: "Wow",
@@ -133,9 +133,7 @@ export const translations = {
         commentedBy: "Đã bình luận:",
         noCommentYet: "Chưa có bình luận",
 
-
-
-        // --- PROFILE & SETTINGS ---
+        // Profile & Settings
         editProfile: "Chỉnh sửa hồ sơ",
         saveChanges: "Lưu thay đổi",
         uploadAvatar: "Đổi ảnh đại diện",
@@ -145,8 +143,6 @@ export const translations = {
         hometown: "Quê quán",
         position: "Chức vụ",
         back: "Quay lại",
-
-        // Change Password (In-App)
         currentPassword: "Mật khẩu hiện tại",
         changePasswordTitle: "Đổi Mật Khẩu",
         backToChat: "Quay lại nhắn tin",
@@ -156,13 +152,9 @@ export const translations = {
         postNotFound: "Không tìm thấy bài viết",
         postDeletedDesc: "Bài viết này có thể đã bị xóa hoặc không tồn tại.",
         goHome: "Về trang chủ",
-
-        // --- POST DETAIL ---
-        postNotFoundDesc: "Bài viết này có thể đã bị xóa hoặc không tồn tại.",
-        backToHome: "Về trang chủ",
         postDeletedWarning: "Bài viết này đã bị xóa!",
 
-        // --- PROFILE ---
+        // Profile Logic
         profileDefaultTitle: "Hồ sơ",
         userNotFound: "Không tìm thấy người dùng!",
         updateProfileSuccess: "Cập nhật hồ sơ thành công!",
@@ -179,7 +171,7 @@ export const translations = {
         posEmployee: "Nhân viên",
         notUpdated: "Chưa cập nhật",
 
-        // --- CHAT WINDOW ---
+        // Chat Window
         msgPinnedTooFar: "Tin nhắn ghim ở quá xa, vui lòng lướt tìm.",
         msgRevokedSuccess: "Đã thu hồi",
         selectUserWarning: "Chọn người",
@@ -197,11 +189,11 @@ export const translations = {
         forwardModalTitle: "Chuyển tiếp tin nhắn",
         contentLabel: "Nội dung:",
         send: "Gửi",
-
-        // --- POST DETAIL & FEED ---
+        choosePersonOrGroup: "Chọn người hoặc nhóm để chuyển tiếp",
         feedLoadError: "Lỗi tải Newsfeed!",
+        pined: "Tin nhắn đã ghim",
 
-        // --- AUTH (Đăng nhập/Ký) ---
+        // Auth
         login: "Đăng nhập",
         loginSubtitle: "Nhập thông tin để truy cập tài khoản của bạn.",
         loginSuccess: "Chào mừng trở lại!",
@@ -233,7 +225,7 @@ export const translations = {
         backToLogin: "Quay lại đăng nhập",
         verifySuccess: "Kích hoạt thành công! Bạn có thể đăng nhập.",
 
-        // Forgot & Reset Password
+        // Forgot & Reset
         forgotTitle: "Quên mật khẩu",
         forgotSubtitle: "Đừng lo! Hãy nhập email để lấy lại mật khẩu.",
         sendOtp: "Gửi mã OTP",
@@ -249,10 +241,7 @@ export const translations = {
         confirmMatchError: "Mật khẩu xác nhận không khớp!",
         resetSuccess: "Đổi mật khẩu thành công! Hãy đăng nhập ngay.",
 
-        //Chat windown
-        choosePersonOrGroup: "Chọn người hoặc nhóm để chuyển tiếp",
-
-        // --- THÊM PHẦN EVENTS ---
+        // Events
         eventsTitle: 'Sự kiện sắp tới',
         createEvent: 'Tạo sự kiện',
         noEvents: 'Chưa có sự kiện nào sắp diễn ra.',
@@ -279,15 +268,13 @@ export const translations = {
         eventPlaceHolderAddr: 'VD: 123 Đường ABC, Quận X',
         pickMap: 'Chọn địa điểm tổ chức sự kiện trên bản đồ',
 
-// --- AI FEATURES (MỚI) ---
+        // AI Features
         aiButton: "AI Viết hộ",
         aiTooltip: "AI giúp bạn viết nội dung nhanh chóng",
         aiTitle: "Trợ lý AI Sáng tạo",
         aiGenerating: "AI đang suy nghĩ và viết bài...",
         aiWait: "(Sẽ mất khoảng vài giây)",
         aiSelectStyle: "Bạn muốn bài viết phong cách nào?",
-
-        // Styles
         styleFunny: "Vui vẻ, Hài hước",
         descFunny: "Bắt trend, dùng nhiều icon, giọng văn thân thiện.",
         styleSerious: "Sâu sắc, Chiêm nghiệm",
@@ -296,29 +283,24 @@ export const translations = {
         descProfessional: "Lịch sự, chia sẻ kiến thức, phù hợp công việc.",
         styleCustom: "Tùy chỉnh (Nhập prompt)",
         descCustom: "Bạn tự ra đề bài cho AI.",
-
-        // Custom Input
         customLabel: "Nhập yêu cầu của bạn:",
         customPlaceholder: "VD: Viết bài thơ tặng mẹ, Review quán cafe...",
-
-        // Actions & Messages
         btnGenerate: "Tạo ngay",
         msgAIEmpty: "Vui lòng nhập chủ đề bạn muốn viết!",
         msgAISuccess: "AI đã hoàn thành tác vụ!",
         msgAIError: "AI đang bận, vui lòng thử lại sau.",
-
-        // Prompts (Gửi xuống AI) - Dùng để AI hiểu ngữ cảnh ngôn ngữ
         promptFunny: "chủ đề cuộc sống vui vẻ, hài hước",
         promptSerious: "chủ đề suy ngẫm cuộc sống, sâu sắc",
         promptProfessional: "chủ đề kiến thức công việc, chuyên nghiệp",
 
-        // --- FORMAT TOOLBAR ---
+        // Format Toolbar
         fmtBold: "In đậm (Bôi đen trước)",
         fmtItalic: "In nghiêng (Bôi đen trước)",
         fmtStrike: "Gạch ngang (Bôi đen trước)",
         fmtEmoji: "Chèn biểu cảm",
         fmtWarn: "Vui lòng bôi đen văn bản cần định dạng!",
 
+        // Event Details
         eventTime: "Thời gian",
         eventLocation: "Địa điểm",
         mapBtn: "Chỉ đường",
@@ -326,20 +308,129 @@ export const translations = {
         organizer: "Người tổ chức",
         youAreHost: "Bạn là BTC",
 
-        //createeventmodals
-        "editEvent": "Cập nhật sự kiện",
-        "generalInfo": "Thông tin chung",
-        "eventName": "Tên sự kiện",
-        "startTime": "Thời gian bắt đầu",
-        "maxParticipants": "Số người",
-        "locationName": "Tên địa điểm",
-        "address": "Địa chỉ chi tiết",
-        "description": "Mô tả chi tiết",
-        "mediaLocation": "Hình ảnh & Vị trí",
-        "coverImage": "Ảnh bìa sự kiện",
-        "requireImage": "Vui lòng chọn ảnh bìa!",
-        "errorDate12h": "Thời gian phải sau hiện tại ít nhất 12 tiếng",
-        "dragDrop": "Kéo thả hoặc Click để tải ảnh lên"
+        editEvent: "Cập nhật sự kiện",
+        generalInfo: "Thông tin chung",
+        eventName: "Tên sự kiện",
+        startTime: "Thời gian bắt đầu",
+        maxParticipants: "Số người",
+        locationName: "Tên địa điểm",
+        address: "Địa chỉ chi tiết",
+        description: "Mô tả chi tiết",
+        mediaLocation: "Hình ảnh & Vị trí",
+        coverImage: "Ảnh bìa sự kiện",
+        requireImage: "Vui lòng chọn ảnh bìa!",
+        errorDate12h: "Thời gian phải sau hiện tại ít nhất 12 tiếng",
+        dragDrop: "Kéo thả hoặc Click để tải ảnh lên",
+
+        // Payment
+        totalDeposit: "Tổng nạp",
+        currentBalance: "Số dư hiện tại",
+        deposit: "Nạp thêm",
+        markAllRead: "Đọc tất cả",
+        noNotifications: "Không có thông báo mới",
+        read: "Đã đọc",
+        home: "Trang chủ",
+        explore: "Khám phá",
+        schedule: "Lịch trình",
+        messages: "Tin nhắn",
+        balance: "SỐ DƯ",
+        paymentGateway: "Cổng Thanh Toán",
+        enterAmount: "Nhập số tiền",
+        scanQr: "Quét mã QR",
+        depositThan: "Nạp Than",
+        donateDev: "Donate Dev",
+        minAmountError: "Số tiền tối thiểu là 10.000đ",
+        maxAmountError: "Số tiền tối đa là 10 Tỷ VND",
+        createQrSuccess: "Tạo mã QR thành công!",
+        transactionError: "Lỗi tạo giao dịch",
+        amountVnd: "Nhập số tiền (VND)",
+        exchangeRate: "Quy đổi nhận được:",
+        thanksDonate: "Cảm ơn bạn đã ủng hộ Developer! ❤️",
+        createQrBtn: "Tạo mã QR",
+        expiresIn: "Hết hạn sau:",
+        transferContent: "Nội dung chuyển khoản (Bắt buộc):",
+        copySuccess: "Đã copy nội dung!",
+        confirmTransfer: "Tôi đã chuyển tiền",
+        sentRequest: "Đã gửi yêu cầu! Admin sẽ duyệt tiền trong ít phút.",
+
+        startDate: "Từ ngày",
+        endDate: "Đến ngày",
+        all: "Tất cả",
+        myEvents: "Của tôi",
+        joinedEvents: "Đã tham gia",
+        fullSlot: "Sự kiện đã hết chỗ!",
+        cancelJoinSuccess: "Đã hủy tham gia",
+        joinedEventsSuccess: "Tham gia thành công!",
+
+        //schedule
+        createSchedule: "Tạo kế hoạch",
+        viewingDate: "Bạn đang xem lịch ngày",
+        eventsToday: "Có {{count}} sự kiện trong ngày",
+        aiSummaryBtn: "AI Tóm tắt",
+        aiAnalyzing: "AI đang phân tích dữ liệu...",
+        aiReportHeader: "Báo cáo trợ lý AI",
+        advice: "Lời khuyên",
+        deleteScheduleTitle: "Xóa lịch trình?",
+        moveScheduleSuccess: "Đã di chuyển lịch trình!",
+        updateScheduleSuccess: "Cập nhật thành công!",
+        createScheduleSuccess: "Tạo lịch thành công!",
+
+        addSchedule: "+ Thêm",
+        editSchedule: "Sửa",
+        deleteSchedule: "Xóa",
+        saveSchedule: "Lưu",
+        cancelSchedule: "Hủy",
+        titlePlaceholder: "Thêm tiêu đề và thời gian",
+        locationPlaceholder: "Thêm địa điểm",
+        descPlaceholder: "Thêm mô tả, ghi chú...",
+        allDay: "Cả ngày",
+        requiredTitleTime: "Vui lòng nhập Tiêu đề và chọn Thời gian!",
+
+        stepChoosePackage: "Chọn Gói",
+        stepPayment: "Thanh Toán",
+        stepComplete: "Hoàn Tất",
+        popular: "Phổ biến",
+        exchangeValue: "Quy đổi giá trị",
+        supportProject: "Ủng hộ dự án",
+        enterAmountVnd: "Nhập số tiền muốn thanh toán (VND)",
+        createDepositTrans: "Tạo Giao Dịch Nạp Tiền",
+        createDonateTrans: "Tạo Mã Donate",
+        secureTrans: "Giao dịch được mã hóa an toàn 100%",
+        waitingPayment: "Đang chờ xác nhận thanh toán...",
+        waitingPaymentDesc: "Màn hình sẽ tự động chuyển khi hệ thống nhận được tiền.",
+        scanViaApp: "QUÉT QUA APP NGÂN HÀNG",
+        bank: "Ngân hàng",
+        accountHolder: "Chủ tài khoản",
+        amount: "Số tiền",
+        content: "Nội dung",
+        importantNote: "Lưu ý quan trọng",
+        noteKeepContent: "Vui lòng giữ nguyên 'Nội dung' để hệ thống tự động cộng tiền.",
+        iHaveTransferred: "Tôi đã chuyển tiền",
+        paymentSuccess: "Thanh Toán Thành Công!",
+        systemRecorded: "Hệ thống đã ghi nhận khoản tiền",
+        balanceAdded: "Số dư của bạn đã được cộng thêm",
+        sentRequestTitle: "Đã gửi yêu cầu xác nhận!",
+        sentRequestDesc: "Hệ thống đang kiểm tra giao dịch. Nếu bạn đã chuyển khoản, tiền sẽ vào ví trong giây lát.",
+        moneyReceived: "Đã nhận được tiền! Cảm ơn bạn.",
+        adminSimulate: "⚡ (Admin Only) Giả lập thanh toán thành công",
+        copied: "Đã sao chép",
+
+        myWallet: "Ví Của Tôi",
+        depositMore: "Nạp Thêm Than",
+        totalDeposited: "Tổng tiền đã nạp",
+        totalSuccessTrans: "Tổng giao dịch thành công",
+        balanceFluctuation: "Biến động số dư theo tháng",
+        noStatsData: "Chưa có dữ liệu thống kê",
+        transactionHistory: "Lịch sử giao dịch",
+        transCode: "Mã Giao Dịch",
+        time: "Thời Gian",
+        amountVndColumn: "Số Tiền (VND)",
+        gift: "Quà tặng",
+        thanReceived: "Than Nhận (T)",
+        type: "Loại",
+        depositType: "Nạp Tiền",
+        donateType: "Donate",
+        adminGift: "Admin Tặng",
     },
     en: {
         settings: "Settings",
@@ -419,9 +510,9 @@ export const translations = {
         errorRemoveMember: "Error removing member (Are you Admin?)",
         errorLoadGroup: "Cannot load group info",
         errorLoadUsers: "Error loading user list",
-        tranferLeader: "Tranfer Leader",
+        tranferLeader: "Transfer Leader", // Fixed typo "Tranfer"
 
-        // Transfer Admin (New)
+        // Transfer Admin
         transferAdminTitle: "Transfer Admin Rights",
         transferAndLeave: "Transfer & Leave",
         transferWarning: "You are the Admin. To leave the group, you must assign a new Admin first.",
@@ -430,7 +521,6 @@ export const translations = {
         selectAdminWarning: "Please select a new Admin!",
         transferSuccess: "Admin rights transferred successfully.",
         transferError: "Transfer error",
-
 
         // Newsfeed & Post
         newsfeed: "Newsfeed",
@@ -442,7 +532,6 @@ export const translations = {
         fileTooLarge: "File too large! Please select under 50MB.",
         emptyPostWarning: "Please write something or select a file!",
         bgTheme: "Background Theme",
-
 
         // Post Actions
         like: "Like",
@@ -464,7 +553,7 @@ export const translations = {
         messsage: "Message",
         commented: "Commented: {{name}}",
 
-        // --- REACTIONS ---
+        // Reactions
         love: "Love",
         haha: "Haha",
         wow: "Wow",
@@ -477,8 +566,7 @@ export const translations = {
         commentedBy: "Commented by:",
         noCommentYet: "No comments yet",
 
-
-        // --- PROFILE & SETTINGS ---
+        // Profile & Settings
         editProfile: "Edit Profile",
         saveChanges: "Save Changes",
         uploadAvatar: "Change Avatar",
@@ -488,8 +576,6 @@ export const translations = {
         hometown: "Hometown",
         position: "Position",
         back: "Back",
-
-        // Change Password
         currentPassword: "Current Password",
         changePasswordTitle: "Change Password",
         backToChat: "Back to Chat",
@@ -499,8 +585,12 @@ export const translations = {
         postNotFound: "Post not found",
         postDeletedDesc: "This post may have been deleted or does not exist.",
         goHome: "Go Home",
+        postDeletedWarning: "This post has been deleted!",
+        postNotFoundDesc: "This post may have been deleted or does not exist.",
+        backToHome: "Back to Home",
+        feedLoadError: "Error loading Newsfeed!",
 
-        // --- AUTH ---
+        // Auth
         login: "Login",
         loginSubtitle: "Enter your details to access your account.",
         loginSuccess: "Welcome back!",
@@ -532,7 +622,7 @@ export const translations = {
         backToLogin: "Back to Login",
         verifySuccess: "Activated successfully! You can login now.",
 
-        // Forgot & Reset Password
+        // Forgot & Reset
         forgotTitle: "Forgot Password",
         forgotSubtitle: "Don't worry! Enter your email to recover password.",
         sendOtp: "Send OTP",
@@ -548,60 +638,8 @@ export const translations = {
         confirmMatchError: "Passwords do not match!",
         resetSuccess: "Password reset successful! Login now.",
 
-        //Chat windown
+        // Chat Window
         choosePersonOrGroup: "Select the person or group to forward",
-
-        // --- AI FEATURES (NEW) ---
-        aiButton: "AI Writer",
-        aiTooltip: "Let AI help you write content faster",
-        aiTitle: "Creative AI Assistant",
-        aiGenerating: "AI is thinking and writing...",
-        aiWait: "(This may take a few seconds)",
-        aiSelectStyle: "Choose a writing style:",
-
-        // Styles
-        styleFunny: "Funny, Humorous",
-        descFunny: "Trendy, using icons, friendly tone.",
-        styleSerious: "Deep, Serious",
-        descSerious: "For sharing personal views, philosophy.",
-        styleProfessional: "Professional",
-        descProfessional: "Polite, knowledge sharing, work-appropriate.",
-        styleCustom: "Custom (Enter prompt)",
-        descCustom: "You define the topic for AI.",
-
-        // Custom Input
-        customLabel: "Enter your request:",
-        customPlaceholder: "Ex: Write a poem for mom, Cafe review...",
-
-        // Actions & Messages
-        btnGenerate: "Generate",
-        msgAIEmpty: "Please enter a topic!",
-        msgAISuccess: "AI has finished!",
-        msgAIError: "AI is busy, please try again later.",
-
-        // Prompts (Sent to AI)
-        promptFunny: "topic about happy life, funny",
-        promptSerious: "topic about life reflection, deep",
-        promptProfessional: "topic about professional knowledge",
-
-        // --- PROFILE ---
-        profileDefaultTitle: "Profile",
-        userNotFound: "User not found!",
-        updateProfileSuccess: "Profile updated successfully!",
-        updateProfileFailed: "Update failed.",
-        uploadingPhoto: "Uploading photo...",
-        uploadPhotoSuccess: "Avatar updated successfully!",
-        uploadPhotoError: "Error uploading photo",
-        positionPlaceholder: "Select Position",
-        posManager: "Manager",
-        posPM: "Project Manager (PM)",
-        posBA: "Business Analyst (BA)",
-        posDev: "Developer (DEV)",
-        posTester: "Tester / QA",
-        posEmployee: "Employee",
-        notUpdated: "Not updated",
-
-        // --- CHAT WINDOW ---
         msgPinnedTooFar: "Pinned message is too far, please scroll.",
         msgRevokedSuccess: "Message revoked",
         selectUserWarning: "Select a user",
@@ -619,21 +657,58 @@ export const translations = {
         forwardModalTitle: "Forward Message",
         contentLabel: "Content:",
         send: "Send",
+        pined: "Pinned",
 
-        // --- POST DETAIL & FEED ---
-        postDeletedWarning: "This post has been deleted!",
-        postNotFoundDesc: "This post may have been deleted or does not exist.",
-        backToHome: "Back to Home",
-        feedLoadError: "Error loading Newsfeed!",
+        // AI Features
+        aiButton: "AI Writer",
+        aiTooltip: "Let AI help you write content faster",
+        aiTitle: "Creative AI Assistant",
+        aiGenerating: "AI is thinking and writing...",
+        aiWait: "(This may take a few seconds)",
+        aiSelectStyle: "Choose a writing style:",
+        styleFunny: "Funny, Humorous",
+        descFunny: "Trendy, using icons, friendly tone.",
+        styleSerious: "Deep, Serious",
+        descSerious: "For sharing personal views, philosophy.",
+        styleProfessional: "Professional",
+        descProfessional: "Polite, knowledge sharing, work-appropriate.",
+        styleCustom: "Custom (Enter prompt)",
+        descCustom: "You define the topic for AI.",
+        customLabel: "Enter your request:",
+        customPlaceholder: "Ex: Write a poem for mom, Cafe review...",
+        btnGenerate: "Generate",
+        msgAIEmpty: "Please enter a topic!",
+        msgAISuccess: "AI has finished!",
+        msgAIError: "AI is busy, please try again later.",
+        promptFunny: "topic about happy life, funny",
+        promptSerious: "topic about life reflection, deep",
+        promptProfessional: "topic about professional knowledge",
 
-        // --- FORMAT TOOLBAR ---
+        // Format Toolbar
         fmtBold: "Bold (Select text first)",
         fmtItalic: "Italic (Select text first)",
         fmtStrike: "Strikethrough (Select text first)",
         fmtEmoji: "Insert Emoji",
         fmtWarn: "Please select text to format!",
 
-        // --- ADD EVENTS SECTION ---
+        // Profile
+        profileDefaultTitle: "Profile",
+        userNotFound: "User not found!",
+        updateProfileSuccess: "Profile updated successfully!",
+        updateProfileFailed: "Update failed.",
+        uploadingPhoto: "Uploading photo...",
+        uploadPhotoSuccess: "Avatar updated successfully!",
+        uploadPhotoError: "Error uploading photo",
+        positionPlaceholder: "Select Position",
+        posManager: "Manager",
+        posPM: "Project Manager (PM)",
+        posBA: "Business Analyst (BA)",
+        posDev: "Developer (DEV)",
+        posTester: "Tester / QA",
+        posEmployee: "Employee",
+        notUpdated: "Not updated",
+
+        // Events
         eventsTitle: 'Upcoming Events',
         createEvent: 'Create Event',
         noEvents: 'No upcoming events found.',
@@ -658,28 +733,138 @@ export const translations = {
         eventPlaceHolderTitle: 'Ex: Birthday Party, Club Meeting...',
         eventPlaceHolderLoc: 'Ex: Highland Coffee',
         eventPlaceHolderAddr: 'Ex: 123 ABC Street, District X',
-
         eventTime: "Time",
         eventLocation: "Location",
         mapBtn: "Directions map",
-        participantsList: "List join",
+        participantsList: "Participant List",
         organizer: "Host",
-        youAreHost: "You Is Host",
+        youAreHost: "You are the Host", // Fixed grammar "You Is Host"
 
-        "editEvent": "Update Event",
-        "generalInfo": "Overall Information",
-        "eventName": "Name Event",
-        "startTime": "Start Time",
-        "maxParticipants": "Max Participants",
-        "locationName": "Location Name",
-        "address": "Details Address",
-        "description": "Details Description",
-        "mediaLocation": "Media Location",
-        "coverImage": "Cover Image Event",
-        "requireImage": "Choose Image Please",
-        "errorDate12h": "The time must be at least 12 hours after the present",
-        "dragDrop": "Drag and drop or Click to upload photos",
+        editEvent: "Update Event",
+        generalInfo: "Overall Information",
+        eventName: "Event Name",
+        startTime: "Start Time",
+        maxParticipants: "Max Participants",
+        locationName: "Location Name",
+        address: "Detailed Address",
+        description: "Detailed Description",
+        mediaLocation: "Media Location",
+        coverImage: "Event Cover Image",
+        requireImage: "Please choose an image",
+        errorDate12h: "The time must be at least 12 hours from now",
+        dragDrop: "Drag and drop or Click to upload photos",
         pickMap: 'Select the event location on the map',
 
+        // Payment
+        totalDeposit: "Total Deposit",
+        currentBalance: "Current Balance",
+        deposit: "Deposit",
+        markAllRead: "Mark all read",
+        noNotifications: "No new notifications",
+        read: "Read",
+        home: "Home",
+        explore: "Explore",
+        schedule: "Schedule",
+        messages: "Messages",
+        balance: "BALANCE",
+        paymentGateway: "Payment Gateway",
+        enterAmount: "Enter Amount",
+        scanQr: "Scan QR Code",
+        depositThan: "Deposit Than",
+        donateDev: "Donate Dev",
+        minAmountError: "Minimum amount is 10,000 VND",
+        maxAmountError: "Maximum amount is 10 Billion VND",
+        createQrSuccess: "QR Code created successfully!",
+        transactionError: "Transaction Error",
+        amountVnd: "Enter Amount (VND)",
+        exchangeRate: "You receive:",
+        thanksDonate: "Thank you for supporting the Developer! ❤️",
+        createQrBtn: "Create QR Code",
+        expiresIn: "Expires in:",
+        transferContent: "Transfer Content (Required):",
+        copySuccess: "Copied content!",
+        confirmTransfer: "I have transferred",
+        sentRequest: "Request sent! Admin will approve shortly.",
+
+        startDate: "Start Date",
+        endDate: "End Date",
+        all: "All",
+        myEvents: "My Events",
+        joinedEvents: "Joined Events",
+        fullSlot: "Event is full!",
+        cancelJoinSuccess: "Left event successfully",
+        joinedEventsSuccess: "Joined successfully!",
+
+        //schedule
+        createSchedule: "Create Plan",
+        viewingDate: "Viewing date",
+        eventsToday: "{{count}} events today",
+        aiSummaryBtn: "AI Summary",
+        aiAnalyzing: "AI is analyzing data...",
+        aiReportHeader: "AI Assistant Report",
+        advice: "Advice",
+        deleteScheduleTitle: "Delete Schedule?",
+        moveScheduleSuccess: "Schedule moved successfully!",
+        updateScheduleSuccess: "Updated successfully!",
+        createScheduleSuccess: "Schedule created successfully!",
+
+
+        addSchedule: "+ Add",
+        editSchedule: "Edit",
+        deleteSchedule: "Delete",
+        saveSchedule: "Save",
+        cancelSchedule: "Cancel",
+        titlePlaceholder: "Add title and time",
+        locationPlaceholder: "Add location",
+        descPlaceholder: "Add description, notes...",
+        allDay: "All day",
+        requiredTitleTime: "Please enter Title and select Time!",
+
+        stepChoosePackage: "Select Package",
+        stepPayment: "Payment",
+        stepComplete: "Complete",
+        popular: "Popular",
+        exchangeValue: "Exchange Value",
+        supportProject: "Support Project",
+        enterAmountVnd: "Enter amount to pay (VND)",
+        createDepositTrans: "Create Deposit Transaction",
+        createDonateTrans: "Create Donate Code",
+        secureTrans: "100% Secure Encrypted Transaction",
+        waitingPayment: "Waiting for payment confirmation...",
+        waitingPaymentDesc: "Screen will automatically redirect when payment is received.",
+        scanViaApp: "SCAN VIA BANK APP",
+        bank: "Bank",
+        accountHolder: "Account Holder",
+        amount: "Amount",
+        content: "Content",
+        importantNote: "Important Note",
+        noteKeepContent: "Please keep the 'Content' exactly as shown for auto-credit.",
+        iHaveTransferred: "I have transferred",
+        paymentSuccess: "Payment Successful!",
+        systemRecorded: "System has recorded amount",
+        balanceAdded: "Your balance has been added",
+        sentRequestTitle: "Confirmation request sent!",
+        sentRequestDesc: "System is checking transaction. If you transferred, money will arrive shortly.",
+        moneyReceived: "Payment received! Thank you.",
+        adminSimulate: "⚡ (Admin Only) Simulate Success",
+        copied: "Copied",
+
+
+        myWallet: "My Wallet",
+        depositMore: "Deposit More Than",
+        totalDeposited: "Total Deposited",
+        totalSuccessTrans: "Total Successful Transactions",
+        balanceFluctuation: "Balance Fluctuation by Month",
+        noStatsData: "No statistical data",
+        transactionHistory: "Transaction History",
+        transCode: "Trans Code",
+        time: "Time",
+        amountVndColumn: "Amount (VND)",
+        gift: "Gift",
+        thanReceived: "Than Received (T)",
+        type: "Type",
+        depositType: "Deposit",
+        donateType: "Donate",
+        adminGift: "Admin Gift",
     }
 };

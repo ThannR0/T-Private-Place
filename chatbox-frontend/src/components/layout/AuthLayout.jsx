@@ -1,18 +1,53 @@
-import React from 'react';
-import { Layout, Typography } from 'antd';
-import AppLogo from '../common/AppLogo'; // <--- 1. Import Logo
+import React, { useState } from 'react';
+import { Typography, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import AppLogo from '../common/AppLogo';
 import { useSettings } from "../../context/SettingsContext.jsx";
 
 const { Title, Text } = Typography;
-const { t } = useSettings;
+
 const AuthLayout = ({ children, title, subtitle }) => {
+    const navigate = useNavigate();
+    // const { t } = useSettings();
+
+
+    const [secretCount, setSecretCount] = useState(0);
+
+    const handleSecretClick = () => {
+        const newCount = secretCount + 1;
+        setSecretCount(newCount);
+
+        setTimeout(() => {
+            setSecretCount(0);
+        }, 2000);
+
+        if (newCount === 6) {
+            // 1. Hiện loading
+            message.loading({ content: "Đang thiết lập kênh kết nối an toàn...", key: 'admin_access', duration: 1.5 });
+
+            // 2. Dùng setTimeout để đảm bảo chuyển trang sau 1.5s
+            setTimeout(() => {
+                // Hiện success
+                message.success({ content: "Truy cập hệ thống quản trị thành công!", key: 'admin_access' });
+
+                // 👇 DEBUG: In ra log để xem nó có chạy vào đây không
+                console.log("NAVIGATING TO ADMIN LOGIN...");
+
+                // 3. Chuyển hướng
+                navigate('/admin/login');
+
+                setSecretCount(0);
+            }, 1500);
+        }
+    };
+    // -----------------------------------------------
+
     return (
         <div style={{ display: 'flex', minHeight: '100vh', overflow: 'hidden' }}>
 
             {/* 1. CỘT TRÁI: BRANDING */}
             <div style={{
                 flex: 1,
-                // Giữ nguyên màu gradient xanh của bạn rất đẹp
                 background: 'linear-gradient(135deg, #1890ff 0%, #0050b3 100%)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -21,8 +56,6 @@ const AuthLayout = ({ children, title, subtitle }) => {
                 color: '#fff',
                 padding: '40px',
                 position: 'relative',
-                // Lưu ý: Logic ẩn trên mobile này nên dùng CSS media query sẽ tốt hơn,
-                // nhưng tạm thời giữ nguyên theo code của bạn.
                 display: window.innerWidth < 768 ? 'none' : 'flex'
             }}>
                 {/* Họa tiết trang trí */}
@@ -31,11 +64,22 @@ const AuthLayout = ({ children, title, subtitle }) => {
 
                 <div style={{ zIndex: 2, textAlign: 'center' }}>
 
-                    {/* --- COACH SỬA: Thay thế thẻ IMG bằng AppLogo --- */}
-                    <div style={{ marginBottom: '30px', display:'flex', justifyContent:'center' }}>
+
+                    <div
+                        style={{
+                            marginBottom: '30px',
+                            display:'flex',
+                            justifyContent:'center',
+                            // Giữ nguyên cursor: 'default' để người ngoài tưởng là ảnh tĩnh
+                            cursor: 'default',
+                            userSelect: 'none'
+                        }}
+                        onClick={handleSecretClick}
+                        title="T Private Place"
+                    >
                         <AppLogo size={140} variant="white" showText={false} />
                     </div>
-                    {/* ----------------------------------------------- */}
+                    {/* --------------------------- */}
 
                     <Title level={1} style={{ color: '#fff', margin: 0, fontSize: '42px', fontWeight: 'bold' }}>
                         T Private Place
@@ -46,7 +90,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
                 </div>
             </div>
 
-            {/* 2. CỘT PHẢI: FORM (Giữ nguyên) */}
+            {/* 2. CỘT PHẢI: FORM */}
             <div style={{
                 flex: '0 0 500px',
                 background: '#fff',

@@ -4,9 +4,11 @@ import com.mosoftvn.chatbox.DTO.ChangePasswordRequest;
 import com.mosoftvn.chatbox.DTO.RegisterRequest;
 import com.mosoftvn.chatbox.DTO.ResetPasswordRequest;
 import com.mosoftvn.chatbox.Entity.Role;
+import com.mosoftvn.chatbox.Entity.Transaction;
 import com.mosoftvn.chatbox.Entity.User;
 import com.mosoftvn.chatbox.Config.JwtUtil;
 import com.mosoftvn.chatbox.Repository.RoleRepository;
+import com.mosoftvn.chatbox.Repository.TransactionRepository;
 import com.mosoftvn.chatbox.Repository.UserRepository;
 import com.mosoftvn.chatbox.DTO.AuthResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,9 @@ public class AuthService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
 
     // PasswordEncoder dùng để mã hóa và kiểm tra mật khẩu
@@ -168,28 +173,44 @@ public class AuthService {
     }
 
     // login
-// ... trong hàm login
-    public AuthResponse login(String username, String password) { // <-- Đổi kiểu trả về thành AuthResponse
+
+    public AuthResponse login(String username, String password) {
+        // 1. Kiểm tra tài khoản
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
 
+        // 2. Kiểm tra mật khẩu
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Sai mật khẩu!");
         }
 
+        // 3. Kiểm tra kích hoạt
         if (!user.isEnabled()) {
             throw new RuntimeException("Tài khoản chưa được kích hoạt! Vui lòng kiểm tra email.");
         }
 
-        String token = jwtUtil.generateToken(username);
+        // 🟢 4. LẤY ROLE RA TRƯỚC (Để đưa vào Token)
+        // Lưu ý: Đảm bảo user.getRole() trả về đúng tên role (VD: "ADMIN", "USER")
+        String roleName = (user.getRole() != null) ? user.getRole().getName() : "USER";
 
+        // 🟢 5. TẠO TOKEN KÈM ROLE (Hàm mới sửa bên JwtUtil)
+        String token = jwtUtil.generateToken(username, roleName);
+
+        // 6. Cập nhật trạng thái Online
         userService.updateUserStatus(username, "ONLINE");
 
+        // 7. Lấy tên hiển thị
         String displayName = (user.getFullName() != null && !user.getFullName().isEmpty())
                 ? user.getFullName()
                 : user.getUsername();
-        // Trả về đầy đủ thông tin
-        return new AuthResponse(token, user.getUsername(), displayName, user.getAvatar());
+
+        // 8. Tính tổng tiền nạp (Giữ nguyên logic của bạn)
+        Double totalDeposited = java.util.Optional.ofNullable(
+                transactionRepository.sumTotalIncomingMoney(user.getId())
+        ).orElse(0.0);
+
+        // 9. Trả về kết quả
+        return new AuthResponse(token, user.getUsername(), displayName, user.getAvatar(), roleName, user.getBalance(), totalDeposited);
     }
 
     public void logout(String username) {

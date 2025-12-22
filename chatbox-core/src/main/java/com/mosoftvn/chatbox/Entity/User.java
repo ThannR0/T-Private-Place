@@ -29,6 +29,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(columnDefinition = "DOUBLE PRECISION DEFAULT 0")
+    private Double balance;
+
     // --- THÊM 2 TRƯỜNG NÀY ---
     @Column(name = "otp_code")
     private String otpCode;
@@ -64,37 +67,9 @@ public class User {
     @Column(name = "reset_password_token_expiry")
     private LocalDateTime resetPasswordTokenExpiry;
 
+    private Double totalDeposited;
+
     // Constructor
     public User() {}
 
-//    // Getter & Setter (Bắt buộc phải có đủ)
-//    public Long getId() { return id; }
-//    public void setId(Long id) { this.id = id; }
-//
-//    public String getUsername() { return username; }
-//    public void setUsername(String username) { this.username = username; }
-//
-//    public String getFullName() { return fullName; }
-//    public void setFullName(String fullName) { this.fullName = fullName; }
-//
-//    public String getPassword() { return password; }
-//    public void setPassword(String password) { this.password = password; }
-//
-//    public String getEmail() { return email; }
-//    public void setEmail(String email) { this.email = email; }
-//
-//    public String getAvatar() { return avatar; }
-//    public void setAvatar(String avatar) { this.avatar = avatar; }
-//
-//    public boolean isEnabled() { return enabled; }
-//    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-//
-//    public Role getRole() { return role; }
-//    public void setRole(Role role) { this.role = role; }
-//
-//    public String getOtpCode() { return otpCode; }
-//    public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
-//
-//    public LocalDateTime getOtpExpiration() { return otpExpiration; }
-//    public void setOtpExpiration(LocalDateTime otpExpiration) { this.otpExpiration = otpExpiration; }
 }

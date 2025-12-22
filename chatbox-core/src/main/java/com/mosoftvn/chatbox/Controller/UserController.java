@@ -3,6 +3,7 @@ package com.mosoftvn.chatbox.Controller;
 import com.mosoftvn.chatbox.DTO.UserUpdateDTO;
 import com.mosoftvn.chatbox.DTO.UserSummary;
 import com.mosoftvn.chatbox.Entity.User;
+import com.mosoftvn.chatbox.Repository.TransactionRepository;
 import com.mosoftvn.chatbox.Repository.UserRepository;
 import com.mosoftvn.chatbox.Service.UserService;
 import com.mosoftvn.chatbox.Service.CloudinaryService; // Nhớ import Service này
@@ -35,7 +36,10 @@ public class UserController {
     @Autowired
     private CloudinaryService cloudinaryService;
 
-    // --- XÓA DÒNG NÀY ĐI: private final String UPLOAD_DIR = "uploads/"; ---
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+
 
     @GetMapping
     public List<UserSummary> getAllUsers() {
@@ -125,5 +129,31 @@ public class UserController {
         messagingTemplate.convertAndSend("/topic/feed", (Object) updatePayload);
 
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyProfile() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        //Tính lại tổng tiền Nạp + Admin thêm + Donate để VIP không bị về 0
+        Double totalDeposited = java.util.Optional.ofNullable(
+                transactionRepository.sumTotalIncomingMoney(user.getId())
+        ).orElse(0.0);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", user.getId());
+        response.put("username", user.getUsername());
+        response.put("fullName", user.getFullName());
+        response.put("avatar", user.getAvatar());
+        response.put("balance", user.getBalance());
+
+        // Trả về trường này thì Frontend mới hiển thị thanh tiến độ được
+        response.put("totalDeposited", totalDeposited);
+
+        response.put("role", user.getRole().getName());
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,12 +1,14 @@
 package com.mosoftvn.chatbox.Entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
 @Entity
+@Data
 @Table(name = "roles")
 public class Role {
     // Getter & Setter thủ công

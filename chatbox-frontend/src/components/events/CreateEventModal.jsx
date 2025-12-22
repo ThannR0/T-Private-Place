@@ -268,7 +268,7 @@ const CreateEventModal = ({ visible, onClose, onCreate, loading, initialData }) 
                             boxShadow: '0 4px 15px rgba(24, 144, 255, 0.3)'
                         }}
                     >
-                        {initialData ? (t('save') || "Lưu thay đổi") : (t('create') || "Tạo sự kiện")}
+                        {initialData ? (t('save') || "Lưu thay đổi") : (t('createEvent') || "Tạo sự kiện")}
                     </Button>
                 </div>
             </Form>

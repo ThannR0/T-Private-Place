@@ -34,10 +34,8 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
         window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
     };
 
-    // --- LOGIC HIỂN THỊ NÚT BẤM DƯỚI CÙNG (ACTION BAR) ---
-    // Bây giờ chỉ trả về 1 nút duy nhất để cân đối với nút Map
+    // --- ACTION BAR ---
     const renderPrimaryAction = () => {
-        // 1. Nếu là CHỦ -> Chỉ hiện nút SỬA (Nút xóa đã chuyển lên trên)
         if (isOwner) {
             return (
                 <Button type="text" icon={<EditOutlined style={{color: '#faad14'}} />} onClick={(e) => {e.stopPropagation(); onEdit(event)}}>
@@ -46,7 +44,6 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
             );
         }
 
-        // 2. Nếu ĐÃ THAM GIA -> Hiện nút HỦY
         if (event.isJoined) {
             return (
                 <Button
@@ -60,16 +57,14 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
             );
         }
 
-        // 3. Nếu FULL -> Disabled
         if (isFull) {
             return (
-                <Button type="text" disabled style={{color: '#999'}}>
+                <Button type="text" disabled style={{color: 'var(--text-secondary)'}}>
                     🚫 {t('fullSlot') || "Hết chỗ"}
                 </Button>
             );
         }
 
-        // 4. Bình thường -> Nút Tham gia
         return (
             <Button
                 type="text"
@@ -90,7 +85,7 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
                 <div style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
                     <img alt="cover" src={event.imageUrl || "https://via.placeholder.com/400x200"} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }} className="hover-zoom" />
 
-                    {/* Badge Ngày tháng (Góc trái) */}
+                    {/* Badge Ngày tháng (Giữ nguyên vì nằm trên ảnh) */}
                     <div style={{
                         position: 'absolute', top: 12, left: 12,
                         background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(4px)',
@@ -102,27 +97,32 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
                         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#333' }}>{month}</div>
                     </div>
 
-                    {/* Badge Host (Góc phải) - Thay vì số lượng, ta để Host tag ở đây cho sang */}
+                    {/* Badge Host */}
                     {isOwner && (
                         <Tag color="#f50" style={{ position: 'absolute', top: 12, right: 12, border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
-                            <CrownOutlined /> Host
+                            <CrownOutlined /> {t('youAreHost') || "Bạn là BTC"}
                         </Tag>
                     )}
                 </div>
             }
             actions={[
-                // Nút Map (Bên trái)
                 <Tooltip title={t('mapBtn') || "Xem bản đồ"}>
                     <Button type="text" icon={<CompassFilled style={{color: '#52c41a', fontSize: 20}} />} onClick={openGoogleMaps} />
                 </Tooltip>,
-
-                // Nút Hành Động Chính (Bên phải)
                 renderPrimaryAction()
             ]}
-            style={{ borderRadius: 16, overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}
+            // [QUAN TRỌNG] Đồng bộ màu nền Card và Viền theo index.css
+            style={{
+                borderRadius: 16,
+                overflow: 'hidden',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--bg-color)',      // Sáng: Trắng / Tối: Xám Đậm
+                border: '1px solid var(--border-color)' // Viền tự đổi màu
+            }}
             styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', position: 'relative' } }}
         >
-            {/* NÚT XÓA (Di chuyển lên góc phải nội dung) */}
             {isOwner && (
                 <Tooltip title={t('delete') || "Xóa sự kiện"}>
                     <Button
@@ -136,41 +136,36 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
                 </Tooltip>
             )}
 
-            {/* Tiêu đề */}
+            {/* Tiêu đề: Màu chữ tự động đổi */}
             <Title level={5} ellipsis={{rows: 2}} style={{ margin: '0 25px 12px 0', color: 'var(--text-color)', minHeight: 44, fontSize: 16 }}>
                 {event.title}
             </Title>
 
-            {/* --- KHU VỰC THÔNG TIN (Icon đẹp, không khoảng trống) --- */}
+            {/* Thông tin chi tiết */}
             <div style={{display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 15, flex: 1}}>
-
-                {/* 1. Thời gian */}
                 <Space align="center" style={{color: 'var(--text-secondary)'}}>
                     <ClockCircleOutlined style={{color: '#1890ff', fontSize: 16}}/>
-                    <Text style={{fontSize: 13, color: 'var(--text-color)'}}>{t('eventTime') || "Lúc"}: <strong>{time}</strong></Text>
+                    <Text style={{fontSize: 13, color: 'var(--text-color)'}}>{t('eventTime')}: <strong>{time}</strong></Text>
                 </Space>
 
-                {/* 2. Địa điểm */}
                 <Space align="start" style={{color: 'var(--text-secondary)'}}>
                     <EnvironmentOutlined style={{color: '#ff4d4f', fontSize: 16, marginTop: 2}}/>
                     <Text ellipsis style={{maxWidth: 220, fontSize: 13, color: 'var(--text-secondary)'}}>{event.locationName}</Text>
                 </Space>
 
-                {/* 3. Số người tham gia (MỚI THÊM) */}
                 <Space align="center" style={{color: 'var(--text-secondary)'}}>
                     <TeamOutlined style={{color: '#52c41a', fontSize: 16}}/>
                     <Text style={{fontSize: 13, color: 'var(--text-secondary)'}}>
-                        {t('participants') || "Tham gia"}: <span style={{color: isFull ? '#ff4d4f' : 'var(--text-color)'}}><strong>{event.participantCount}</strong> / {event.maxParticipants}</span>
+                        {t('participants')}: <span style={{color: isFull ? '#ff4d4f' : 'var(--text-color)'}}><strong>{event.participantCount}</strong> / {event.maxParticipants}</span>
                     </Text>
                 </Space>
-
             </div>
 
-            {/* Footer: Người tạo */}
+            {/* Footer */}
             <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Avatar src={event.creatorAvatar} size="small" />
                 <div style={{display:'flex', flexDirection:'column', lineHeight: 1.2}}>
-                    <Text style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Organizer</Text>
+                    <Text style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t('organizer')}</Text>
                     <Text strong style={{ fontSize: 12, color: 'var(--text-color)' }} ellipsis>{event.creatorName}</Text>
                 </div>
             </div>

@@ -76,6 +76,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             null,
                             List.of(new SimpleGrantedAuthority(roleName))
                     );
+                    System.out.println("👉 USER: " + username);
+//                   System.out.println("👉 QUYỀN THỰC TẾ: " + userDetails.getAuthorities());
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);

@@ -24,7 +24,7 @@ public class GeminiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    private final String MODEL_ID = "gemini-2.5-flash"; // Model này hỗ trợ đa phương tiện tốt
+    private final String MODEL_ID = "gemini-2.5-flash";
 //    private final String MODEL_ID = "gemini-1.5-flash";
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();

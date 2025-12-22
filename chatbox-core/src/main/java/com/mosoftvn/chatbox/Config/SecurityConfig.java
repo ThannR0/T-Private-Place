@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod; // Nhớ import cái này để dùng HttpMethod.GET
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,7 +33,7 @@ public class SecurityConfig {
         System.out.println(">>> CẤU HÌNH BẢO MẬT: ĐANG KÍCH HOẠT FILTER JWT <<<");
 
         http
-                //tẮT CSRF (Bắt buộc)
+                //tẮT CSRF
                 .csrf(AbstractHttpConfigurer::disable)
 
                 //CẤU HÌNH CORS (QUAN TRỌNG: CHỈ GIỮ 1 DÒNG NÀY, XÓA DÒNG withDefaults đi)
@@ -46,23 +47,32 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/users/**").permitAll()
 
-                        // SỰ KIỆN (QUAN TRỌNG NHẤT) ---
-                        // Quy tắc 1: Các hành động Thay đổi dữ liệu (Tạo/Sửa/Xóa/Join) -> BẮT BUỘC ĐĂNG NHẬP
-                        // Phải đặt những dòng này LÊN TRƯỚC dòng permitAll
+
+                        //Các hành động Thay đổi dữ liệu (Tạo/Sửa/Xóa/Join) -> BẮT BUỘC ĐĂNG NHẬP
                         .requestMatchers(
                                 "/api/events/create",
                                 "/api/events/update",
                                 "/api/events/*/join",
-                                "/api/events/*" // Dành cho Delete
+                                "/api/events/*"
                         ).authenticated()
 
                         //  Xem danh sách/chi tiết -> CÔNG KHAI (Chỉ cho phép GET)
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
 
                         // --- NHÓM 3: CÁC API KHÁC ---
-                        .requestMatchers("/api/posts/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+// Chấp nhận chính xác chuỗi "ROLE_ADMIN" hoặc "ROLE_USER" có trong Token
+//                                .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+//                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("USER", "ADMIN")
+//                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
+                       .requestMatchers("/api/posts/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
                         .requestMatchers("/api/chat/**").permitAll()
+
+                        .requestMatchers("/api/auth/**", "/api/payment/create").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") //CHỈ ADMIN MỚI ĐƯỢC VÀO ĐÂY
 
                         // CHỐT CHẶN CUỐI CÙNG
                         .anyRequest().authenticated()
@@ -78,7 +88,9 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 1. Cho phép Frontend (Check kỹ port của bạn, ví dụ 5173)
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173"
+                ));
 
         // 2. Cho phép ĐỦ các method
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

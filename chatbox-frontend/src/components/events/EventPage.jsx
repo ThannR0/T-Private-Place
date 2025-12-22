@@ -9,7 +9,7 @@ import { useSettings } from '../../context/SettingsContext';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const EventsPage = () => {
     const { currentUser } = useChat();
@@ -19,10 +19,9 @@ const EventsPage = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Filter State (Thêm mới)
+    // Filter State
     const [searchText, setSearchText] = useState('');
-    const [filterType, setFilterType] = useState('all'); // 'all', 'mine', 'joined'
-
+    const [filterType, setFilterType] = useState('all');
     const [dateRange, setDateRange] = useState(null);
 
     // Modal State
@@ -45,7 +44,7 @@ const EventsPage = () => {
 
     // --- LOGIC LỌC
     const filteredEvents = events.filter(event => {
-        // 1. Lọc theo Tìm kiếm (Tên, Địa điểm)
+        // 1. Lọc theo Tìm kiếm
         const lowerSearch = searchText.toLowerCase();
         const matchText =
             (event.title || "").toLowerCase().includes(lowerSearch) ||
@@ -53,17 +52,16 @@ const EventsPage = () => {
 
         if (!matchText) return false;
 
-        // 2. Lọc theo Loại (Của tôi, Đã tham gia)
+        // 2. Lọc theo Loại
         if (filterType === 'mine' && event.creatorUsername !== currentUser) return false;
         if (filterType === 'joined' && !event.isJoined) return false;
 
-        // 🟢 3. LỌC THEO NGÀY THÁNG (Mới thêm)
+        // 3. Lọc theo Ngày tháng
         if (dateRange) {
             const eventDate = dayjs(event.startTime);
-            const startDate = dateRange[0].startOf('day'); // Bắt đầu từ 00:00 của ngày chọn
-            const endDate = dateRange[1].endOf('day');     // Kết thúc lúc 23:59 của ngày chọn
+            const startDate = dateRange[0].startOf('day');
+            const endDate = dateRange[1].endOf('day');
 
-            // Nếu ngày sự kiện nằm ngoài khoảng chọn -> Loại
             if (eventDate.isBefore(startDate) || eventDate.isAfter(endDate)) {
                 return false;
             }
@@ -71,7 +69,6 @@ const EventsPage = () => {
 
         return true;
     });
-    // -----------------------------
 
     // 2. Logic Modal
     const openCreateModal = () => {
@@ -93,10 +90,10 @@ const EventsPage = () => {
             };
             if (isEditMode) {
                 await api.put(`/events/update`, formData, config);
-                message.success("Cập nhật thành công!");
+                message.success(t('updateSuccess') || "Cập nhật thành công!");
             } else {
                 await api.post('/events/create', formData, config);
-                message.success("Tạo sự kiện thành công!");
+                message.success(t('createSuccess') || "Tạo sự kiện thành công!");
             }
             setModalVisible(false);
             fetchEvents();
@@ -114,7 +111,7 @@ const EventsPage = () => {
             if (!targetEvent) return;
 
             if (!targetEvent.isJoined && targetEvent.participantCount >= targetEvent.maxParticipants) {
-                message.error("Sự kiện đã hết chỗ!");
+                message.error(t('fullSlot') || "Sự kiện đã hết chỗ!");
                 return;
             }
 
@@ -131,17 +128,19 @@ const EventsPage = () => {
                 }
                 return ev;
             }));
-            message.success(targetEvent.isJoined ? "Đã hủy tham gia" : "Tham gia thành công!");
+
+            // Sử dụng key mới thêm
+            message.success(targetEvent.isJoined ? (t('cancelJoinSuccess') || "Đã hủy tham gia") : (t('joinSuccess') || "Tham gia thành công!"));
         } catch (error) {
-            message.error("Lỗi kết nối");
+            message.error(t('connectionError') || "Lỗi kết nối");
         }
     };
 
     const handleDeleteEvent = async (eventId) => {
-        if (!window.confirm("Bạn chắc chắn muốn xóa?")) return;
+        if (!window.confirm(t('confirmDeleteEvent') || "Bạn chắc chắn muốn xóa?")) return;
         try {
             await api.delete(`/events/${eventId}`);
-            message.success("Đã xóa!");
+            message.success(t('deleteSuccess') || "Đã xóa!");
             setEvents(prev => prev.filter(e => e.id !== eventId));
         } catch (error) { message.error("Lỗi xóa"); }
     };
@@ -156,23 +155,26 @@ const EventsPage = () => {
                 padding: '0 20px'
             }}>
                 <div>
+                    {/* eventsTitle trong file cũ là "Sự kiện sắp tới", ở đây chỉ cần "Sự kiện" hoặc dùng luôn key cũ */}
                     <Title level={2} style={{margin: 0, color: 'var(--text-color)'}}>
-                        <CalendarOutlined style={{marginRight: 10}}/> Sự kiện
+                        <CalendarOutlined style={{marginRight: 10}}/> {t('eventsTitle') || "Sự kiện"}
                     </Title>
-                    <Typography.Text type="secondary">Hoạt động sắp diễn ra</Typography.Text>
+                    <Text style={{color: 'var(--text-secondary)'}}>
+                        {t('explore') || "Khám phá các hoạt động"}
+                    </Text>
                 </div>
                 <Button type="primary" size="large" icon={<PlusOutlined/>} onClick={openCreateModal} shape="round">
-                    Tạo sự kiện
+                    {t('createEvent') || "Tạo sự kiện"}
                 </Button>
             </div>
 
             {/* --- THANH TÌM KIẾM & LỌC --- */}
             <div style={{marginBottom: 24, padding: '0 20px'}}>
                 <Row gutter={[16, 16]}>
-                    {/* Ô Tìm kiếm: Chiếm 10 phần */}
+                    {/* Ô Tìm kiếm */}
                     <Col xs={24} md={10}>
                         <Input
-                            placeholder="Tìm tên, địa điểm..."
+                            placeholder={t('searchPlaceholder') || "Tìm kiếm..."}
                             prefix={<SearchOutlined style={{color: '#bfbfbf'}}/>}
                             size="large"
                             allowClear
@@ -182,10 +184,10 @@ const EventsPage = () => {
                         />
                     </Col>
 
-                    {/* 🟢 Ô Chọn Ngày: Chiếm 8 phần (Mới thêm) */}
+                    {/* Ô Chọn Ngày (Sử dụng key mới thêm) */}
                     <Col xs={24} md={8}>
                         <DatePicker.RangePicker
-                            placeholder={['Từ ngày', 'Đến ngày']}
+                            placeholder={[t('startDate') || 'Từ ngày', t('endDate') || 'Đến ngày']}
                             size="large"
                             style={{width: '100%', borderRadius: 8}}
                             format="DD/MM/YYYY"
@@ -193,7 +195,7 @@ const EventsPage = () => {
                         />
                     </Col>
 
-                    {/* Ô Chọn Loại: Chiếm 6 phần */}
+                    {/* Ô Chọn Loại (Sử dụng key mới thêm) */}
                     <Col xs={24} md={6}>
                         <Select
                             defaultValue="all"
@@ -201,9 +203,9 @@ const EventsPage = () => {
                             style={{width: '100%'}}
                             onChange={val => setFilterType(val)}
                             options={[
-                                {value: 'all', label: 'Tất cả'},
-                                {value: 'mine', label: 'Của tôi'},
-                                {value: 'joined', label: 'Đã tham gia'},
+                                {value: 'all', label: t('all') || 'Tất cả'},
+                                {value: 'mine', label: t('myEvents') || 'Của tôi'},
+                                {value: 'joined', label: t('joinedEvents') || 'Đã tham gia'},
                             ]}
                         />
                     </Col>
@@ -211,22 +213,23 @@ const EventsPage = () => {
             </div>
 
             {loading ? <div style={{textAlign: 'center', padding: 50}}><Spin size="large"/></div> : (
-                // SỬA TẠI ĐÂY: Dùng filteredEvents thay vì events
-                filteredEvents.length === 0 ? <Empty description="Không tìm thấy sự kiện phù hợp"/> : (
-                    <Row gutter={[24, 24]} style={{padding: '0 10px'}}>
-                        {filteredEvents.map(event => (
-                            <Col xs={24} sm={12} lg={8} xl={6} key={event.id}>
-                                <EventCard
-                                    event={event}
-                                    currentUser={currentUser}
-                                    onJoin={handleJoinEvent}
-                                    onDelete={handleDeleteEvent}
-                                    onEdit={openEditModal}
-                                />
-                            </Col>
-                        ))}
-                    </Row>
-                )
+                filteredEvents.length === 0 ?
+                    <Empty description={<span style={{color: 'var(--text-secondary)'}}>{t('noEvents') || "Chưa có sự kiện"}</span>}/>
+                    : (
+                        <Row gutter={[24, 24]} style={{padding: '0 10px'}}>
+                            {filteredEvents.map(event => (
+                                <Col xs={24} sm={12} lg={8} xl={6} key={event.id}>
+                                    <EventCard
+                                        event={event}
+                                        currentUser={currentUser}
+                                        onJoin={handleJoinEvent}
+                                        onDelete={handleDeleteEvent}
+                                        onEdit={openEditModal}
+                                    />
+                                </Col>
+                            ))}
+                        </Row>
+                    )
             )}
 
             <CreateEventModal
@@ -237,7 +240,12 @@ const EventsPage = () => {
                 initialData={editingEvent}
             />
 
-            <FloatButton icon={<PlusOutlined/>} type="primary" onClick={openCreateModal} tooltip="Tạo mới"/>
+            <FloatButton
+                icon={<PlusOutlined/>}
+                type="primary"
+                onClick={openCreateModal}
+                tooltip={t('createEvent') || "Tạo mới"}
+            />
         </div>
     );
 };

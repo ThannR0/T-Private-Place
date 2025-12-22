@@ -14,6 +14,23 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const { t } = useSettings();
 
+    const [secretCount, setSecretCount] = useState(0);
+
+    const handleLogoClick = () => {
+        const newCount = secretCount + 1;
+        setSecretCount(newCount);
+
+        console.log(`Click: ${newCount}`); // Debug chơi thôi
+
+        if (newCount === 6) {
+            // Hiệu ứng "Hackerman" một tí
+            message.loading("Đang truy cập hệ thống quản trị...", 1).then(() => {
+                navigate('/admin/dashboard'); // Chuyển hướng
+                setSecretCount(0);
+            });
+        }
+    };
+
     const onFinish = async (values) => {
         setLoading(true);
         try {

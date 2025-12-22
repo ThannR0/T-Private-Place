@@ -30,5 +30,6 @@ build/
 !**/src/test/**/build/
 # Bỏ qua file cấu hình chứa mật khẩu/API Key
 src/main/resources/application.properties
+src/main/resources/application-secret.properties
 ### VS Code ###
 .vscode/

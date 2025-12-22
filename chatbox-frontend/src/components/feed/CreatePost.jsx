@@ -122,7 +122,11 @@ const CreatePost = ({ onPostCreated }) => {
             formData.append('backgroundTheme', selectedTheme);
             if (mediaFile) formData.append('file', mediaFile);
 
-            const res = await api.post('/posts', formData);
+            const res = await api.post('/posts', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data' // 🟢 Ghi đè header chỉ cho request này
+                }
+            });
             message.success(t('postSuccess'));
             setContent(''); removeMedia();
             if (onPostCreated) onPostCreated(res.data);

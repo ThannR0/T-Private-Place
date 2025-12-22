@@ -25,8 +25,8 @@ public class Event {
 
     private String imageUrl; // Ảnh bìa sự kiện
 
-    // --- PHẦN ĐỊA LÝ (GOOGLE MAPS) ---
-    private String locationName; // Tên địa điểm (VD: Quán Cafe A)
+    // ---  (GOOGLE MAPS) ---
+    private String locationName; // Tên địa điểm
     private String address;      // Địa chỉ cụ thể
     private Double latitude;     // Vĩ độ (Để ghim map)
     private Double longitude;    // Kinh độ (Để ghim map)

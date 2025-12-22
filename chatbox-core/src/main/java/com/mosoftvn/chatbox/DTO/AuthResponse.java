@@ -15,4 +15,9 @@ public class AuthResponse
     private String username;
     private String fullName;
     private String avatar;
+
+    private String role;
+
+    private Double balance;
+    private Double totalDeposited;
 }

@@ -8,12 +8,10 @@ import lombok.Setter;
 @Setter
 @Getter
 public class RegisterRequest {
-    // --- GETTER & SETTER THỦ CÔNG (An toàn tuyệt đối) ---
     private String username;
     private String password;
     private String email;
 
-    // --- TRƯỜNG MỚI ---
     private String fullName;
     // ------------------
 

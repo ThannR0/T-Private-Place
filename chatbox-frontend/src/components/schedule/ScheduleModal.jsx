@@ -5,6 +5,7 @@ import {
     CheckOutlined, CloseOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSettings } from '../../context/SettingsContext';
 
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
@@ -16,13 +17,13 @@ const COLORS = [
 ];
 
 const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selectedDate }) => {
+    const { t } = useSettings();
     const [form] = Form.useForm();
     const [selectedColor, setSelectedColor] = useState('#039BE5');
 
     useEffect(() => {
         if (visible) {
             form.resetFields();
-
             if (initialData) {
                 form.setFieldsValue({
                     ...initialData,
@@ -32,7 +33,6 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
             } else {
                 const defaultStart = selectedDate ? selectedDate : dayjs().startOf('hour').add(1, 'hour');
                 const defaultEnd = defaultStart.add(1, 'hour');
-
                 form.setFieldsValue({
                     timeRange: [defaultStart, defaultEnd],
                     color: '#039BE5',
@@ -58,16 +58,15 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
         onSave(payload);
     };
 
-    // 🟢 SỬA LỖI 1: Thêm hàm này để báo lỗi khi người dùng chưa nhập đủ
     const onFinishFailed = () => {
-        message.error("Vui lòng nhập Tiêu đề và chọn Thời gian!");
+        message.error(t('requiredTitleTime') || "Vui lòng nhập Tiêu đề và chọn Thời gian!");
     };
 
     const ColorRadio = ({ color, isSelected }) => (
         <div style={{
             width: 24, height: 24, borderRadius: '50%', background: color,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: isSelected ? `0 0 0 2px #fff, 0 0 0 4px ${color}` : 'none',
+            boxShadow: isSelected ? `0 0 0 2px var(--bg-color), 0 0 0 4px ${color}` : 'none', // Viền trắng đổi thành màu nền
             transition: 'all 0.2s', margin: '0 6px'
         }}>
             {isSelected && <CheckOutlined style={{ color: '#fff', fontSize: 12 }} />}
@@ -83,18 +82,12 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
             width={550}
             closable={false}
             styles={{
-                content: { padding: 0, borderRadius: 16, overflow: 'hidden' },
+                content: { padding: 0, borderRadius: 16, overflow: 'hidden', backgroundColor: 'var(--card-bg)' },
                 body: { padding: 0 }
             }}
             maskClosable={false}
         >
-            {/* Thêm onFinishFailed vào Form để bắt lỗi */}
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleFinish}
-                onFinishFailed={onFinishFailed}
-            >
+            <Form form={form} layout="vertical" onFinish={handleFinish} onFinishFailed={onFinishFailed}>
                 {/* --- HERO HEADER --- */}
                 <div style={{
                     background: selectedColor,
@@ -105,15 +98,14 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ flex: 1 }}>
                             <Form.Item name="title" noStyle rules={[{ required: true, message: '' }]}>
-                                {/* 🟢 SỬA LỖI 2: Đổi bordered={false} -> variant="borderless" */}
                                 <Input
-                                    placeholder="Thêm tiêu đề và thời gian"
+                                    placeholder={t('titlePlaceholder') || "Thêm tiêu đề và thời gian"}
                                     variant="borderless"
                                     style={{
                                         fontSize: 22, fontWeight: 600, color: '#fff',
                                         padding: 0, boxShadow: 'none'
                                     }}
-                                    className="custom-title-input"
+                                    className="custom-title-input" // Bạn có thể thêm class này vào css global để style placeholder: ::placeholder { color: rgba(255,255,255,0.7) }
                                     autoComplete="off"
                                 />
                             </Form.Item>
@@ -128,20 +120,20 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                 </div>
 
                 {/* --- BODY --- */}
-                <div style={{ padding: '24px' }}>
+                <div style={{ padding: '24px', background: 'var(--card-bg)' }}>
 
                     {/* 1. Thời Gian */}
                     <div style={{ display: 'flex', gap: 15, marginBottom: 20 }}>
-                        <div style={{ marginTop: 8 }}><ClockCircleOutlined style={{ fontSize: 20, color: '#757575' }} /></div>
+                        <div style={{ marginTop: 8 }}><ClockCircleOutlined style={{ fontSize: 20, color: 'var(--text-secondary)' }} /></div>
                         <div style={{ flex: 1 }}>
                             <Row gutter={12} align="middle" style={{marginBottom: 5}}>
                                 <Col flex="auto">
                                     <Form.Item name="timeRange" noStyle rules={[{ required: true, message: '' }]}>
-                                        {/* 🟢 SỬA LỖI 2: Đổi bordered={false} -> variant="borderless" */}
+                                        {/* CSS Override cho RangePicker trong suốt */}
                                         <RangePicker
                                             showTime={{ format: 'HH:mm' }}
                                             format="DD/MM/YYYY HH:mm"
-                                            style={{ width: '100%' }}
+                                            style={{ width: '100%', backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
                                             variant="borderless"
                                         />
                                     </Form.Item>
@@ -152,7 +144,7 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                                     <Form.Item name="isAllDay" valuePropName="checked" noStyle>
                                         <Switch size="small" />
                                     </Form.Item>
-                                    <Text type="secondary" style={{marginLeft: 8, fontSize: 13}}>Cả ngày</Text>
+                                    <Text style={{marginLeft: 8, fontSize: 13, color: 'var(--text-secondary)'}}>{t('allDay') || "Cả ngày"}</Text>
                                 </Col>
                             </Row>
                         </div>
@@ -160,14 +152,13 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
 
                     {/* 2. Địa điểm */}
                     <div style={{ display: 'flex', gap: 15, marginBottom: 20 }}>
-                        <div style={{ marginTop: 5 }}><EnvironmentOutlined style={{ fontSize: 20, color: '#757575' }} /></div>
+                        <div style={{ marginTop: 5 }}><EnvironmentOutlined style={{ fontSize: 20, color: 'var(--text-secondary)' }} /></div>
                         <div style={{ flex: 1 }}>
                             <Form.Item name="location" noStyle>
-                                {/* 🟢 SỬA LỖI 2: Đổi bordered={false} -> variant="borderless" */}
                                 <Input
-                                    placeholder="Thêm địa điểm"
+                                    placeholder={t('locationPlaceholder') || "Thêm địa điểm"}
                                     variant="borderless"
-                                    style={{ paddingLeft: 0, borderBottom: '1px solid #eee', borderRadius: 0 }}
+                                    style={{ paddingLeft: 0, borderBottom: '1px solid var(--border-color)', borderRadius: 0, backgroundColor: 'transparent', color: 'var(--text-color)' }}
                                 />
                             </Form.Item>
                         </div>
@@ -175,15 +166,14 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
 
                     {/* 3. Mô tả */}
                     <div style={{ display: 'flex', gap: 15, marginBottom: 20 }}>
-                        <div style={{ marginTop: 5 }}><AlignLeftOutlined style={{ fontSize: 20, color: '#757575' }} /></div>
+                        <div style={{ marginTop: 5 }}><AlignLeftOutlined style={{ fontSize: 20, color: 'var(--text-secondary)' }} /></div>
                         <div style={{ flex: 1 }}>
                             <Form.Item name="description" noStyle>
-                                {/* 🟢 SỬA LỖI 2: Đổi bordered={false} -> variant="borderless" */}
                                 <TextArea
-                                    placeholder="Thêm mô tả, ghi chú..."
+                                    placeholder={t('descPlaceholder') || "Thêm mô tả, ghi chú..."}
                                     autoSize={{ minRows: 3, maxRows: 6 }}
                                     variant="borderless"
-                                    style={{ padding: '8px 12px', background: '#f5f5f5', borderRadius: 8 }}
+                                    style={{ padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 8, color: 'var(--text-color)' }}
                                 />
                             </Form.Item>
                         </div>
@@ -195,14 +185,9 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                         <Form.Item name="color" noStyle>
                             <Radio.Group onChange={(e) => setSelectedColor(e.target.value)}>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                    {COLORS.map(c => <Radio key={c} value={c} style={{display:'none'}}></Radio>)}
                                     {COLORS.map(c => (
-                                        <Radio key={c} value={c} style={{display:'none'}}></Radio>
-                                    ))}
-                                    {COLORS.map(c => (
-                                        <div key={c} onClick={() => {
-                                            form.setFieldsValue({ color: c });
-                                            setSelectedColor(c);
-                                        }}>
+                                        <div key={c} onClick={() => { form.setFieldsValue({ color: c }); setSelectedColor(c); }}>
                                             <ColorRadio color={c} isSelected={selectedColor === c} />
                                         </div>
                                     ))}
@@ -215,12 +200,12 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                 {/* --- FOOTER --- */}
                 <div style={{
                     padding: '15px 24px',
-                    background: '#fff',
+                    background: 'var(--card-bg)',
                     display: 'flex', justifyContent: 'flex-end',
-                    borderTop: '1px solid #f0f0f0'
+                    borderTop: '1px solid var(--border-color)'
                 }}>
-                    <Button onClick={onClose} size="large" style={{ marginRight: 12, border: 'none', background: '#f5f5f5', color: '#666' }}>
-                        Hủy
+                    <Button onClick={onClose} size="large" style={{ marginRight: 12, border: 'none', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                        {t('cancelSchedule') || "Hủy"}
                     </Button>
                     <Button
                         type="primary"
@@ -233,7 +218,7 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                             boxShadow: `0 4px 10px ${selectedColor}66`
                         }}
                     >
-                        Lưu
+                        {t('saveSchedule') || "Lưu"}
                     </Button>
                 </div>
             </Form>

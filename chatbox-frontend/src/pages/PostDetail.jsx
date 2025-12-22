@@ -5,15 +5,15 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import PostCard from '../components/feed/PostCard';
 import api from '../services/api';
 import { useChat } from '../context/ChatContext';
-import { useSettings } from '../context/SettingsContext'; // 1. Import Settings
+import { useSettings } from '../context/SettingsContext';
 
 const { Content } = Layout;
 
 const PostDetail = () => {
-    const { postId } = useParams(); // ID từ URL (Cố định)
+    const { postId } = useParams();
     const navigate = useNavigate();
     const { feedUpdate } = useChat();
-    const { t } = useSettings(); // 2. Lấy hàm dịch
+    const { t } = useSettings();
 
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -37,21 +37,20 @@ const PostDetail = () => {
         if (postId) fetchPost();
     }, [postId]);
 
-    // --- LOGIC REAL-TIME (GIỮ NGUYÊN) ---
+    // --- LOGIC REAL-TIME ---
     useEffect(() => {
         if (feedUpdate && String(feedUpdate.postId) === String(postId)) {
-
             setPost(prev => {
                 if (!prev) return prev;
 
-                // A. Xử lý COMMENT
+                // A. COMMENT
                 if (feedUpdate.type === 'COMMENT_UPDATE') {
                     const exists = prev.comments.some(c => c.id === feedUpdate.comment.id);
                     if (exists) return prev;
                     return { ...prev, comments: [...prev.comments, feedUpdate.comment] };
                 }
 
-                // B. Xử lý REACTION (Thả tim/Haha...)
+                // B. REACTION
                 if (feedUpdate.type === 'POST_REACTION_UPDATE') {
                     return {
                         ...prev,
@@ -60,12 +59,12 @@ const PostDetail = () => {
                     };
                 }
 
-                // C. Xử lý LIKE
+                // C. LIKE
                 if (feedUpdate.type === 'LIKE_UPDATE') {
                     return { ...prev, likeCount: feedUpdate.likeCount };
                 }
 
-                // D. Xử lý SỬA BÀI
+                // D. EDIT POST
                 if (feedUpdate.type === 'POST_UPDATED') {
                     return { ...prev, content: feedUpdate.newContent };
                 }
@@ -73,9 +72,9 @@ const PostDetail = () => {
                 return prev;
             });
 
-            // E. Xử lý XÓA BÀI
+            // E. DELETE POST
             if (feedUpdate.type === 'POST_DELETED') {
-                message.warning(t('postDeletedWarning')); // Dùng t()
+                message.warning(t('postDeletedWarning'));
                 navigate('/feed');
             }
         }
@@ -88,31 +87,40 @@ const PostDetail = () => {
     return (
         <Layout style={{
             minHeight: '100vh',
-            background: 'var(--bg-color)', // 3. Sửa nền theo Theme
+            background: 'var(--bg-color)', // Đổi nền theo theme
             transition: 'background 0.3s'
         }}>
             <Content style={{ maxWidth: '700px', margin: '20px auto', width: '100%', padding: '0 15px' }}>
+
+                {/* Nút Quay Lại */}
                 <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => navigate('/feed')}
                     style={{
                         marginBottom: 15,
-                        border: 'none',
-                        background: 'transparent',
-                        boxShadow: 'none',
-                        color: 'var(--text-color)', // 4. Sửa màu chữ nút Back
-                        fontSize: '16px'
+                        border: '1px solid var(--border-color)', // Thêm viền nhẹ
+                        background: 'var(--bg-secondary)',       // Nền phụ
+                        color: 'var(--text-color)',              // Màu chữ theo theme
+                        fontSize: '16px',
+                        borderRadius: '8px'
                     }}
                 >
                     {t('backToFeed')}
                 </Button>
 
-                {loading && <div style={{ textAlign: 'center', padding: 50 }}><Spin size="large" /></div>}
+                {/* Loading State */}
+                {loading && (
+                    <div style={{ textAlign: 'center', padding: 50 }}>
+                        <Spin size="large" />
+                    </div>
+                )}
 
+                {/* Error / Not Found State */}
                 {!loading && error && (
                     <div style={{ marginTop: 50 }}>
                         <Result
                             status="404"
+                            // Dùng span để ép màu chữ, vì Result mặc định của Antd khó override bằng CSS global
                             title={<span style={{color: 'var(--text-color)'}}>{t('postNotFound')}</span>}
                             subTitle={<span style={{color: 'var(--text-secondary)'}}>{t('postNotFoundDesc')}</span>}
                             extra={
@@ -124,6 +132,7 @@ const PostDetail = () => {
                     </div>
                 )}
 
+                {/* Post Content */}
                 {!loading && !error && post && (
                     <PostCard post={post} onRemove={handleRemoveSelf} />
                 )}

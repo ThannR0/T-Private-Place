@@ -30,13 +30,13 @@ const EventDetailPage = () => {
     const { currentUser } = useChat();
     const { t } = useSettings();
 
-    // --- CÁC STATE QUAN TRỌNG ---
+    // --- STATE ---
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editLoading, setEditLoading] = useState(false); // Biến loading cho nút Lưu
+    const [editLoading, setEditLoading] = useState(false);
 
-    // Load Map (Trang chi tiết)
+    // Load Map
     const { isLoaded: isMapLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
@@ -49,7 +49,7 @@ const EventDetailPage = () => {
             setEvent(res.data);
         } catch (error) {
             console.error("Lỗi tải detail:", error);
-            message.error("Không tìm thấy sự kiện!");
+            message.error(t('postNotFound') || "Không tìm thấy sự kiện!");
             navigate('/events');
         } finally { setLoading(false); }
     };
@@ -59,50 +59,36 @@ const EventDetailPage = () => {
     const handleJoin = async () => {
         try {
             await api.post(`/events/${event.id}/join`);
-            message.success(event.isJoined ? "Đã rời sự kiện" : "Đã tham gia!");
+            message.success(event.isJoined ? (t('cancelJoinSuccess') || "Đã hủy tham gia") : (t('joinSuccess') || "Đã tham gia!"));
             fetchEvent();
         } catch (error) { message.error("Lỗi kết nối: " + error.message); }
     };
 
     const handleDelete = async () => {
-        if (!window.confirm("Bạn chắc chắn muốn xóa?")) return;
+        if (!window.confirm(t('confirmDeleteEvent') || "Bạn chắc chắn muốn xóa?")) return;
         try {
             await api.delete(`/events/${event.id}`);
             navigate('/events');
-            message.success("Đã xóa!");
+            message.success(t('deleteSuccess') || "Đã xóa!");
         } catch(e) { message.error("Lỗi xóa"); }
     };
 
-    // --- HÀM UPDATE ĐÃ SỬA (Giống hệt EventsPage) ---
     const handleUpdateEvent = async (formData) => {
         setEditLoading(true);
         try {
-            // SỬA TẠI ĐÂY: Thêm config header để ghi đè JSON mặc định
-            const config = {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            };
-
-            // Gọi API Update (ID đã nằm trong formData -> key 'event')
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
             await api.put(`/events/update`, formData, config);
-
-            message.success("Cập nhật thành công!");
-            setIsEditModalOpen(false); // Đóng modal
-            fetchEvent(); // Load lại dữ liệu mới nhất
+            message.success(t('updateSuccess') || "Cập nhật thành công!");
+            setIsEditModalOpen(false);
+            fetchEvent();
         } catch (error) {
-            console.error("Update Error:", error);
             message.error("Lỗi cập nhật: " + (error.response?.data?.message || "Vui lòng thử lại"));
-        } finally {
-            setEditLoading(false);
-        }
+        } finally { setEditLoading(false); }
     };
 
     const openExternalMap = () => {
         if (!event) return;
-        const query = (event.latitude && event.longitude)
-            ? `${event.latitude},${event.longitude}`
-            : encodeURIComponent(event.address);
+        const query = (event.latitude && event.longitude) ? `${event.latitude},${event.longitude}` : encodeURIComponent(event.address);
         window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
     };
 
@@ -111,19 +97,45 @@ const EventDetailPage = () => {
 
     const isOwner = currentUser && event.creatorUsername && (currentUser === event.creatorUsername);
     const isFull = event.maxParticipants && event.participantCount >= event.maxParticipants;
-
     const mapCenter = { lat: event.latitude || 21.0285, lng: event.longitude || 105.8542 };
     const startTime = event.startTime ? dayjs(event.startTime) : dayjs();
     const participantsData = Array.isArray(event.participants) ? event.participants : [];
 
+    // --- STYLE ĐÃ SỬA LỖI (Quan trọng) ---
+    // Sử dụng var(--bg-color) thay vì var(--card-bg) để khớp với index.css của bạn
+    const cardStyle = {
+        backgroundColor: 'var(--bg-color)', // Đảm bảo nền thẻ là màu Xám (#242526) khi ở Dark Mode
+        borderColor: 'var(--border-color)',
+        borderRadius: 16,
+        overflow: 'hidden'
+    };
+
+    // Style cho text để đảm bảo luôn tương phản với nền
+    const primaryTextStyle = { color: 'var(--text-color)' };
+    const secondaryTextStyle = { color: 'var(--text-secondary)' };
+
+    // Nút phụ (Back, Edit)
+    const btnSecondaryStyle = {
+        borderRadius: 8,
+        backgroundColor: 'var(--input-bg)', // Dùng màu input cho nút phụ
+        color: 'var(--text-color)',
+        border: '1px solid var(--border-color)'
+    };
+
     return (
         <div style={{ maxWidth: 1200, margin: '20px auto', padding: '0 20px' }}>
             <div style={{display:'flex', justifyContent:'space-between', marginBottom: 15}}>
-                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/events')} style={{borderRadius: 8}}>Quay lại</Button>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/events')} style={btnSecondaryStyle}>
+                    {t('back') || "Quay lại"}
+                </Button>
                 {isOwner && (
                     <Space>
-                        <Button icon={<EditOutlined />} onClick={() => setIsEditModalOpen(true)} style={{borderRadius: 8}}>Sửa</Button>
-                        <Button danger icon={<DeleteOutlined />} onClick={handleDelete} style={{borderRadius: 8}}>Xóa</Button>
+                        <Button icon={<EditOutlined />} onClick={() => setIsEditModalOpen(true)} style={btnSecondaryStyle}>
+                            {t('edit') || "Sửa"}
+                        </Button>
+                        <Button danger icon={<DeleteOutlined />} onClick={handleDelete} style={{borderRadius: 8, background: 'var(--bg-color)'}}>
+                            {t('delete') || "Xóa"}
+                        </Button>
                     </Space>
                 )}
             </div>
@@ -146,27 +158,29 @@ const EventDetailPage = () => {
 
             <Row gutter={32}>
                 <Col xs={24} lg={16}>
-                    <Card style={{ marginBottom: 24, borderRadius: 16 }}>
-                        <Title level={4} style={{marginTop: 0}}>📖 Chi tiết</Title>
-                        <Paragraph style={{ fontSize: 16, whiteSpace: 'pre-line' }}>{event.description || "Chưa có mô tả."}</Paragraph>
-                        <Divider />
+                    <Card style={cardStyle} bordered={false}>
+                        <Title level={4} style={{marginTop: 0, color: 'var(--text-color)'}}>📖 {t('description') || "Chi tiết"}</Title>
+                        <Paragraph style={{ fontSize: 16, whiteSpace: 'pre-line', ...primaryTextStyle }}>
+                            {event.description || (t('noDesc') || "Chưa có mô tả.")}
+                        </Paragraph>
+                        <Divider style={{borderColor: 'var(--border-color)'}} />
                         <div style={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
                             <Space align="start">
                                 <EnvironmentOutlined style={{ fontSize: 24, color: '#ff4d4f', marginTop: 5 }} />
                                 <div>
-                                    <Text strong style={{ fontSize: 16, display:'block' }}>{event.locationName}</Text>
-                                    <Text type="secondary">{event.address}</Text>
+                                    <Text strong style={{ fontSize: 16, display:'block', ...primaryTextStyle }}>{event.locationName}</Text>
+                                    <Text style={secondaryTextStyle}>{event.address}</Text>
                                 </div>
                             </Space>
-                            <Button type="primary" style={{background: '#52c41a', border: 'none', borderRadius: 20}} icon={<CompassFilled />} onClick={openExternalMap}>
-                                Chỉ đường
+                            <Button type="primary" style={{background: '#52c41a', border: 'none', borderRadius: 20, color: '#fff'}} icon={<CompassFilled />} onClick={openExternalMap}>
+                                {t('mapBtn') || "Chỉ đường"}
                             </Button>
                         </div>
 
                         {/* Map Area */}
-                        <div style={{height: 350, borderRadius: 16, overflow: 'hidden', marginTop: 20, border: '1px solid #eee', position: 'relative'}}>
+                        <div style={{height: 350, borderRadius: 16, overflow: 'hidden', marginTop: 20, border: '1px solid var(--border-color)', position: 'relative'}}>
                             {loadError ? (
-                                <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', background:'#fff2f0', color:'#ff4d4f'}}>
+                                <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', background:'var(--bg-hover)', color:'#ff4d4f'}}>
                                     <WarningOutlined style={{fontSize: 30, marginBottom: 10}}/>
                                     <b>Bản đồ lỗi hiển thị</b>
                                 </div>
@@ -174,19 +188,20 @@ const EventDetailPage = () => {
                                 <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={mapCenter} zoom={15} options={{disableDefaultUI: true}}>
                                     <Marker position={mapCenter} />
                                 </GoogleMap>
-                            ) : <div style={{padding: 20, textAlign:'center'}}>Loading Map...</div>}
+                            ) : <div style={{padding: 20, textAlign:'center', color: 'var(--text-secondary)'}}>Loading Map...</div>}
                         </div>
                     </Card>
                 </Col>
 
                 <Col xs={24} lg={8}>
-                    <Card style={{ textAlign: 'center', borderRadius: 16 }}>
+                    <Card style={{ ...cardStyle, textAlign: 'center' }} bordered={false}>
                         <Avatar src={event.creatorAvatar} size={80} style={{marginBottom: 10}} />
-                        <Title level={4} style={{margin: 0}}>{event.creatorName} <CrownOutlined style={{color:'gold'}}/></Title>
-                        <Text type="secondary">Người tổ chức</Text>
+                        <Title level={4} style={{margin: 0, ...primaryTextStyle}}>{event.creatorName} <CrownOutlined style={{color:'gold'}}/></Title>
+                        <Text style={secondaryTextStyle}>{t('organizer') || "Người tổ chức"}</Text>
+
                         <div style={{ marginTop: 20, marginBottom: 20 }}>
                             {isOwner ? (
-                                <Button size="large" block disabled style={{borderRadius: 8, background: 'rgba(0,0,0,0.05)', color: 'var(--text-secondary)'}}>
+                                <Button size="large" block disabled style={{borderRadius: 8, background: 'var(--input-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)'}}>
                                     {t('youAreHost')}
                                 </Button>
                             ) : (
@@ -197,16 +212,22 @@ const EventDetailPage = () => {
                                     icon={event.isJoined ? <UsergroupAddOutlined /> : <CheckCircleOutlined />}
                                     onClick={handleJoin}
                                     disabled={!event.isJoined && isFull}
-                                    style={{borderRadius: 8, fontWeight: 600, height: 45}}
+                                    style={{
+                                        borderRadius: 8, fontWeight: 600, height: 45,
+                                        // Xử lý nút khi đã tham gia (trong suốt, viền đỏ, chữ đỏ/trắng)
+                                        background: event.isJoined ? 'transparent' : undefined,
+                                        borderColor: event.isJoined ? '#ff4d4f' : undefined,
+                                        color: event.isJoined ? '#ff4d4f' : '#fff'
+                                    }}
                                 >
-                                    {event.isJoined ? "Hủy tham gia" : (isFull ? "Full" : "Tham gia")}
+                                    {event.isJoined ? (t('cancelJoin') || "Hủy tham gia") : (isFull ? (t('fullSlot') || "Full") : (t('join') || "Tham gia"))}
                                 </Button>
                             )}
                         </div>
-                        <Divider />
+                        <Divider style={{borderColor: 'var(--border-color)'}} />
                         <div style={{textAlign: 'left'}}>
                             <Space style={{marginBottom: 10, width: '100%', justifyContent:'space-between'}}>
-                                <Text strong><TeamOutlined /> Tham gia</Text>
+                                <Text strong style={primaryTextStyle}><TeamOutlined /> {t('participantsList') || "Danh sách tham gia"}</Text>
                                 <Tag color="blue">{event.participantCount} / {event.maxParticipants}</Tag>
                             </Space>
                             <div style={{maxHeight: 300, overflowY: 'auto'}}>
@@ -214,10 +235,10 @@ const EventDetailPage = () => {
                                     itemLayout="horizontal"
                                     dataSource={participantsData}
                                     renderItem={p => (
-                                        <List.Item style={{padding: '8px 0'}}>
+                                        <List.Item style={{padding: '8px 0', borderBottom: '1px solid var(--border-color)'}}>
                                             <List.Item.Meta
                                                 avatar={<Avatar src={getSafeAvatar(p)} />}
-                                                title={<Text style={{fontSize: 13}}>{typeof p === 'string' ? p : p.fullName}</Text>}
+                                                title={<Text style={{fontSize: 13, ...primaryTextStyle}}>{typeof p === 'string' ? p : p.fullName}</Text>}
                                             />
                                         </List.Item>
                                     )}
@@ -228,13 +249,12 @@ const EventDetailPage = () => {
                 </Col>
             </Row>
 
-            {/* Chỉ render Modal khi isEditModalOpen = true để tránh lỗi render và map */}
             {isOwner && isEditModalOpen && (
                 <CreateEventModal
-                    visible={true} // Luôn true vì modal được sinh ra là để hiện
+                    visible={true}
                     onClose={() => setIsEditModalOpen(false)}
                     onCreate={handleUpdateEvent}
-                    loading={editLoading} // <--- TRUYỀN BIẾN LOADING
+                    loading={editLoading}
                     initialData={event}
                 />
             )}

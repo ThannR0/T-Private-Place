@@ -4,8 +4,21 @@ import { Stomp } from '@stomp/stompjs';
 import { message } from 'antd';
 import api from '../services/api';
 import { getAvatarUrl } from '../utils/common';
+import {useSettings} from "./SettingsContext.jsx";
 
 const ChatContext = createContext();
+
+// Helper tính VIP (để dùng trong Context)
+const getVipLevelName = (amount) => {
+    const total = Number(amount) || 0;
+    if (total >= 100000000) return 'TITANIUM';
+    if (total >= 2000000) return 'DIAMOND';
+    if (total >= 800000) return 'PLATINUM';
+    if (total >= 500000) return 'GOLD';
+    if (total >= 200000) return 'SILVER';
+    if (total >= 50000) return 'BRONZE';
+    return 'MEMBER';
+};
 
 export const ChatProvider = ({ children }) => {
     // --- STATE ---
@@ -13,6 +26,15 @@ export const ChatProvider = ({ children }) => {
     const [currentFullName, setCurrentFullName] = useState(() => localStorage.getItem('fullName'));
     const [currentAvatar, setCurrentAvatar] = useState(() => localStorage.getItem('avatar'));
     const [myStatus, setMyStatus] = useState("ONLINE");
+
+
+    // // --- STATE TIỀN TỆ & VIP ---
+    // const [myBalance, setMyBalance] = useState(0);
+    // const [myTotalDeposited, setMyTotalDeposited] = useState(0);
+
+
+    // State cho sự kiện thăng cấp
+    const [celebrationData, setCelebrationData] = useState(null);
 
     const [messages, setMessages] = useState([]);
     const [recipient, setRecipient] = useState("bot");
@@ -31,6 +53,22 @@ export const ChatProvider = ({ children }) => {
     // THÊM: Bộ lọc chống trùng cho Feed (Group, Status...)
     const processedFeedIdsRef = useRef(new Set());
 
+    const prevVipLevelRef = useRef('MEMBER');
+
+    const isBot = recipient === 'bot';
+    const { t } = useSettings();
+
+// Lấy từ localStorage để không bị về 0 khi vừa F5
+    const [myTotalDeposited, setMyTotalDeposited] = useState(() => {
+        const saved = localStorage.getItem('totalDeposited');
+        return saved ? parseFloat(saved) : 0;
+    });
+
+    const [myBalance, setMyBalance] = useState(() => {
+        const saved = localStorage.getItem('balance');
+        return saved ? parseFloat(saved) : 0;
+    });
+
     // --- 1. XỬ LÝ TIN NHẮN ---
     const processMessage = (msg) => {
         if (msg.fileUrl && !msg.file) {
@@ -40,6 +78,43 @@ export const ChatProvider = ({ children }) => {
             };
         }
         return msg;
+    };
+
+    const fetchMyProfile = async () => {
+        if (!currentUser) return;
+        try {
+            const res = await api.get('/users/me'); // Gọi API Backend bước 1
+            const { balance, totalDeposited, fullName, avatar } = res.data;
+
+
+            setMyBalance(balance);
+            setMyTotalDeposited(totalDeposited);
+
+            // Cập nhật tên/avatar nếu có thay đổi từ Admin
+            if (fullName && fullName !== currentFullName) {
+                setCurrentFullName(fullName); localStorage.setItem('fullName', fullName);
+            }
+            if (avatar && avatar !== currentAvatar) {
+                setCurrentAvatar(avatar); localStorage.setItem('avatar', avatar);
+            }
+
+            // --- CHECK LEVEL UP LOGIC ---
+            const newLevel = getVipLevelName(totalDeposited);
+            const oldLevel = prevVipLevelRef.current;
+
+            // Nếu Level Mới KHÁC Level Cũ và Level Mới xịn hơn (Logic đơn giản là khác MEMBER)
+            // Để chuẩn xác cần so sánh thứ tự, nhưng ở đây check khác nhau là đủ kích hoạt
+            if (newLevel !== oldLevel && oldLevel !== 'MEMBER' && newLevel !== 'MEMBER') {
+                // Trigger sự kiện chúc mừng (Trừ lần đầu load trang)
+                // Bạn có thể thêm logic check kỹ hơn
+                setCelebrationData({ level: newLevel });
+            }
+            // Cập nhật ref
+            prevVipLevelRef.current = newLevel;
+
+        } catch (error) {
+            console.error("Lỗi tải thông tin cá nhân:", error);
+        }
     };
 
     const addMessageUnique = (newMsg) => {
@@ -106,7 +181,7 @@ export const ChatProvider = ({ children }) => {
             }));
 
             const botUser = {
-                username: 'bot', displayName: 'Trợ lý AI',
+                username: 'bot', displayName: isBot ? t('assistant') : recipient,
                 avatar: 'https://robohash.org/bot?set=set1', status: 'ONLINE', isGroup: false
             };
 
@@ -138,7 +213,7 @@ export const ChatProvider = ({ children }) => {
         stompClientRef.current.subscribe(topic, (payload) => {
             const msg = JSON.parse(payload.body);
 
-            // --- QUAN TRỌNG: Chặn tin nhắn của chính mình (để không hiện 2 lần) ---
+            //Chặn tin nhắn của chính mình (để không hiện 2 lần) ---
             if (msg.senderId === currentUser) return;
             msg.type = 'GROUP';
             addMessageUnique(msg);
@@ -356,6 +431,13 @@ export const ChatProvider = ({ children }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
         const name = data.fullName || data.username;
+        const balance = data.balance || 0;
+        setMyBalance(balance);
+
+        const total = data.totalDeposited || 0;
+        setMyTotalDeposited(total);
+        localStorage.setItem('totalDeposited', total);
+        localStorage.setItem('balance', balance);
         localStorage.setItem('fullName', name);
         localStorage.setItem('avatar', data.avatar || "");
         setCurrentUser(data.username);
@@ -366,10 +448,40 @@ export const ChatProvider = ({ children }) => {
         fetchMessages();
     };
 
+    const fetchMyBalance = async () => {
+        if (!currentUser) return;
+        try {
+            // Gọi API lấy thông tin user hiện tại
+            // Lưu ý: Backend cần có API trả về user detail kèm balance
+            const res = await api.get(`/users/${currentUser}`);
+            if (res.data && res.data.balance !== undefined) {
+                setMyBalance(res.data.balance);
+                localStorage.setItem('balance', res.data.balance);
+            }
+        } catch (error) {
+            console.error("Lỗi cập nhật số dư", error);
+        }
+    };
+
+    const fetchMyTotalDeposited = async () => {
+        if (!currentUser) return;
+        try {
+            // Gọi API lấy thông tin user hiện tại
+            // Lưu ý: Backend cần có API trả về user detail kèm balance
+            const res = await api.get(`/users/${currentUser}`);
+            if (res.data && res.data.totalDeposit !== undefined) {
+                setMyTotalDeposited(res.data.totalDeposit);
+                localStorage.setItem('deposited', res.data.totalDeposit);
+            }
+        } catch (error) {
+            console.error("Lỗi cập nhật số dư", error);
+        }
+    };
+
     const logoutUser = async () => {
         const token = localStorage.getItem('token');
         if (token) {
-            try { await api.post('/auth/logout', {}, { headers: { 'Authorization': `Bearer ${token}` } }); } catch (e) {}
+            try { await api.post('/auth/logout', {}, { headers: { 'Authorization': `Bearer ${token}` } }); } catch (e) { /* empty */ }
         }
         if (stompClientRef.current) stompClientRef.current.deactivate();
 
@@ -411,6 +523,8 @@ export const ChatProvider = ({ children }) => {
 
     useEffect(() => {
         if (currentUser) {
+            fetchMyTotalDeposited
+            fetchMyBalance();
             fetchUsers();
             fetchMessages();
             api.get('/notifications').then(res => {
@@ -426,7 +540,7 @@ export const ChatProvider = ({ children }) => {
         isConnected, loginUser, logoutUser,
         users, getUserAvatar, refreshGroups, leaveGroup,
         myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers,
-        deleteNotification, clearAllNotifications, markOneRead
+        deleteNotification, clearAllNotifications, markOneRead, setCurrentUser, myBalance, fetchMyBalance, myTotalDeposited, fetchMyProfile, fetchMyTotalDeposited
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

@@ -23,6 +23,12 @@ import EventsPage from "./components/events/EventPage.jsx";
 import EventDetailPage from "./pages/EventDetailPage.jsx";
 import ErrorBoundary from "antd/es/alert/ErrorBoundary.js";
 import SchedulePage from "./pages/SchedulePage.jsx";
+import PaymentPage from "./pages/PaymentPage.jsx";
+import AdminPaymentPage from "./pages/admin/AdminPaymentPage.jsx";
+import AdminLoginPage from "./pages/admin/AdminLoginPage.jsx";
+import AdminLayout from "./components/layout/AdminLayout.jsx";
+import AdminProtectedRoute from "./components/layout/AdminProtectedRoute.jsx";
+import AdminUserPage from "./pages/admin/AdminUserPage.jsx";
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
@@ -57,65 +63,64 @@ const ProtectedRoute = ({ children }) => {
 function App() {
     return (
         <SettingsProvider>
-        <ChatProvider>
-            <Router>
-                <Routes>
-                    {/* --- CÁC ROUTE CÔNG KHAI (Không có Header) --- */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/verify" element={<VerifyOtp />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
+            <ChatProvider>
+                <Router>
+                    <Routes>
+                        {/* =================================================== */}
+                        {/* 1. PUBLIC ROUTES (Login, Register, Admin Login)     */}
+                        {/* =================================================== */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/verify" element={<VerifyOtp />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
 
-                    <Route path="/reset-password" element={<ResetPassword />} />
+                        {/* Admin Login nằm ngoài tất cả Layout */}
+                        <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                    {/* --- CÁC ROUTE NỘI BỘ (Có Header + Cần Login) --- */}
-                    {/* Bọc trong ProtectedRoute và MainLayout */}
-                    <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
 
-                        {/* Mặc định vào trang chủ là Feed */}
-                        <Route path="/" element={<Navigate to="/feed" replace />} />
+                        {/* =================================================== */}
+                        {/* 2. ADMIN ROUTES (Giao diện RIÊNG BIỆT)             */}
+                        {/* =================================================== */}
+                        <Route path="/admin" element={
+                            <AdminProtectedRoute>
+                                <AdminLayout />
+                            </AdminProtectedRoute>
+                        }>
+                            {/* Khi vào /admin -> Tự động vào dashboard */}
+                            <Route index element={<Navigate to="dashboard" replace />} />
 
-                        <Route path="/feed" element={<Feed />} />
-                        <Route path="/chat" element={<Chat />} />
-                        <Route
-                            path="/events"
-                            element={
-                                <ProtectedRoute>
-                                    <ErrorBoundary>
-                                    <EventsPage />
-                                    </ErrorBoundary>
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route path="/events/:id" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
+                            {/* /admin/dashboard */}
+                            <Route path="dashboard" element={<AdminPaymentPage />} />
 
-                        <Route
-                            path="/schedule"
-                            element={
-                                <ProtectedRoute>
-                                    <ErrorBoundary>
-                                        <SchedulePage />
-                                    </ErrorBoundary>
-                                </ProtectedRoute>
-                            }
-                        />
+                            <Route path="users" element={<AdminUserPage />} />
 
-                        {/* Chi tiết bài viết */}
-                        <Route path="/post/:postId" element={<PostDetail />} />
+                            {/* Sau này thêm: /admin/users, /admin/settings... */}
+                        </Route>
 
-                        {/* Hồ sơ cá nhân (Của mình) */}
-                        <Route path="/profile" element={<Profile />} />
 
-                        {/* Hồ sơ người khác (Xem từ bài viết/comment) */}
-                        <Route path="/profile/:targetUsername" element={<Profile />} />
-                        <Route path="/change-password" element={<ChangePassword />} />
-                    </Route>
+                        {/* =================================================== */}
+                        {/* 3. USER ROUTES (Giao diện Chat/Feed bình thường)    */}
+                        {/* =================================================== */}
+                        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                            <Route path="/" element={<Navigate to="/feed" replace />} />
+                            <Route path="/feed" element={<Feed />} />
+                            <Route path="/chat" element={<Chat />} />
+                            <Route path="/payment" element={<PaymentPage />} />
+                            <Route path="/profile" element={<Profile />} />
+                            <Route path="/profile/:targetUsername" element={<Profile />} />
+                            <Route path="/post/:postId" element={<PostDetail />} />
+                            <Route path="/events" element={<ErrorBoundary><EventsPage /></ErrorBoundary>} />
+                            <Route path="/events/:id" element={<EventDetailPage />} />
+                            <Route path="/schedule" element={<ErrorBoundary><SchedulePage /></ErrorBoundary>} />
+                            <Route path="/change-password" element={<ChangePassword />} />
+                        </Route>
 
-                    {/* --- ROUTE 404 (Nếu gõ linh tinh thì về Feed hoặc Login) --- */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </Router>
-        </ChatProvider>
+                        {/* 404 */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Router>
+            </ChatProvider>
         </SettingsProvider>
     );
 }
