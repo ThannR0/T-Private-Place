@@ -1,11 +1,10 @@
-import React from 'react';
-import { Layout, Menu, Button, Typography, message } from 'antd';
+import React, { useState } from 'react';
+import { Layout, Menu, Button, Typography, Avatar, Dropdown, Space, Badge, Tag } from 'antd';
 import {
-    DashboardOutlined,
-    UserOutlined,
-    LogoutOutlined,
-    SettingOutlined,
-    DollarCircleOutlined
+    DashboardOutlined, UserOutlined, LogoutOutlined,
+    SettingOutlined, DollarCircleOutlined, ShopOutlined,
+    BellOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
+    LineChartOutlined, GiftOutlined // Icon mới cho thống kê
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
@@ -16,50 +15,80 @@ const { Title } = Typography;
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { logoutUser } = useChat();
+    const { logoutUser, currentAvatar, currentFullName } = useChat();
+    const [collapsed, setCollapsed] = useState(false);
 
     const handleLogout = () => {
         logoutUser();
-        message.success("Đã đăng xuất Admin");
         navigate('/admin/login');
     };
 
-    // Menu Items
+    const userMenu = {
+        items: [
+            { key: '3', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true, onClick: handleLogout },
+        ]
+    };
+
+    // --- CẤU HÌNH MENU MỚI ---
     const items = [
+        // 1. Trang Giao dịch cũ (Giữ nguyên cho bạn)
         {
             key: '/admin/dashboard',
             icon: <DollarCircleOutlined />,
-            label: 'Quản lý Giao dịch',
-            onClick: () => navigate('/admin/dashboard'),
+            label: 'Quản Lý Giao Dịch Banking',
+            onClick: () => navigate('/admin/dashboard')
+        },
+
+        // 2. Trang Thống kê Mới (Đổi tên & Icon)
+        {
+            key: '/admin/market-stats',
+            icon: <LineChartOutlined />,
+            label: 'Thống Kê Doanh Thu',
+            onClick: () => navigate('/admin/market-stats')
+        },
+
+        // 3. Các trang khác
+        {
+            key: '/admin/market',
+            icon: <ShopOutlined />,
+            label: 'Quản Lý Mua Bán',
+            onClick: () => navigate('/admin/market')
         },
         {
             key: '/admin/users',
             icon: <UserOutlined />,
-            label: 'Quản lý Người dùng',
-            // disabled: true,
-            onClick: () => navigate('/admin/users'),
+            label: 'Quản Lý Người Dùng',
+            onClick: () => navigate('/admin/users')
         },
         {
-            key: '/admin/settings',
-            icon: <SettingOutlined />,
-            label: 'Cài đặt hệ thống',
-            disabled: true,
+            key: '/admin/vouchers',
+            icon: <GiftOutlined />, // Icon hộp quà
+            label: 'Quản lý Voucher',
+            onClick: () => navigate('/admin/vouchers')
         },
     ];
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
-            {/* 1. SIDEBAR (Thanh bên trái) */}
-            <Sider width={250} theme="dark" collapsible>
-                <div style={{ padding: '20px', textAlign: 'center', borderBottom: '1px solid #333' }}>
-                    <div style={{
-                        width: 40, height: 40, background: '#faad14', borderRadius: '50%',
-                        margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 'bold', fontSize: 20
-                    }}>
-                        A
-                    </div>
-                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>ADMIN PORTAL</span>
+            <Sider
+                trigger={null}
+                collapsible
+                collapsed={collapsed}
+                width={260}
+                style={{
+                    background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)',
+                    boxShadow: '4px 0 15px rgba(0,0,0,0.1)'
+                }}
+            >
+                <div style={{ padding: '24px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    {collapsed ? (
+                        <div style={{ fontSize: 24, fontWeight: 'bold', color: '#fff' }}>TP</div>
+                    ) : (
+                        <div>
+                            <div style={{ color: '#fff', fontSize: 20, fontWeight: '800', letterSpacing: '1px' }}>PRIVATE PLACE</div>
+                            <Tag color="gold" style={{ marginTop: 5, fontSize: 10 }}>ADMINISTRATOR</Tag>
+                        </div>
+                    )}
                 </div>
 
                 <Menu
@@ -67,32 +96,43 @@ const AdminLayout = () => {
                     mode="inline"
                     selectedKeys={[location.pathname]}
                     items={items}
-                    style={{ marginTop: 20 }}
+                    style={{ background: 'transparent', padding: '10px' }}
                 />
-
-                <div style={{ position: 'absolute', bottom: 20, width: '100%', padding: '0 20px' }}>
-                    <Button
-                        type="primary"
-                        danger
-                        icon={<LogoutOutlined />}
-                        block
-                        onClick={handleLogout}
-                    >
-                        Đăng xuất
-                    </Button>
-                </div>
             </Sider>
 
-            {/* 2. MAIN CONTENT (Nội dung bên phải) */}
-            <Layout>
-                <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,21,41,0.08)' }}>
-                    <Title level={4} style={{ margin: 0 }}>Hệ Thống Quản Trị T Private Place</Title>
-                    <span style={{ fontWeight: 'bold', color: '#555' }}>Admin</span>
+            <Layout style={{ background: '#f0f2f5' }}>
+                <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 99 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                        <Button
+                            type="text"
+                            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                            onClick={() => setCollapsed(!collapsed)}
+                            style={{ fontSize: '16px', width: 64, height: 64 }}
+                        />
+                        <Title level={4} style={{ margin: 0, fontWeight: 600, color: '#333' }}>
+                            {items.find(i => i.key === location.pathname)?.label || 'Trang quản trị'}
+                        </Title>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                        <Badge count={5} dot>
+                            <BellOutlined style={{ fontSize: 20, color: '#666', cursor: 'pointer' }} />
+                        </Badge>
+                        <Dropdown menu={userMenu} placement="bottomRight" arrow>
+                            <Space style={{ cursor: 'pointer', padding: '5px 10px', borderRadius: 8, transition: '0.3s', background: '#f9f9f9' }}>
+                                <Avatar src={currentAvatar} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
+                                <div style={{ lineHeight: '1.2' }}>
+                                    <div style={{ fontWeight: 'bold', fontSize: 14 }}>{currentFullName || 'Admin'}</div>
+                                </div>
+                            </Space>
+                        </Dropdown>
+                    </div>
                 </Header>
 
-                <Content style={{ margin: '24px 16px', padding: 24, minHeight: 280, background: '#f0f2f5' }}>
-                    {/* 👇 Đây là nơi các trang con (AdminPaymentPage...) sẽ hiển thị */}
-                    <Outlet />
+                <Content style={{ margin: '24px', minHeight: 280 }}>
+                    <div style={{ animation: 'fadeIn 0.5s ease-in-out' }}>
+                        <Outlet />
+                    </div>
                 </Content>
             </Layout>
         </Layout>

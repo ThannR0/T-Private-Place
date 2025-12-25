@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Button, Typography, Empty, message, Spin, FloatButton, Input, Select, DatePicker } from 'antd';
+import {Row, Col, Button, Typography, Empty, message, Spin, FloatButton, Input, Select, DatePicker, Layout} from 'antd';
 import { PlusOutlined, CalendarOutlined, SearchOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import { useChat } from '../../context/ChatContext';
@@ -146,7 +146,8 @@ const EventsPage = () => {
     };
 
     return (
-        <div style={{padding: '20px 0', maxWidth: 1200, margin: '0 auto'}}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--bg-color)', transition: 'background 0.3s' }}>
+        <div style={{padding: '20px 0', maxWidth: 1200, margin: '0 auto', backgroundColor: 'var(--bg-color)'}}>
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -212,7 +213,7 @@ const EventsPage = () => {
                 </Row>
             </div>
 
-            {loading ? <div style={{textAlign: 'center', padding: 50}}><Spin size="large"/></div> : (
+            {loading ? <div style={{textAlign: 'center', padding: 50, backgroundColor: 'var(--bg-color)'}}><Spin size="large"/></div> : (
                 filteredEvents.length === 0 ?
                     <Empty description={<span style={{color: 'var(--text-secondary)'}}>{t('noEvents') || "Chưa có sự kiện"}</span>}/>
                     : (
@@ -247,6 +248,7 @@ const EventsPage = () => {
                 tooltip={t('createEvent') || "Tạo mới"}
             />
         </div>
+        </Layout>
     );
 };
 

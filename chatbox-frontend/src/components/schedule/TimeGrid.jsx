@@ -130,7 +130,7 @@ const TimeGrid = ({ date, events, onCreate, onEdit, onDelete, onEventDrop }) => 
                 left: '60px',
                 right: '10px',
                 position: 'absolute',
-                backgroundColor: event.color || '#3788d8',
+                backgroundColor: event.color || 'var(--bg-color)',
                 borderRadius: '6px',
                 padding: '4px 8px',
                 color: '#fff',
@@ -141,7 +141,7 @@ const TimeGrid = ({ date, events, onCreate, onEdit, onDelete, onEventDrop }) => 
                 opacity: isDragging ? 0.9 : 1,
                 transition: isDragging ? 'none' : 'top 0.2s, height 0.2s',
                 overflow: 'hidden',
-                userSelect: 'none'
+                userSelect: 'none',
             };
 
             const content = (
@@ -207,7 +207,7 @@ const TimeGrid = ({ date, events, onCreate, onEdit, onDelete, onEventDrop }) => 
                     trigger="click"
                     placement="leftTop"
                     // Override background popover
-                    overlayInnerStyle={{ backgroundColor: 'var(--card-bg)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}
+                    overlayInnerStyle={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}
                 >
                     {content}
                 </Popover>

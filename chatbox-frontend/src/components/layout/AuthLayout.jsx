@@ -70,7 +70,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
                             marginBottom: '30px',
                             display:'flex',
                             justifyContent:'center',
-                            // Giữ nguyên cursor: 'default' để người ngoài tưởng là ảnh tĩnh
+                            // Giữ nguyên cursor: 'default'
                             cursor: 'default',
                             userSelect: 'none'
                         }}

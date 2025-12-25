@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Modal, Form, Input, DatePicker, InputNumber, Upload, Button,
-    Row, Col, Typography, message, theme, Divider
+    Row, Col, Typography, message, theme, Divider, Layout
 } from 'antd';
 import {
     InboxOutlined, EnvironmentOutlined, FileTextOutlined,
@@ -106,7 +106,9 @@ const CreateEventModal = ({ visible, onClose, onCreate, loading, initialData }) 
     };
 
     return (
+
         <Modal
+
             title={
                 <Title level={3} style={{ margin: 0, textAlign: 'center', color: token.colorPrimary }}>
                     {initialData ? (t('editEvent') || "Cập nhật sự kiện") : (t('createEvent') || "Tạo sự kiện mới")}
@@ -273,6 +275,7 @@ const CreateEventModal = ({ visible, onClose, onCreate, loading, initialData }) 
                 </div>
             </Form>
         </Modal>
+
     );
 };
 

@@ -91,7 +91,7 @@ public class GroupService {
         notifyGroupUpdate(groupId, "MEMBER_ADDED");
     }
 
-    // Các hàm Remove, Leave, Rename giữ nguyên như cũ (tôi rút gọn để tập trung logic mới)
+    // Các hàm Remove, Leave, Rename giữ nguyên như cũ
     public void removeMember(Long groupId, String currentUsername, String targetUsername) {
         ChatGroup group = groupRepo.findById(groupId).orElseThrow();
         if (currentUsername.equals(targetUsername)) { leaveGroup(groupId, currentUsername); return; }

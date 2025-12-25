@@ -111,7 +111,6 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
                 </Tooltip>,
                 renderPrimaryAction()
             ]}
-            // [QUAN TRỌNG] Đồng bộ màu nền Card và Viền theo index.css
             style={{
                 borderRadius: 16,
                 overflow: 'hidden',
@@ -119,7 +118,8 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 background: 'var(--bg-color)',      // Sáng: Trắng / Tối: Xám Đậm
-                border: '1px solid var(--border-color)' // Viền tự đổi màu
+                border: '1px solid var(--border-color)', // Viền tự đổi màu
+                backgroundColor: 'var(--bg-color)'
             }}
             styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', position: 'relative' } }}
         >

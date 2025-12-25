@@ -107,7 +107,6 @@ public class PostController {
         }
 
         // 2. Gọi Service và truyền LINK ẢNH (String) thay vì file gốc
-        // LƯU Ý: Bạn cần qua file PostService sửa lại tham số đầu vào nhé!
         return postService.createPost(username, content, imageUrl, backgroundTheme);
     }
 }

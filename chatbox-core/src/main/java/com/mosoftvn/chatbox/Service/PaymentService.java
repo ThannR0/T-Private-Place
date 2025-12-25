@@ -47,6 +47,8 @@ public class PaymentService {
     @Value("${payment.exchange.rate}")
     private double exchangeRate;
 
+    @Autowired private UserService userService;
+
     // 1. TẠO GIAO DỊCH NẠP/DONATE
     @Transactional
     public PaymentDTO.TransactionResponse createTransaction(String username, PaymentDTO.DepositRequest req) {
@@ -162,8 +164,29 @@ public class PaymentService {
 
         // 4. Cộng tiền cho User
         User user = trans.getUser();
-        Double currentBalance = user.getBalance() == null ? 0.0 : user.getBalance();
-        user.setBalance(currentBalance + trans.getThanReceived()); // Cộng Coin (Than)
+
+
+        Double oldBalance = user.getBalance() == null ? 0.0 : user.getBalance();
+        Double oldTotalDeposited = user.getTotalDeposited() == null ? 0.0 : user.getTotalDeposited();
+
+        // B. Cộng tiền:
+        // - Balance (Số dư): Cộng bằng Coin (thanReceived)
+        // - TotalDeposited (Tổng nạp): Cộng bằng VND (amountVnd)
+        user.setBalance(oldBalance + trans.getThanReceived());
+        Double newTotalDeposited = oldTotalDeposited + trans.getAmountVnd(); // Quan trọng: Phải cộng tổng nạp VND
+        user.setTotalDeposited(newTotalDeposited);
+
+        userRepository.save(user); // Lưu lại
+        transactionRepository.save(trans);
+
+        // C. GỌI HÀM KIỂM TRA LÊN CẤP VÀ BẮN PHÁO HOA
+        // (Hàm này nằm bên UserService vừa được đổi thành public)
+        try {
+            userService.checkAndRewardLevelUp(user, oldTotalDeposited, newTotalDeposited);
+        } catch (Exception e) {
+            System.err.println("Lỗi khi check lên cấp: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         userRepository.save(user);
         transactionRepository.save(trans);
@@ -188,6 +211,10 @@ public class PaymentService {
         // 7. (Tùy chọn) BẮN SOCKET: Báo cho trang Admin reload (nếu Admin đang mở)
         messagingTemplate.convertAndSend("/topic/admin/payment-updates", "NEW_PAYMENT");
     }
+
+
+
+
 
     private PaymentDTO.TransactionResponse mapToDTO(Transaction t) {
         return PaymentDTO.TransactionResponse.builder()

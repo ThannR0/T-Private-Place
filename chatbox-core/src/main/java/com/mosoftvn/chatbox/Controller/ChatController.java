@@ -132,7 +132,6 @@ public class ChatController {
 
     //API Lấy lịch sử tin nhắn (Cho chức năng sync khi online lại)
     // Lưu ý: Đường dẫn này phải khớp với Frontend gọi (/api/chat/history hoặc /api/messages/history)
-    // Ở đây tôi để /api/chat/history cho đồng bộ với RequestMapping
     @GetMapping("/history")
     @ResponseBody
     public ResponseEntity<List<ChatMessage>> getMyMessageHistory() {
@@ -141,23 +140,17 @@ public class ChatController {
         // 1. Lấy tin nhắn cá nhân (1-1)
         List<ChatMessage> personalMsgs = chatMessageRepository.findBySenderIdOrRecipientIdOrderByTimestampAsc(currentUser, currentUser);
 
-        // 2. Lấy tin nhắn của các NHÓM mà tôi tham gia
         List<GroupDetailDTO> myGroups = groupService.getMyGroups(currentUser);
         List<String> groupIds = myGroups.stream().map(g -> String.valueOf(g.getId())).collect(Collectors.toList());
 
-        // (Lưu ý: Repository của bạn cần có hàm findByRecipientIdIn. Nếu chưa có, hãy thêm vào ChatMessageRepository)
         // Nếu không thêm được, tạm thời dùng findByRecipientId cho từng nhóm (hơi chậm)
         List<ChatMessage> groupMsgs = new ArrayList<>();
         if (!groupIds.isEmpty()) {
             // Cách tốt nhất: chatMessageRepository.findByRecipientIdIn(groupIds);
             // Cách tạm thời (nếu lười sửa Repo):
             for (String gid : groupIds) {
-                // Giả sử repo có hàm tìm theo RecipientId (là ID nhóm)
-                // Bạn có thể dùng hàm findAll() rồi filter stream nếu DB ít (không khuyến khích)
-                // Ở đây tôi giả định bạn sẽ thêm hàm findByRecipientIdIn vào Repo cho chuẩn.
                 // groupMsgs.addAll(chatMessageRepository.findByRecipientId(gid));
             }
-            // --- QUAN TRỌNG: Bạn cần thêm hàm này vào ChatMessageRepository: ---
             // List<ChatMessage> findByRecipientIdIn(List<String> recipientIds);
             try {
                 groupMsgs.addAll(chatMessageRepository.findByRecipientIdIn(groupIds));

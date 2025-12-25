@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Typography, Tag, Row, Col, Avatar, message, Spin, Space, Divider, List } from 'antd';
+import {Card, Button, Typography, Tag, Row, Col, Avatar, message, Spin, Space, Divider, List, Layout} from 'antd';
 import {
     CalendarOutlined, EnvironmentOutlined, UsergroupAddOutlined, ArrowLeftOutlined,
     CheckCircleOutlined, DeleteOutlined, EditOutlined, CrownOutlined,
@@ -123,6 +123,7 @@ const EventDetailPage = () => {
     };
 
     return (
+        <Layout style={{ minHeight: '100vh', background: 'var(--bg-color)', transition: 'background 0.3s' }}>
         <div style={{ maxWidth: 1200, margin: '20px auto', padding: '0 20px' }}>
             <div style={{display:'flex', justifyContent:'space-between', marginBottom: 15}}>
                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/events')} style={btnSecondaryStyle}>
@@ -259,6 +260,7 @@ const EventDetailPage = () => {
                 />
             )}
         </div>
+        </Layout>
     );
 };
 

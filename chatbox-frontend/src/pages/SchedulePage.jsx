@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Calendar, Row, Col, Card, Typography, Button,
-    message, Spin, Modal, Divider, Tag, Avatar
+    message, Spin, Modal, Divider, Tag, Avatar, Layout
 } from 'antd';
 import {
     PlusOutlined, RobotOutlined,
@@ -39,7 +39,7 @@ const AiSummaryRenderer = ({ rawText }) => {
     const lines = rawText.split('\n');
 
     return (
-        <div style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", backgroundColor: 'var(--bg-color)' }}>
             {lines.map((line, index) => {
                 const parts = line.split('|');
                 const type = parts[0];
@@ -52,7 +52,9 @@ const AiSummaryRenderer = ({ rawText }) => {
                             margin: '-24px -24px 20px -24px',
                             padding: '30px 24px',
                             color: '#fff',
-                            textAlign: 'center'
+                            textAlign: 'center',
+                            backgroundColor: 'var(--bg-color)'
+
                         }}>
                             <div style={{ textTransform: 'uppercase', letterSpacing: 2, fontSize: 12, opacity: 0.8 }}>{t('aiReportHeader') || "AI Assistant Report"}</div>
                             <Title level={2} style={{ color: '#fff', margin: '5px 0 0 0' }}>{parts[1]}</Title>
@@ -308,93 +310,118 @@ const SchedulePage = () => {
     const dailyEvents = schedules.filter(s => dayjs(s.startTime).isSame(currentDate, 'day'));
 
     return (
-        <div style={{ maxWidth: 1400, margin: '20px auto', padding: '0 20px' }}>
-            <Row gutter={24}>
-                {/* CỘT TRÁI */}
-                <Col xs={24} lg={6}>
-                    <Card style={{ borderRadius: 16, marginBottom: 20 }}>
-                        <div style={{textAlign: 'center', marginBottom: 20}}>
-                            <Button type="primary" size="large" icon={<PlusOutlined />} block onClick={() => openCreateModal()}
-                                    style={{borderRadius: 8, height: 45, fontSize: 16, fontWeight: 600}}>
-                                {t('createSchedule') || "Tạo kế hoạch"}
-                            </Button>
-                        </div>
-                        <Calendar fullscreen={false} value={currentDate} onSelect={onSelectDate} cellRender={dateCellRender} />
-                        <Divider />
-                        <div style={{textAlign: 'center'}}>
-                            <Text style={{color: 'var(--text-secondary)'}}>{t('viewingDate') || "Bạn đang xem lịch ngày"}:</Text>
-                            <Title level={4} style={{margin: '5px 0', color: '#1890ff'}}>
-                                {currentDate.format('DD/MM/YYYY')}
-                            </Title>
-                        </div>
-                    </Card>
-                </Col>
-
-                {/* CỘT PHẢI */}
-                <Col xs={24} lg={18}>
-                    {/* Thêm style để Card bung chiều cao và đổi nền theo theme */}
-                    <Card
-                        style={{ borderRadius: 16, height: '100%', display: 'flex', flexDirection: 'column' }}
-                        bodyStyle={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column' }}
-                    >
-                        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <Title level={4} style={{ margin: 0, color: 'var(--text-color)' }}>
-                                    {currentDate.format('dddd')}, {currentDate.format('D')} / {currentDate.format('M')}
-                                </Title>
-                                <Text style={{color: 'var(--text-secondary)'}}>
-                                    {t('eventsToday')?.replace('{{count}}', dailyEvents.length) || `Có ${dailyEvents.length} sự kiện`}
-                                </Text>
+        <Layout style={{minHeight: '100vh', background: 'var(--bg-color)', transition: 'background 0.3s'}}>
+            <div style={{maxWidth: 1400, margin: '20px auto', padding: '0 20px', backgroundColor: 'var(--bg-color)'}}>
+                <Row gutter={24}>
+                    {/* CỘT TRÁI */}
+                    <Col xs={24} lg={6}>
+                        <Card style={{borderRadius: 16, marginBottom: 20, backgroundColor: 'var(--bg-color)'}}>
+                            <div style={{textAlign: 'center', marginBottom: 20}}>
+                                <Button type="primary" size="large" icon={<PlusOutlined/>} block
+                                        onClick={() => openCreateModal()}
+                                        style={{borderRadius: 8, height: 45, fontSize: 16, fontWeight: 600}}>
+                                    {t('createSchedule') || "Tạo kế hoạch"}
+                                </Button>
                             </div>
-                            <Button type="dashed" icon={<RobotOutlined />} onClick={handleAiSummary} style={{ color: '#722ed1', borderColor: '#722ed1', background: 'var(--bg-secondary)' }}>
-                                {t('aiSummaryBtn') || "AI Tóm tắt"}
-                            </Button>
+                            <Calendar fullscreen={false} value={currentDate} onSelect={onSelectDate}
+                                      cellRender={dateCellRender}/>
+                            <Divider/>
+                            <div style={{textAlign: 'center'}}>
+                                <Text
+                                    style={{color: 'var(--text-secondary)'}}>{t('viewingDate') || "Bạn đang xem lịch ngày"}:</Text>
+                                <Title level={4} style={{margin: '5px 0', color: '#1890ff'}}>
+                                    {currentDate.format('DD/MM/YYYY')}
+                                </Title>
+                            </div>
+                        </Card>
+                    </Col>
+
+                    {/* CỘT PHẢI */}
+                    <Col xs={24} lg={18}>
+                        {/* Thêm style để Card bung chiều cao và đổi nền theo theme */}
+                        <Card
+                            style={{
+                                borderRadius: 16,
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                backgroundColor: 'var(--bg-color)'
+                            }}
+                            bodyStyle={{padding: 0, flex: 1, display: 'flex', flexDirection: 'column'}}
+                        >
+                            <div style={{
+                                padding: '16px 24px',
+                                borderBottom: '1px solid var(--border-color)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <div>
+                                    <Title level={4} style={{margin: 0, color: 'var(--text-color)'}}>
+                                        {currentDate.format('dddd')}, {currentDate.format('D')} / {currentDate.format('M')}
+                                    </Title>
+                                    <Text style={{color: 'var(--text-secondary)'}}>
+                                        {t('eventsToday')?.replace('{{count}}', dailyEvents.length) || `Có ${dailyEvents.length} sự kiện`}
+                                    </Text>
+                                </div>
+                                <Button type="dashed" icon={<RobotOutlined/>} onClick={handleAiSummary} style={{
+                                    color: '#722ed1',
+                                    borderColor: '#722ed1',
+                                    background: 'var(--bg-secondary)'
+                                }}>
+                                    {t('aiSummaryBtn') || "AI Tóm tắt"}
+                                </Button>
+                            </div>
+
+                            {loading ? <div style={{padding: 50, textAlign: 'center'}}><Spin/></div> : (
+                                <TimeGrid
+                                    date={currentDate}
+                                    events={dailyEvents}
+                                    onCreate={openCreateModal}
+                                    onEdit={(evt) => {
+                                        setEditingSchedule(evt);
+                                        setModalVisible(true);
+                                    }}
+                                    onDelete={handleDelete}
+                                    onEventDrop={handleEventDrop}
+                                />
+                            )}
+                        </Card>
+                    </Col>
+                </Row>
+
+                <ScheduleModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    onSave={handleSave}
+                    loading={saveLoading}
+                    initialData={editingSchedule}
+                    selectedDate={selectedSlotTime}
+                />
+
+                {/* MODAL AI PRO MAX */}
+                <Modal
+                    open={aiModalVisible}
+                    onCancel={() => setAiModalVisible(false)}
+                    footer={null}
+                    centered
+                    width={600}
+                    styles={{content: {borderRadius: 16, overflow: 'hidden', padding: 0}, body: {padding: '24px'}}}
+                >
+                    {aiLoading ? (
+                        <div style={{textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--bg-color)'}}>
+                            <Spin size="large"/>
+                            <div style={{marginTop: 20, color: '#667eea', fontWeight: 600}}>
+                                {t('aiAnalyzing') || "AI đang phân tích dữ liệu..."}
+                            </div>
                         </div>
+                    ) : (
+                        <AiSummaryRenderer rawText={aiSummary}/>
+                    )}
+                </Modal>
+            </div>
+        </Layout>
 
-                        {loading ? <div style={{padding: 50, textAlign: 'center'}}><Spin /></div> : (
-                            <TimeGrid
-                                date={currentDate}
-                                events={dailyEvents}
-                                onCreate={openCreateModal}
-                                onEdit={(evt) => { setEditingSchedule(evt); setModalVisible(true); }}
-                                onDelete={handleDelete}
-                                onEventDrop={handleEventDrop}
-                            />
-                        )}
-                    </Card>
-                </Col>
-            </Row>
-
-            <ScheduleModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                onSave={handleSave}
-                loading={saveLoading}
-                initialData={editingSchedule}
-                selectedDate={selectedSlotTime}
-            />
-
-            {/* MODAL AI PRO MAX */}
-            <Modal
-                open={aiModalVisible}
-                onCancel={() => setAiModalVisible(false)}
-                footer={null}
-                centered
-                width={600}
-                styles={{ content: { borderRadius: 16, overflow: 'hidden', padding: 0 }, body: { padding: '24px' } }}
-            >
-                {aiLoading ? (
-                    <div style={{textAlign: 'center', padding: '60px 20px'}}>
-                        <Spin size="large" />
-                        <div style={{marginTop: 20, color: '#667eea', fontWeight: 600}}>
-                            {t('aiAnalyzing') || "AI đang phân tích dữ liệu..."}
-                        </div>
-                    </div>
-                ) : (
-                    <AiSummaryRenderer rawText={aiSummary} />
-                )}
-            </Modal>
-        </div>
     );
 };
 

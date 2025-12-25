@@ -60,18 +60,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
 
                         // --- NHÓM 3: CÁC API KHÁC ---
-//                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-// Chấp nhận chính xác chuỗi "ROLE_ADMIN" hoặc "ROLE_USER" có trong Token
-//                                .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
-//                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("USER", "ADMIN")
-//                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("USER", "ADMIN")
                                 .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
                        .requestMatchers("/api/posts/**").permitAll()
+                                .requestMatchers("/api/market/**").permitAll()
                         .requestMatchers("/api/groups/**").permitAll()
                         .requestMatchers("/api/chat/**").permitAll()
 
                         .requestMatchers("/api/auth/**", "/api/payment/create").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/market/vouchers/admin/**").hasRole("ADMIN") // Nếu bạn phân quyền kỹ
+                        .requestMatchers("/api/market/vouchers/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") //CHỈ ADMIN MỚI ĐƯỢC VÀO ĐÂY
 
                         // CHỐT CHẶN CUỐI CÙNG
@@ -87,7 +85,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 1. Cho phép Frontend (Check kỹ port của bạn, ví dụ 5173)
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173"
                 ));

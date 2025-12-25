@@ -12,7 +12,7 @@ import Chat from './pages/Chat';
 import Feed from "./pages/Feed";
 
 import PostDetail from "./pages/PostDetail";
-import Profile from "./pages/Profile"; // File Profile bạn đã sửa ở bước trước
+import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 // --- Components ---
 import AppHeader from './components/layout/AppHeader';
@@ -29,6 +29,20 @@ import AdminLoginPage from "./pages/admin/AdminLoginPage.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 import AdminProtectedRoute from "./components/layout/AdminProtectedRoute.jsx";
 import AdminUserPage from "./pages/admin/AdminUserPage.jsx";
+import ProductList from "./components/marketplace/ProductList.jsx";
+import CreateProduct from "./components/marketplace/CreateProduct.jsx";
+import Checkout from "./components/marketplace/Checkout.jsx";
+import MyOrders from "./components/marketplace/MyOders.jsx";
+import {CartProvider} from "./context/CartContext.jsx";
+import AdminMarket from "./components/marketplace/AdminMarket.jsx";
+import MarketLayout from "./components/marketplace/MarketLayout.jsx";
+import ProductDetail from "./components/marketplace/ProductDetail.jsx";
+import {Layout} from "antd";
+import MyShop from "./components/marketplace/MyShop.jsx";
+import MarketDashboard from "./components/marketplace/MarketDashboard.jsx";
+import AdminVoucherManager from "./pages/admin/AdminVoucherManager.jsx";
+import CreateShop from "./components/marketplace/CreateShop.jsx";
+import ShopProfile from "./components/marketplace/ShopProfile.jsx";
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
@@ -64,6 +78,7 @@ function App() {
     return (
         <SettingsProvider>
             <ChatProvider>
+                <CartProvider>
                 <Router>
                     <Routes>
                         {/* =================================================== */}
@@ -92,8 +107,11 @@ function App() {
 
                             {/* /admin/dashboard */}
                             <Route path="dashboard" element={<AdminPaymentPage />} />
-
+                            <Route path="market" element={<AdminMarket />} />
                             <Route path="users" element={<AdminUserPage />} />
+                            <Route path="market-stats" element={<MarketDashboard />} />
+                            <Route path="vouchers" element={<AdminVoucherManager />} />
+
 
                             {/* Sau này thêm: /admin/users, /admin/settings... */}
                         </Route>
@@ -114,12 +132,23 @@ function App() {
                             <Route path="/events/:id" element={<EventDetailPage />} />
                             <Route path="/schedule" element={<ErrorBoundary><SchedulePage /></ErrorBoundary>} />
                             <Route path="/change-password" element={<ChangePassword />} />
+                            <Route path="/market/create" element={<CreateProduct />} />
+                            <Route path="/market/cart" element={<Checkout />} />
+                            <Route path="/market/orders" element={<MyOrders />} />
+                            <Route path="/market" element={
+                                        <ProductList />
+                            } />
+                            <Route path="/market/product/:id" element={<ProductDetail />} />
+                            <Route path="/market/myshop" element={<MyShop />} />
+                            <Route path="/market/register-shop" element={<CreateShop />} />
+                            <Route path="/market/shop/:username" element={<ShopProfile />} />
                         </Route>
 
                         {/* 404 */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Router>
+                </CartProvider>
             </ChatProvider>
         </SettingsProvider>
     );

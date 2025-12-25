@@ -11,12 +11,12 @@ const ChatContext = createContext();
 // Helper tính VIP (để dùng trong Context)
 const getVipLevelName = (amount) => {
     const total = Number(amount) || 0;
-    if (total >= 100000000) return 'TITANIUM';
-    if (total >= 2000000) return 'DIAMOND';
-    if (total >= 800000) return 'PLATINUM';
-    if (total >= 500000) return 'GOLD';
-    if (total >= 200000) return 'SILVER';
-    if (total >= 50000) return 'BRONZE';
+    if (total >= 1000000000) return 'TITANIUM';
+    if (total >= 250000000) return 'DIAMOND';
+    if (total >= 80000000) return 'PLATINUM';
+    if (total >= 15000000) return 'GOLD';
+    if (total >= 5000000) return 'SILVER';
+    if (total >= 500000) return 'BRONZE';
     return 'MEMBER';
 };
 
@@ -106,7 +106,6 @@ export const ChatProvider = ({ children }) => {
             // Để chuẩn xác cần so sánh thứ tự, nhưng ở đây check khác nhau là đủ kích hoạt
             if (newLevel !== oldLevel && oldLevel !== 'MEMBER' && newLevel !== 'MEMBER') {
                 // Trigger sự kiện chúc mừng (Trừ lần đầu load trang)
-                // Bạn có thể thêm logic check kỹ hơn
                 setCelebrationData({ level: newLevel });
             }
             // Cập nhật ref
@@ -142,7 +141,6 @@ export const ChatProvider = ({ children }) => {
             // Tính lại số chưa đọc (nếu tin vừa xóa là tin chưa đọc)
             setUnreadCount(prev => {
                 // Logic đơn giản: đếm lại từ list mới
-                // Nhưng ở đây ta filter state cũ nên hơi khó tính chính xác số unread giảm bao nhiêu
                 // Cách nhanh nhất: Trừ 1 nếu > 0 (tạm thời), hoặc để lần sau fetch lại tự đúng.
                 return prev > 0 ? prev - 1 : 0;
             });
@@ -340,6 +338,35 @@ export const ChatProvider = ({ children }) => {
                 message.info(newNoti.content);
             });
 
+            client.subscribe(`/user/${currentUser}/queue/levelup`, (payload) => {
+                try {
+                    const data = JSON.parse(payload.body);
+                    console.log("🎉 SỰ KIỆN LÊN CẤP:", data);
+
+                    if (data && data.level) {
+                        // 1. Kích hoạt Modal pháo hoa
+                        setCelebrationData({ level: data.level });
+
+                        // 2. Cập nhật ngay lại số tiền và cấp độ mới nhất từ server
+                        fetchMyTotalDeposited();
+                        fetchMyBalance();
+
+                        // 3. Hiện thông báo nhỏ góc màn hình
+                        message.success({
+                            content: `Chúc mừng! Bạn đã thăng hạng ${data.level}`,
+                            duration: 5,
+                            style: { marginTop: '10vh' }
+                        });
+
+                        // 4. Phát âm thanh (nếu có file)
+                        const audio = new Audio('/sounds/levelup.mp3');
+                        audio.play().catch(e => {});
+                    }
+                } catch (e) {
+                    console.error("Lỗi socket levelup:", e);
+                }
+            });
+
         }, (err) => {
             setIsConnected(false);
             subscribedGroupsRef.current.clear();
@@ -466,18 +493,20 @@ export const ChatProvider = ({ children }) => {
     const fetchMyTotalDeposited = async () => {
         if (!currentUser) return;
         try {
-            // Gọi API lấy thông tin user hiện tại
-            // Lưu ý: Backend cần có API trả về user detail kèm balance
-            const res = await api.get(`/users/${currentUser}`);
-            if (res.data && res.data.totalDeposit !== undefined) {
-                setMyTotalDeposited(res.data.totalDeposit);
-                localStorage.setItem('deposited', res.data.totalDeposit);
+            // 👇 ĐỔI THÀNH '/users/me' ĐỂ LẤY CHÍNH XÁC SỐ TIỀN NẠP
+            const res = await api.get('/users/me');
+
+            // Backend thường trả về totalDeposited (có 'ed') hoặc totalDeposit
+            const val = res.data.totalDeposited !== undefined ? res.data.totalDeposited : res.data.totalDeposit;
+
+            if (val !== undefined) {
+                setMyTotalDeposited(val);
+                localStorage.setItem('totalDeposited', val); // Lưu đúng key
             }
         } catch (error) {
-            console.error("Lỗi cập nhật số dư", error);
+            console.error("Lỗi cập nhật tổng nạp", error);
         }
     };
-
     const logoutUser = async () => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -523,7 +552,7 @@ export const ChatProvider = ({ children }) => {
 
     useEffect(() => {
         if (currentUser) {
-            fetchMyTotalDeposited
+            fetchMyTotalDeposited();
             fetchMyBalance();
             fetchUsers();
             fetchMessages();
@@ -540,7 +569,9 @@ export const ChatProvider = ({ children }) => {
         isConnected, loginUser, logoutUser,
         users, getUserAvatar, refreshGroups, leaveGroup,
         myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers,
-        deleteNotification, clearAllNotifications, markOneRead, setCurrentUser, myBalance, fetchMyBalance, myTotalDeposited, fetchMyProfile, fetchMyTotalDeposited
+        deleteNotification, clearAllNotifications, markOneRead, setCurrentUser, myBalance, fetchMyBalance, myTotalDeposited, fetchMyProfile, fetchMyTotalDeposited,
+        celebrationData,
+        setCelebrationData
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

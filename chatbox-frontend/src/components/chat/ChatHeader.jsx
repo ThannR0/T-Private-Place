@@ -42,7 +42,7 @@ const ChatHeader = () => {
         statusColor = 'success';       // Xanh lá
     } else if (isGroupChat) {
         statusText = t('groupChat');   // 'Nhóm chat'
-        statusColor = 'success';       // Xanh lá (hoặc processing - xanh dương tùy bạn)
+        statusColor = 'success';       // Xanh lá
     } else {
         switch (targetUser.status) {
             case 'ONLINE':

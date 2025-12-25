@@ -232,7 +232,6 @@ public class PostService {
             messagingTemplate.convertAndSend("/topic/feed", (Object) (payload));
         } catch (Exception e) { e.printStackTrace(); }
 
-        // 2. TẠO THÔNG BÁO (Đây là phần bạn đang thiếu!)
         // Chỉ báo nếu là hành động Thêm/Đổi (isAdding = true) và người thả không phải chủ bài viết
         if (isAdding && !post.getUser().getUsername().equals(username)) {
             String emoji = getEmojiIcon(reactionType);

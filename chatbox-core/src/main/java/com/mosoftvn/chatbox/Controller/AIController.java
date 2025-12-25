@@ -23,7 +23,6 @@ public class AIController {
         // 1. Xây dựng câu lệnh hoàn chỉnh cho AI
         String finalPrompt = buildPrompt(prompt, tone);
 
-        // 2. Gọi GeminiService của bạn
         String result = geminiService.callGemini(finalPrompt);
 
         // 3. Trả về đúng định dạng Frontend cần: { "content": "..." }

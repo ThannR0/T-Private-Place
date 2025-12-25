@@ -27,7 +27,6 @@ export const getAvatarUrl = (username, fullName, avatarUrlFromDB) => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(nameDisplay)}&background=${bgColor}&color=fff&size=128&bold=true`;
 };
 
-// 2. LOGIC LẤY MÀU TRẠNG THÁI (Cái bạn đang thiếu)
 export const getStatusColor = (status) => {
     switch (status) {
         case 'ONLINE': return '#52c41a'; // Xanh lá (Sáng hơn màu mặc định)

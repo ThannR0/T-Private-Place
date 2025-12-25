@@ -91,7 +91,6 @@ public class GroupController {
     public ResponseEntity<?> removeMember(@PathVariable Long groupId, @RequestBody GroupRequest req) {
         groupService.removeMember(groupId, getCurrentUser(), req.getTargetUsername());
 
-        // (Tùy chọn) Bạn có thể bắn socket báo người đó bị kick nếu muốn
         return ResponseEntity.ok("Đã xóa thành viên");
     }
 

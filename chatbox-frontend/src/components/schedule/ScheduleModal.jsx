@@ -105,7 +105,7 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                                         fontSize: 22, fontWeight: 600, color: '#fff',
                                         padding: 0, boxShadow: 'none'
                                     }}
-                                    className="custom-title-input" // Bạn có thể thêm class này vào css global để style placeholder: ::placeholder { color: rgba(255,255,255,0.7) }
+                                    className="custom-title-input"
                                     autoComplete="off"
                                 />
                             </Form.Item>
@@ -173,7 +173,7 @@ const ScheduleModal = ({ visible, onClose, onSave, loading, initialData, selecte
                                     placeholder={t('descPlaceholder') || "Thêm mô tả, ghi chú..."}
                                     autoSize={{ minRows: 3, maxRows: 6 }}
                                     variant="borderless"
-                                    style={{ padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 8, color: 'var(--text-color)' }}
+                                    style={{ padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 8, color: 'var(--text-color)', backgroundColor: 'var(--bg-color)' }}
                                 />
                             </Form.Item>
                         </div>

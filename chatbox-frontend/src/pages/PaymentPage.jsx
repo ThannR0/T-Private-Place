@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Typography, Table, Tag, Statistic, Button, message } from 'antd';
+import {Row, Col, Card, Typography, Table, Tag, Statistic, Button, message, Layout} from 'antd';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
     WalletOutlined,
@@ -108,8 +108,9 @@ const PaymentPage = () => {
         .reduce((sum, item) => sum + item.amountVnd, 0);
 
     return (
-        <div style={{ maxWidth: 1200, margin: '20px auto', padding: '0 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Layout style={{ minHeight: '100vh', background: 'var(--bg-color)', transition: 'background 0.3s' }}>
+        <div style={{ maxWidth: 1200, margin: '20px auto', padding: '0 20px', backgroundColor: 'var(--bg-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24,backgroundColor: 'var(--bg-color)' }}>
                 <Title level={2} style={{ margin: 0, color: 'var(--text-color)' }}>
                     <WalletOutlined style={{ marginRight: 10, color: '#faad14' }} />
                     {t('myWallet')}
@@ -120,7 +121,7 @@ const PaymentPage = () => {
                     icon={<PlusCircleOutlined />}
                     shape="round"
                     onClick={() => setModalVisible(true)}
-                    style={{ background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)', border: 'none', color: '#000', fontWeight: 600 }}
+                    style={{ background: 'linear-gradient(90deg, #FFD700 0%, #FFA500 100%)', border: 'none', color: '#000', fontWeight: 600, backgroundColor: 'var(--bg-color)' }}
                 >
                     {t('depositMore')}
                 </Button>
@@ -129,7 +130,7 @@ const PaymentPage = () => {
             <Row gutter={[24, 24]}>
                 {/* 1. THỐNG KÊ TỔNG QUAN */}
                 <Col xs={24} md={8}>
-                    <Card bordered={false} style={{ height: '100%', borderRadius: 16, background: 'var(--card-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
+                    <Card bordered={false} style={{ height: '100%', borderRadius: 16, background: 'var(--card-bg)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)' }}>
                         <Statistic
                             title={<span style={{color: 'var(--text-secondary)'}}>{t('totalDeposited')}</span>}
                             value={totalDeposited}
@@ -154,10 +155,10 @@ const PaymentPage = () => {
                     <Card
                         title={<span style={{color: 'var(--text-color)'}}><BarChartOutlined /> {t('balanceFluctuation')}</span>}
                         bordered={false}
-                        style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
+                        style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', background: 'var(--card-bg)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)' }}
                         headStyle={{borderBottom: '1px solid var(--border-color)'}}
                     >
-                        <div style={{ width: '100%', height: 200 }}>
+                        <div style={{ width: '100%', height: 200, backgroundColor: 'var(--bg-color)' }}>
                             {stats.length > 0 ? (
                                 <ResponsiveContainer>
                                     <AreaChart data={stats}>
@@ -189,7 +190,7 @@ const PaymentPage = () => {
                     <Card
                         title={<span style={{color: 'var(--text-color)'}}><HistoryOutlined /> {t('transactionHistory')}</span>}
                         bordered={false}
-                        style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}
+                        style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', background: 'var(--card-bg)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)' }}
                         headStyle={{borderBottom: '1px solid var(--border-color)'}}
                     >
                         <Table
@@ -198,7 +199,7 @@ const PaymentPage = () => {
                             rowKey="id"
                             loading={loading}
                             pagination={{ pageSize: 5 }}
-                            // Không cần style riêng cho table vì đã có override trong index.css
+
                         />
                     </Card>
                 </Col>
@@ -212,6 +213,7 @@ const PaymentPage = () => {
                 }}
             />
         </div>
+        </Layout>
     );
 };
 
