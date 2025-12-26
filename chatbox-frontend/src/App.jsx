@@ -40,9 +40,10 @@ import ProductDetail from "./components/marketplace/ProductDetail.jsx";
 import {Layout} from "antd";
 import MyShop from "./components/marketplace/MyShop.jsx";
 import MarketDashboard from "./components/marketplace/MarketDashboard.jsx";
-import AdminVoucherManager from "./pages/admin/AdminVoucherManager.jsx";
+import AdminVoucherManager from "./components/marketplace/AdminVoucherManager.jsx";
 import CreateShop from "./components/marketplace/CreateShop.jsx";
 import ShopProfile from "./components/marketplace/ShopProfile.jsx";
+import OrderDashboard from "./components/marketplace/OrderDashboard.jsx";
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
@@ -142,6 +143,9 @@ function App() {
                             <Route path="/market/myshop" element={<MyShop />} />
                             <Route path="/market/register-shop" element={<CreateShop />} />
                             <Route path="/market/shop/:username" element={<ShopProfile />} />
+                            <Route path="/market/finance" element={<OrderDashboard />} />
+
+
                         </Route>
 
                         {/* 404 */}

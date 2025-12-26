@@ -33,7 +33,8 @@ public class ShopOrder {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    private String shippingAddress; // Địa chỉ nhận
+    @Column(name = "shipping_address", length = 1000)
+    private String shippingAddress;
     private String note; // Ghi chú mua hàng
 
     @ManyToOne

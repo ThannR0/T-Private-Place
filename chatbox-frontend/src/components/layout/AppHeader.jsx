@@ -8,7 +8,7 @@ import {
     ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined,
     DeleteOutlined, ClearOutlined, CheckCircleFilled, MinusCircleFilled, StopFilled,
     MenuOutlined, CompassOutlined, ScheduleOutlined,
-    ShopOutlined, ShoppingCartOutlined, FileTextOutlined, InfoCircleOutlined // 🟢 Mới thêm icon
+    ShopOutlined, ShoppingCartOutlined, FileTextOutlined, InfoCircleOutlined, RiseOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
@@ -274,7 +274,10 @@ const AppHeader = () => {
 
                 {/* 🟢 MỤC ĐƠN HÀNG MỚI */}
                 <Button type="text" block style={{textAlign: 'left', color: 'var(--text-color)', height: 42}}
-                        icon={<FileTextOutlined/>} onClick={() => navigate('/market/orders')}>Đơn mua / Đơn bán</Button>
+                        icon={<FileTextOutlined/>} onClick={() => navigate('/market/orders')}>Quản lý đơn hàng mua/bán</Button>
+
+                <Button type="text" block style={{textAlign: 'left', color: 'var(--text-color)', height: 42}}
+                        icon={<RiseOutlined/>} onClick={() => navigate('/market/finance')}>Lịch sử mua/bán hàng</Button>
 
                 <Button type="text" block style={{textAlign: 'left', color: 'var(--text-color)', height: 42}}
                         icon={<LockOutlined/>}

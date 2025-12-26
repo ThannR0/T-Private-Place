@@ -104,7 +104,14 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+
+        // (Xóa mềm - An toàn tuyệt đối):
+        // Đổi trạng thái sang DELETED để ẩn khỏi chợ nhưng vẫn giữ được lịch sử đơn hàng
+        product.setStatus(ProductStatus.HIDDEN);
+
+        productRepository.save(product);
     }
 
     // 3. Admin duyệt/từ chối

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {Card, Button, Typography, Tag, Row, Col, Avatar, message, Spin, Space, Divider, List, Layout} from 'antd';
 import {
     CalendarOutlined, EnvironmentOutlined, UsergroupAddOutlined, ArrowLeftOutlined,
@@ -30,6 +30,8 @@ const EventDetailPage = () => {
     const { currentUser } = useChat();
     const { t } = useSettings();
 
+    const location = useLocation();
+
     // --- STATE ---
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -43,25 +45,72 @@ const EventDetailPage = () => {
         libraries: LIBRARIES
     });
 
+    const isFirstLoad = React.useRef(true);
+
     const fetchEvent = async () => {
         try {
-            const res = await api.get(`/events/${id}`);
-            setEvent(res.data);
+            // Thêm tham số timestamp để tránh cache trình duyệt
+            const res = await api.get(`/events/${id}?t=${new Date().getTime()}`);
+
+            let eventData = res.data;
+
+            // 🟢 LOGIC FIX: Tự kiểm tra xem mình có trong danh sách tham gia không
+            // Nếu API trả về participants có chứa mình -> Chắc chắn là Đã tham gia
+            if (currentUser && Array.isArray(eventData.participants)) {
+                const amIInList = eventData.participants.some(p => {
+                    const pUsername = typeof p === 'string' ? p : p.username || p.fullName; // Tùy cấu trúc object user của bạn
+                    return pUsername === currentUser;
+                });
+
+                if (amIInList) {
+                    eventData.isJoined = true;
+                }
+            }
+
+            setEvent(eventData);
         } catch (error) {
             console.error("Lỗi tải detail:", error);
-            message.error(t('postNotFound') || "Không tìm thấy sự kiện!");
-            navigate('/events');
-        } finally { setLoading(false); }
+            if (!event) {
+                message.error(t('postNotFound') || "Không tìm thấy sự kiện!");
+                navigate('/events');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => { fetchEvent(); }, [id]);
 
+
+
     const handleJoin = async () => {
         try {
+            // 1. Gọi API
             await api.post(`/events/${event.id}/join`);
-            message.success(event.isJoined ? (t('cancelJoinSuccess') || "Đã hủy tham gia") : (t('joinSuccess') || "Đã tham gia!"));
-            fetchEvent();
-        } catch (error) { message.error("Lỗi kết nối: " + error.message); }
+
+            // 2. Tính toán trạng thái mới
+            const newIsJoined = !event.isJoined;
+            const newCount = newIsJoined
+                ? event.participantCount + 1
+                : event.participantCount - 1;
+
+            // 3. Thông báo
+            message.success(newIsJoined ? (t('joinSuccess') || "Đã tham gia!") : (t('cancelJoinSuccess') || "Đã hủy tham gia"));
+
+            // 🟢 4. CẬP NHẬT STATE NGAY LẬP TỨC (Fix lỗi nút không đổi)
+            setEvent(prev => ({
+                ...prev,
+                isJoined: newIsJoined,
+                participantCount: newCount,
+                // Nếu muốn danh sách Avatar cập nhật luôn thì cần fetch lại,
+                // nhưng để đổi nút bấm thì chỉ cần 2 dòng trên là đủ.
+            }));
+
+
+        } catch (error) {
+            console.error(error);
+            message.error("Lỗi kết nối: " + (error.response?.data || error.message));
+        }
     };
 
     const handleDelete = async () => {
@@ -90,6 +139,59 @@ const EventDetailPage = () => {
         if (!event) return;
         const query = (event.latitude && event.longitude) ? `${event.latitude},${event.longitude}` : encodeURIComponent(event.address);
         window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    };
+
+    const renderActionButton = () => {
+        // 1. Chủ event -> Disabled
+        if (isOwner) {
+            return (
+                <Button size="large" block disabled style={{ borderRadius: 8, background: 'var(--input-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}>
+                    {t('youAreHost')}
+                </Button>
+            );
+        }
+
+        // 2. ƯU TIÊN CAO NHẤT: Đã tham gia -> Hiện nút Hủy (Kể cả khi Full)
+        // Nếu biến event.isJoined cập nhật đúng (nhờ bước 1), nút này sẽ hiện ra
+        if (event.isJoined) {
+            return (
+                <Button
+                    size="large" block
+                    danger
+                    icon={<UsergroupAddOutlined />}
+                    onClick={handleJoin}
+                    style={{ borderRadius: 8, fontWeight: 600, height: 45 }}
+                >
+                    {t('cancelJoin') || "Hủy tham gia"}
+                </Button>
+            );
+        }
+
+        // 3. Nếu chưa tham gia mà Hết chỗ -> Disabled
+        if (isFull) {
+            return (
+                <Button
+                    size="large" block
+                    disabled
+                    style={{ borderRadius: 8, fontWeight: 600, height: 45, color: 'var(--text-secondary)' }}
+                >
+                    🚫 {t('fullSlot') || "Hết chỗ"}
+                </Button>
+            );
+        }
+
+        // 4. Còn lại -> Nút Tham gia
+        return (
+            <Button
+                type="primary"
+                size="large" block
+                icon={<CheckCircleOutlined />}
+                onClick={handleJoin}
+                style={{ borderRadius: 8, fontWeight: 600, height: 45 }}
+            >
+                {t('join') || "Tham gia"}
+            </Button>
+        );
     };
 
     if (loading) return <div style={{textAlign:'center', padding: 100}}><Spin size="large" tip="Đang tải..." /></div>;
@@ -195,40 +297,21 @@ const EventDetailPage = () => {
                 </Col>
 
                 <Col xs={24} lg={8}>
-                    <Card style={{ ...cardStyle, textAlign: 'center' }} bordered={false}>
-                        <Avatar src={event.creatorAvatar} size={80} style={{marginBottom: 10}} />
-                        <Title level={4} style={{margin: 0, ...primaryTextStyle}}>{event.creatorName} <CrownOutlined style={{color:'gold'}}/></Title>
+                    <Card style={{...cardStyle, textAlign: 'center'}} bordered={false}>
+                        <Avatar src={event.creatorAvatar} size={80} style={{marginBottom: 10}}/>
+                        <Title level={4} style={{margin: 0, ...primaryTextStyle}}>{event.creatorName} <CrownOutlined
+                            style={{color: 'gold'}}/></Title>
                         <Text style={secondaryTextStyle}>{t('organizer') || "Người tổ chức"}</Text>
 
-                        <div style={{ marginTop: 20, marginBottom: 20 }}>
-                            {isOwner ? (
-                                <Button size="large" block disabled style={{borderRadius: 8, background: 'var(--input-bg)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)'}}>
-                                    {t('youAreHost')}
-                                </Button>
-                            ) : (
-                                <Button
-                                    type={event.isJoined ? "default" : "primary"}
-                                    danger={event.isJoined}
-                                    size="large" block
-                                    icon={event.isJoined ? <UsergroupAddOutlined /> : <CheckCircleOutlined />}
-                                    onClick={handleJoin}
-                                    disabled={!event.isJoined && isFull}
-                                    style={{
-                                        borderRadius: 8, fontWeight: 600, height: 45,
-                                        // Xử lý nút khi đã tham gia (trong suốt, viền đỏ, chữ đỏ/trắng)
-                                        background: event.isJoined ? 'transparent' : undefined,
-                                        borderColor: event.isJoined ? '#ff4d4f' : undefined,
-                                        color: event.isJoined ? '#ff4d4f' : '#fff'
-                                    }}
-                                >
-                                    {event.isJoined ? (t('cancelJoin') || "Hủy tham gia") : (isFull ? (t('fullSlot') || "Full") : (t('join') || "Tham gia"))}
-                                </Button>
-                            )}
+                        <div style={{marginTop: 20, marginBottom: 20}}>
+                            {renderActionButton()}
                         </div>
-                        <Divider style={{borderColor: 'var(--border-color)'}} />
+                        <Divider style={{borderColor: 'var(--border-color)'}}/>
                         <div style={{textAlign: 'left'}}>
-                            <Space style={{marginBottom: 10, width: '100%', justifyContent:'space-between'}}>
-                                <Text strong style={primaryTextStyle}><TeamOutlined /> {t('participantsList') || "Danh sách tham gia"}</Text>
+                            <Space style={{marginBottom: 10, width: '100%', justifyContent: 'space-between'}}>
+                                <Text strong
+                                      style={primaryTextStyle}><TeamOutlined/> {t('participantsList') || "Danh sách tham gia"}
+                                </Text>
                                 <Tag color="blue">{event.participantCount} / {event.maxParticipants}</Tag>
                             </Space>
                             <div style={{maxHeight: 300, overflowY: 'auto'}}>
@@ -236,10 +319,12 @@ const EventDetailPage = () => {
                                     itemLayout="horizontal"
                                     dataSource={participantsData}
                                     renderItem={p => (
-                                        <List.Item style={{padding: '8px 0', borderBottom: '1px solid var(--border-color)'}}>
+                                        <List.Item
+                                            style={{padding: '8px 0', borderBottom: '1px solid var(--border-color)'}}>
                                             <List.Item.Meta
-                                                avatar={<Avatar src={getSafeAvatar(p)} />}
-                                                title={<Text style={{fontSize: 13, ...primaryTextStyle}}>{typeof p === 'string' ? p : p.fullName}</Text>}
+                                                avatar={<Avatar src={getSafeAvatar(p)}/>}
+                                                title={<Text
+                                                    style={{fontSize: 13, ...primaryTextStyle}}>{typeof p === 'string' ? p : p.fullName}</Text>}
                                             />
                                         </List.Item>
                                     )}

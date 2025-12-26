@@ -1,5 +1,6 @@
 import api from '../../services/api';
-import axios from 'axios';
+import axios from "axios";
+
 
 const getHeader = () => {
     const token = localStorage.getItem('token'); // Hoặc nơi bạn lưu token
@@ -11,43 +12,32 @@ const getHeader = () => {
     };
 };
 export const marketApi = {
-    // --- USER (Giữ nguyên) ---
     getAllProducts: () => api.get('/market/products'),
-    createProduct: (formData) => {
-        return axios.post('/api/market/products', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data', // Bắt buộc dòng này để gửi file
-                // Token Auth thường được axios interceptor tự thêm, nếu chưa thì thêm vào đây
-                'Authorization': `Bearer ${localStorage.get('token')}`
-            }
-        });
-    },
+    createProduct: (formData) => api.post('/market/products/create', formData),
 
     // Kiểm tra xem user đã có shop chưa
     getMyShopInfo: () => api.get('/market/shop/me'),
     // Đăng ký shop mới
-    registerShop: (formData) => {
-        return axios.post('/api/market/shop/register', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data', // Quan trọng
-                'Authorization': `Bearer ${localStorage.get('token')}`
-            }
-        });
-    },
+    registerShop: (formData) => api.post('/market/shop/register', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
 
-    // Sửa (Update)
-    updateVoucher: (id, data) => axios.put(`/market/vouchers/${id}`, data, getHeader()),
+// Admin lấy tất cả: /api/market/vouchers/all
 
 
-    // Voucher User
-    getMyVouchers: () => axios.get('/market/vouchers/my-vouchers', getHeader()),
-    hideVoucher: (id) => axios.put(`/market/vouchers/${id}/hide`, {}, getHeader()),
+    getAllVouchers: () => api.get('/market/vouchers/admin/all'),
+    createVoucher: (data) => api.post('/market/vouchers/create', data),
+    updateVoucher: (id, data) => api.put(`/market/vouchers/${id}`, data),
+    deleteVoucher: (id) => api.delete(`/market/vouchers/${id}`),
 
-    // Voucher Admin
-    getAllVouchers: () => axios.get('/market/vouchers/all', getHeader()), // Sửa lại đường dẫn nếu cần
-    createVoucher: (data) => axios.post('/market/vouchers/create', data, getHeader()),
-    deleteVoucher: (id) => axios.delete(`/market/vouchers/${id}`, getHeader()),
-    syncVouchers: () => axios.post('/vouchers/admin/sync-missing', {}, getHeader()),
+    // Sync
+    syncVouchers: () => api.post('/market/vouchers/admin/sync-missing'),
+
+    // User
+    getMyVouchers: () => api.get('/market/vouchers/my-vouchers'),
+    hideVoucher: (id) => api.put(`/market/vouchers/${id}/hide`),
+    checkVoucher: (code) => api.get('/market/vouchers/check', { params: { code } }),
+
 
     // --- REVIEW ---
     // Lấy đánh giá của sản phẩm
@@ -83,7 +73,6 @@ export const marketApi = {
     getMyProducts: () => api.get('/market/my-products'),
     getMySales: () => api.get('/market/my-sales'),
 
-    checkVoucher: (code) => api.get('/market/vouchers/check', { params: { code } }),
     adminUpdateOrderStatus: (id, status) => api.put(`/admin/market/orders/${id}/status`, null, { params: { status } }),
 
     getAdminStats: () => api.get('/admin/market/dashboard/stats'),

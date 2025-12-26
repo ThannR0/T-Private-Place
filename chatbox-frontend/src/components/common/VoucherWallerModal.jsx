@@ -3,7 +3,7 @@ import { Modal, List, Tag, Typography, Button, Empty, Skeleton, message } from '
 import { GiftOutlined, CopyOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api'; // Đường dẫn api của bạn
 import dayjs from 'dayjs';
-
+import { marketApi } from '../marketplace/MarketAPI';
 const { Title, Text } = Typography;
 
 const VoucherWalletModal = ({ visible, onClose }) => {
@@ -19,7 +19,7 @@ const VoucherWalletModal = ({ visible, onClose }) => {
     const fetchMyVouchers = async () => {
         setLoading(true);
         try {
-            const res = await api.get('/vouchers/my-vouchers');
+            const res = await marketApi.getMyVouchers();
             setVouchers(res.data);
         } catch (error) {
             console.error(error);

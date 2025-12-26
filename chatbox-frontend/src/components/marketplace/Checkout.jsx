@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
     Card, Button, Input, Divider, message, Avatar, Typography,
-    Steps, Row, Col, Form, Radio, InputNumber, Space, Statistic, Tag, Modal, Result
+    Steps, Row, Col, Form, InputNumber, Space, Statistic, Tag, Modal
 } from 'antd';
 import {
     UserOutlined, PhoneOutlined, EnvironmentOutlined, CreditCardOutlined,
@@ -20,10 +20,17 @@ const Checkout = () => {
     const [voucherCode, setVoucherCode] = useState('');
     const [appliedVoucher, setAppliedVoucher] = useState(null);
     const [checkingVoucher, setCheckingVoucher] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('WALLET');
     const navigate = useNavigate();
     const [form] = Form.useForm();
 
+    // 🟢 HÀM AN TOÀN: Chuyển mọi giá trị về số (tránh lỗi NaN khi tính toán)
+    const parseNumber = (val) => {
+        if (!val) return 0;
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
+    };
+
+    // Nhóm sản phẩm theo Shop
     const groupedItems = useMemo(() => {
         return cart.reduce((acc, item) => {
             const sellerName = item.product.seller?.username || 'Unknown Shop';
@@ -33,28 +40,40 @@ const Checkout = () => {
         }, {});
     }, [cart]);
 
-    // 🟢 LOGIC TÍNH TIỀN MỚI
-    const merchandiseSubtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    // 🟢 TÍNH TOÁN TIỀN (Sử dụng parseNumber để an toàn)
+    const merchandiseSubtotal = cart.reduce((sum, item) => sum + (parseNumber(item.product.price) * item.quantity), 0);
 
-    // Tổng phí ship (nếu không có thì = 0)
-    const totalShippingFee = cart.reduce((sum, item) => sum + ((item.product.shippingFee || 0) * item.quantity), 0);
+    // Tổng phí ship
+    const totalShippingFee = cart.reduce((sum, item) => sum + (parseNumber(item.product.shippingFee) * item.quantity), 0);
 
-    const discountAmount = appliedVoucher ? (merchandiseSubtotal * appliedVoucher.discountPercent) : 0;
+    // Tính giảm giá (Ưu tiên %, nếu không có thì kiểm tra giảm tiền mặt - mở rộng cho tương lai)
+    let discountAmount = 0;
+    if (appliedVoucher) {
+        const percent = parseNumber(appliedVoucher.discountPercent);
+        if (percent > 0) {
+            discountAmount = merchandiseSubtotal * percent;
+        } else {
+            discountAmount = parseNumber(appliedVoucher.discountAmount);
+        }
+    }
 
     // Tổng thanh toán = Tiền hàng + Tiền ship - Giảm giá
-    const totalPayment = merchandiseSubtotal + totalShippingFee - discountAmount;
+    // Đảm bảo không âm
+    const totalPayment = Math.max(0, merchandiseSubtotal + totalShippingFee - discountAmount);
 
-    // Hàm gọi API check voucher (Giữ nguyên)
+    // Hàm gọi API check voucher
     const handleApplyVoucher = async () => {
         if (!voucherCode.trim()) return message.warning("Bạn chưa nhập mã voucher!");
         setCheckingVoucher(true);
         try {
             const res = await marketApi.checkVoucher(voucherCode);
+            // 🟢 FIX LỖI NaN: Đảm bảo discountPercent luôn có giá trị số
             setAppliedVoucher({
                 code: res.data.code,
-                discountPercent: res.data.discountPercent
+                discountPercent: parseNumber(res.data.discountPercent),
+                discountAmount: parseNumber(res.data.discountAmount)
             });
-            message.success(`Áp dụng thành công! Giảm ${(res.data.discountPercent * 100).toFixed(0)}%`);
+            message.success(`Áp dụng thành công!`);
         } catch (error) {
             setAppliedVoucher(null);
             message.error(error.response?.data || "Mã voucher không hợp lệ!");
@@ -79,7 +98,6 @@ const Checkout = () => {
             await Promise.all(promises);
             clearCart();
 
-            // Hiện Modal thông báo thành công
             Modal.success({
                 title: 'Đặt hàng thành công!',
                 width: 500,
@@ -94,10 +112,7 @@ const Checkout = () => {
                     </div>
                 ),
                 okText: 'Xem đơn hàng của tôi',
-                onOk: () => {
-                    // Chuyển sang trang "Đơn mua" (Không phải MyShop)
-                    navigate('/market/orders');
-                },
+                onOk: () => navigate('/market/orders'),
                 centered: true
             });
 
@@ -108,7 +123,6 @@ const Checkout = () => {
         }
     };
 
-    // Nút quay lại
     const renderBackButton = () => (
         <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate('/market')} style={{ marginBottom: 20 }}>
             Quay lại Chợ
@@ -163,9 +177,13 @@ const Checkout = () => {
                                                 <div style={{ flex: 1, marginLeft: 15 }}>
                                                     <Text strong>{item.product.name}</Text>
                                                     <div style={{display:'flex', gap: 10, fontSize: 13}}>
-                                                        <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>{item.product.price.toLocaleString()} T</span>
-                                                        {/* 🟢 HIỂN THỊ SHIP TỪNG MÓN */}
-                                                        <span style={{ color: '#888' }}><CarOutlined /> Ship: {item.product.shippingFee > 0 ? item.product.shippingFee.toLocaleString() : 'Free'}</span>
+                                                        <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>{parseNumber(item.product.price).toLocaleString()} T</span>
+                                                        {/* 🟢 ĐỒNG BỘ: Thêm chữ 'T' vào phí ship */}
+                                                        <span style={{ color: '#888' }}>
+                                                            <CarOutlined /> Ship: {parseNumber(item.product.shippingFee) > 0
+                                                            ? `${parseNumber(item.product.shippingFee).toLocaleString()} T`
+                                                            : 'Free'}
+                                                        </span>
                                                     </div>
                                                 </div>
                                                 <Space>
@@ -203,15 +221,19 @@ const Checkout = () => {
                             </div>
                             <Divider />
 
-                            {/* 🟢 CẬP NHẬT CHI TIẾT THANH TOÁN */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}><Text type="secondary">Tạm tính:</Text><Text>{merchandiseSubtotal.toLocaleString()} T</Text></div>
+                            {/* 🟢 HIỂN THỊ THÔNG TIN THANH TOÁN (ĐÃ FIX NaN) */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                                <Text type="secondary">Tạm tính:</Text>
+                                <Text>{merchandiseSubtotal.toLocaleString()} T</Text>
+                            </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                                 <Text type="secondary">Phí vận chuyển:</Text>
                                 <Text>{totalShippingFee > 0 ? totalShippingFee.toLocaleString() : '0'} T</Text>
                             </div>
                             {appliedVoucher && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                    <Text type="success">Voucher ({(appliedVoucher.discountPercent * 100).toFixed(0)}%):</Text>
+                                    {/* Fix lỗi hiển thị NaN% nếu discountPercent = 0 */}
+                                    <Text type="success">Voucher ({appliedVoucher.discountPercent > 0 ? `-${(appliedVoucher.discountPercent * 100).toFixed(0)}%` : 'Tiền mặt'}):</Text>
                                     <Text type="success">- {discountAmount.toLocaleString()} T</Text>
                                 </div>
                             )}

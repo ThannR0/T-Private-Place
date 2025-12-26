@@ -38,7 +38,7 @@ public class Voucher {
 
 
     // Đổi tên expiryDate -> expirationDate để khớp với logic Service cũ
-    private LocalDateTime expiryDate;
+    private LocalDateTime expirationDate;
 
     private boolean isUsed; // Có thể giữ lại hoặc dùng logic (usedCount >= usageLimit)
 

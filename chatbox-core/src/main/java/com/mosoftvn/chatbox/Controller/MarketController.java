@@ -38,9 +38,10 @@ public class MarketController {
     @PostMapping(value = "/products/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(@ModelAttribute ProductDTO dto, Principal principal) {
         try {
+            // Gọi đúng hàm Service bạn vừa gửi cho tôi
             return ResponseEntity.ok(productService.createProduct(dto, principal.getName()));
-        } catch (IOException | java.io.IOException e) {
-            return ResponseEntity.badRequest().body("Lỗi upload ảnh: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
 

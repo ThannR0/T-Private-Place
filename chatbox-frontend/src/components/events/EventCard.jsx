@@ -80,7 +80,7 @@ const EventCard = ({ event, currentUser, onJoin, onDelete, onEdit }) => {
     return (
         <Card
             hoverable
-            onClick={() => navigate(`/events/${event.id}`)}
+            onClick={() => navigate(`/events/${event.id}`, { state: { initialEvent: event } })}
             cover={
                 <div style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
                     <img alt="cover" src={event.imageUrl || "https://via.placeholder.com/400x200"} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }} className="hover-zoom" />

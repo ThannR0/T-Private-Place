@@ -1,5 +1,20 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Tabs, Table, Tag, Button, message, Popconfirm, Empty, Card, Statistic, Row, Col, Typography, Spin } from 'antd';
+import {
+    Tabs,
+    Table,
+    Tag,
+    Button,
+    message,
+    Popconfirm,
+    Empty,
+    Card,
+    Statistic,
+    Row,
+    Col,
+    Typography,
+    Spin,
+    Modal
+} from 'antd';
 import {
     CheckCircleOutlined, SyncOutlined, ClockCircleOutlined,
     ShopOutlined, ShoppingOutlined, DollarOutlined,
@@ -19,7 +34,7 @@ const MyOrders = () => {
     const [buyOrders, setBuyOrders] = useState([]);   // Đơn mình mua
     const [sellOrders, setSellOrders] = useState([]); // Đơn mình bán
     const [loading, setLoading] = useState(false);
-
+    const [pendingProducts, setPendingProducts] = useState([]);
     // Lấy context
     const { currentUser, notifications } = useChat();
     const navigate = useNavigate();
@@ -79,19 +94,22 @@ const MyOrders = () => {
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            // Gọi song song cả API mua và bán để tính toán tài chính
-            const [resBuy, resSell] = await Promise.all([
-                marketApi.getMyOrders(), // API lấy đơn mua
-                marketApi.getMySales()   // API lấy đơn bán (Từ MyShop chuyển sang đây để vẽ chart)
+            // 🟢 2. SỬA ĐOẠN GỌI API NÀY
+            const [resBuy, resSell, resProducts] = await Promise.all([
+                marketApi.getMyOrders(), // Đơn mua
+                marketApi.getMySales(),  // Đơn bán
+                marketApi.getMyProducts() // Lấy danh sách sản phẩm của tôi
             ]);
 
-            // Sắp xếp theo ngày mới nhất
             setBuyOrders((resBuy.data || []).sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)));
             setSellOrders((resSell.data || []).sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)));
 
+            // Lọc ra các sản phẩm đang chờ duyệt (PENDING)
+            const allMyProducts = resProducts.data || [];
+            setPendingProducts(allMyProducts.filter(p => p.status === 'PENDING'));
+
         } catch (error) {
             console.error("Lỗi đồng bộ dữ liệu:", error);
-            // message.error("Không thể tải dữ liệu đơn hàng"); // Có thể ẩn để đỡ spam
         } finally {
             setLoading(false);
         }
@@ -148,6 +166,31 @@ const MyOrders = () => {
             .sort((a, b) => dayjs(a.date, 'DD/MM').diff(dayjs(b.date, 'DD/MM')))
             .slice(-7);
     }, [buyOrders, sellOrders, currentUser]);
+
+    const productColumns = [
+        {
+            title: 'Sản phẩm',
+            dataIndex: 'name',
+            render: (t, r) => (
+                <div style={{display:'flex', gap: 10, alignItems:'center'}}>
+                    <img src={r.images?.[0]} alt="" style={{width: 40, height: 40, objectFit:'cover', borderRadius: 4}} />
+                    <div>
+                        <div style={{fontWeight: 600}}>{t}</div>
+                        <div style={{fontSize: 11, color: '#888'}}>Kho: {r.quantity}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: 'Giá bán',
+            dataIndex: 'price',
+            render: v => <span style={{fontWeight:'bold', color: '#faad14'}}>{v?.toLocaleString()} T</span>
+        },
+        {
+            title: 'Tình trạng',
+            render: () => <Tag icon={<SyncOutlined spin />} color="warning">Đang chờ Admin duyệt</Tag>
+        }
+    ];
 
     // --- CẤU HÌNH CỘT BẢNG ---
     const getColumns = (type) => [
@@ -340,6 +383,11 @@ const MyOrders = () => {
                         key: '2',
                         label: <span><ShopOutlined /> Đơn Bán Hàng ({sellOrders.length})</span>,
                         children: <Table dataSource={sellOrders} columns={getColumns('SELL')} rowKey="id" loading={loading} pagination={{pageSize: 5}} />
+                    },
+                    {
+                        key: '3',
+                        label: <span><ClockCircleOutlined /> Đang Chờ Duyệt ({pendingProducts.length})</span>,
+                        children: <Table dataSource={pendingProducts} columns={productColumns} rowKey="id" loading={loading} pagination={{pageSize: 5}} />
                     }
                 ]} />
             </Card>

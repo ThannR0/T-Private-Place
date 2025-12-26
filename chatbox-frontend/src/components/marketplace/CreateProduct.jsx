@@ -142,6 +142,25 @@ const CreateProduct = () => {
         reader.onerror = (error) => reject(error);
     });
 
+    // Hàm kiểm tra trước khi upload
+    const beforeUpload = (file) => {
+        // 1. Chỉ nhận ảnh
+        const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif';
+        if (!isImage) {
+            message.error('Chỉ được chọn file ảnh!');
+            return Upload.LIST_IGNORE;
+        }
+
+        // 2. Giới hạn 2MB/ảnh (Để 4 ảnh cộng lại không quá 10MB của Server)
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        if (!isLt2M) {
+            message.error('Ảnh phải nhỏ hơn 2MB để tránh lỗi hệ thống!');
+            return Upload.LIST_IGNORE;
+        }
+
+        return false;
+    };
+
     return (
         <div style={{ padding: '40px 20px', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', minHeight: '100vh' }}>
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -183,7 +202,7 @@ const CreateProduct = () => {
                                             label="Giá bán"
                                             rules={[
                                                 { required: true, message: 'Vui lòng nhập giá' },
-                                                { type: 'number', min: 1000, message: 'Giá tối thiểu là 1,000 Than' }
+                                                { type: 'number', min: 100, message: 'Giá tối thiểu là 100 Than' }
                                             ]}
                                             tooltip="Giá bán bằng đơn vị Than (Tối thiểu 1,000)"
                                         >
@@ -194,7 +213,7 @@ const CreateProduct = () => {
                                                 formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                                 parser={v => v.replace(/\$\s?|(,*)/g, '')}
                                                 // 🟢 ICON TIỀN TỆ CUSTOM
-                                                addonAfter={<div style={{display:'flex', alignItems:'center', gap:5}}><PremiumCoinIcon size={20}/> <span style={{fontWeight:'bold', color: '#d48806'}}>THAN</span></div>}
+                                                addonAfter={<div style={{display:'flex', alignItems:'center', gap:5}}><PremiumCoinIcon size={20}/> <span style={{fontWeight:'bold', color: '#d48806'}}>T</span></div>}
                                             />
                                         </Form.Item>
                                     </Col>
@@ -215,7 +234,14 @@ const CreateProduct = () => {
                                                 formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                                 parser={v => v.replace(/\$\s?|(,*)/g, '')}
                                                 prefix={<CarOutlined style={{color: '#888'}} />}
-                                                addonAfter="Than"
+
+                                                // 🟢 SỬA DÒNG NÀY: Thay chữ "Than" bằng Icon + Chữ T màu vàng
+                                                addonAfter={
+                                                    <div style={{display:'flex', alignItems:'center', gap:5}}>
+                                                        <PremiumCoinIcon size={20}/>
+                                                        <span style={{fontWeight:'bold', color: '#d48806'}}>T</span>
+                                                    </div>
+                                                }
                                             />
                                         </Form.Item>
                                     </Col>
@@ -277,7 +303,7 @@ const CreateProduct = () => {
                                         fileList={fileList}
                                         onPreview={handlePreview}
                                         onChange={handleUploadChange}
-                                        beforeUpload={() => false}
+                                        beforeUpload={beforeUpload}
                                         maxCount={5}
                                         accept="image/*"
                                         style={{width: '100%'}}

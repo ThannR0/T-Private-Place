@@ -90,7 +90,7 @@ public class VoucherService {
         LocalDateTime endOfMonth = LocalDateTime.now()
                 .with(java.time.temporal.TemporalAdjusters.lastDayOfMonth())
                 .withHour(23).withMinute(59).withSecond(59);
-        v.setExpiryDate(endOfMonth);
+        v.setExpirationDate(endOfMonth);
 
         voucherRepository.save(v);
     }
@@ -98,8 +98,8 @@ public class VoucherService {
     // 2. LẤY DANH SÁCH VOUCHER CỦA TÔI (Cho API Frontend)
     public List<Voucher> getMyVouchers(String username) {
         User user = userRepository.findByUsername(username).orElseThrow();
-        // Lấy voucher của user VÀ voucher chung (owner == null) mà còn hạn
-        return voucherRepository.findAvailableVouchersForUser(user.getId(), LocalDateTime.now());
+        // Gọi query mới trong Repository
+        return voucherRepository.findAllVouchersForUser(user.getId());
     }
 
     @Transactional
@@ -110,7 +110,7 @@ public class VoucherService {
         v.setDiscountPercent(dto.getDiscountPercent());
 
         // Mặc định hạn 30 ngày nếu không chọn
-        v.setExpiryDate(dto.getExpiryDate() != null ? dto.getExpiryDate() : LocalDateTime.now().plusDays(30));
+        v.setExpirationDate(dto.getExpiryDate() != null ? dto.getExpiryDate() : LocalDateTime.now().plusDays(30));
 
         v.setUsageLimit(1);
         v.setUsedCount(0);
@@ -143,7 +143,7 @@ public class VoucherService {
         voucher.setDiscountPercent(discountPercent);
         voucher.setDiscountAmount(0.0);
         voucher.setMinOrderAmount(0.0);
-        voucher.setExpiryDate(LocalDateTime.now().plusDays(30));
+        voucher.setExpirationDate(LocalDateTime.now().plusDays(30));
         voucher.setUsageLimit(1);
         voucher.setUsedCount(0);
         voucher.setIsActive(true);
@@ -184,9 +184,6 @@ public class VoucherService {
             System.err.println("Lỗi gửi thông báo voucher: " + e.getMessage());
         }
     }
-    public List<Voucher> getAllVouchers() {
-        return voucherRepository.findAll();
-    }
 
     // 3. HÀM QUÉT VÀ BÙ VOUCHER (ĐÃ THÊM LOG DEBUG)
     public String syncVouchersForExistingUsers() {
@@ -221,6 +218,10 @@ public class VoucherService {
         return "Đã quét " + users.size() + " user. Tạo mới " + countCreated + " voucher.";
     }
 
+    public List<Voucher> getAllVouchers() {
+        return voucherRepository.findAll();
+    }
+
     // Hàm phụ trợ: Trả về true nếu tạo mới, false nếu đã có
     private boolean checkAndCreateMissingVoucher(User user, String levelName, Double percent) {
         // Mã định danh để check trùng: VIP_LEVELNAME_USERNAME
@@ -246,45 +247,80 @@ public class VoucherService {
         return voucherRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
     }
 
-    // 🟢 1. HÀM CẬP NHẬT (Update) CHO ADMIN
+    // 1. Cập nhật (Admin)
     @Transactional
     public Voucher updateVoucher(Long id, VoucherDTO dto) {
         Voucher v = voucherRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
 
-        // Update các trường cho phép sửa
         if (dto.getDiscountPercent() != null) v.setDiscountPercent(dto.getDiscountPercent());
-        if (dto.getExpiryDate() != null) v.setExpiryDate(dto.getExpiryDate());
-        if (dto.getDescription() != null) v.setDescription(dto.getDescription());
+        // Lưu ý: Kiểm tra Entity dùng 'expiryDate' hay 'expirationDate'
+        if (dto.getExpiryDate() != null) v.setExpirationDate(dto.getExpiryDate());
 
-        // Nếu muốn cho sửa mã code (cần check trùng)
+        // Logic đổi mã (check trùng)
         if (dto.getCode() != null && !dto.getCode().equals(v.getCode())) {
-            if(voucherRepository.existsByCode(dto.getCode())) throw new RuntimeException("Mã mới bị trùng");
+            if(voucherRepository.existsByCode(dto.getCode())) throw new RuntimeException("Mã mới bị trùng!");
             v.setCode(dto.getCode());
         }
-
         return voucherRepository.save(v);
     }
 
-    // 🟢 2. HÀM XÓA VĨNH VIỄN CHO ADMIN
+    // 2. Xóa vĩnh viễn (Admin)
     @Transactional
     public void deleteVoucher(Long id) {
-        if(!voucherRepository.existsById(id)) throw new RuntimeException("Không tìm thấy voucher");
+        if(!voucherRepository.existsById(id)) throw new RuntimeException("Không tìm thấy");
         voucherRepository.deleteById(id);
     }
 
-    // 🟢 3. HÀM ẨN VOUCHER CHO USER (Soft Delete)
+    // 3. Ẩn voucher (User dọn rác)
     @Transactional
     public void hideVoucher(Long id, String username) {
         Voucher v = voucherRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy"));
-
         // Chỉ chủ sở hữu mới được ẩn
         if (v.getOwner() != null && v.getOwner().getUsername().equals(username)) {
-            v.setDeletedByUser(true);
+            v.setDeletedByUser(true); // Yêu cầu Entity Voucher phải có cột này
             voucherRepository.save(v);
         } else {
-            throw new RuntimeException("Bạn không sở hữu voucher này");
+            throw new RuntimeException("Không có quyền");
         }
+    }
+
+    public Voucher getValidVoucher(String code) {
+        Voucher v = voucherRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Mã voucher không tồn tại!"));
+
+        if (!v.getIsActive()) throw new RuntimeException("Voucher đã bị khóa!");
+
+        if (v.getUsageLimit() > 0 && v.getUsedCount() >= v.getUsageLimit()) {
+            throw new RuntimeException("Voucher đã hết lượt sử dụng!");
+        }
+
+        // Kiểm tra ngày hết hạn (expirationDate)
+        if (v.getExpirationDate() != null && LocalDateTime.now().isAfter(v.getExpirationDate())) {
+            throw new RuntimeException("Voucher đã hết hạn!");
+        }
+
+        return v;
+    }
+
+    @Transactional
+    public Voucher applyVoucher(String code, String username) {
+        Voucher v = getValidVoucher(code); // Gọi lại hàm kiểm tra hạn/lượt dùng
+
+        // Kiểm tra chủ sở hữu
+        if (v.getOwner() != null && !v.getOwner().getUsername().equals(username)) {
+            throw new RuntimeException("Voucher này không phải của bạn!");
+        }
+
+        // Trừ lượt dùng
+        v.setUsedCount(v.getUsedCount() + 1);
+
+        // Nếu đã dùng hết lượt cá nhân thì đánh dấu đã dùng (để hiện bên tab Lịch sử)
+        if (v.getOwner() != null && v.getUsedCount() >= v.getUsageLimit()) {
+            v.setUsed(true);
+        }
+
+        return voucherRepository.save(v);
     }
 
 

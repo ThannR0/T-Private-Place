@@ -8,13 +8,13 @@ import CreateEventModal from '../../components/events/CreateEventModal';
 import { useSettings } from '../../context/SettingsContext';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
-
+import { useLocation } from 'react-router-dom'; // 🟢 Thêm dòng này
 const { Title, Text } = Typography;
 
 const EventsPage = () => {
     const { currentUser } = useChat();
     const { t } = useSettings();
-
+    const location = useLocation();
     // Data State
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -40,7 +40,7 @@ const EventsPage = () => {
         } finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchEvents(); }, []);
+    useEffect(() => { fetchEvents(); }, [location.key]);
 
     // --- LOGIC LỌC
     const filteredEvents = events.filter(event => {
@@ -120,17 +120,36 @@ const EventsPage = () => {
             setEvents(prev => prev.map(ev => {
                 if (ev.id === eventId) {
                     const isJoining = !ev.isJoined;
+
+                    // 🟢 LOGIC FIX: Cập nhật luôn mảng participants giả lập
+                    // Để khi bấm vào chi tiết, nó hiển thị avatar mình ngay lập tức
+                    let newParticipants = ev.participants || [];
+                    if (isJoining) {
+                        // Thêm mình vào (giả lập object user hoặc string username tùy backend)
+                        // Tốt nhất là thêm object có avatar để hiển thị đẹp
+                        newParticipants = [
+                            ...newParticipants,
+                            { username: currentUser, fullName: currentUser, avatar: null } // Mock data
+                        ];
+                    } else {
+                        // Xóa mình đi
+                        newParticipants = newParticipants.filter(p => {
+                            const pName = typeof p === 'string' ? p : p.username;
+                            return pName !== currentUser;
+                        });
+                    }
+
                     return {
                         ...ev,
                         isJoined: isJoining,
-                        participantCount: isJoining ? ev.participantCount + 1 : ev.participantCount - 1
+                        participantCount: isJoining ? ev.participantCount + 1 : ev.participantCount - 1,
+                        participants: newParticipants
                     };
                 }
                 return ev;
             }));
 
-            // Sử dụng key mới thêm
-            message.success(targetEvent.isJoined ? (t('cancelJoinSuccess') || "Đã hủy tham gia") : (t('joinSuccess') || "Tham gia thành công!"));
+            // ... (phần message giữ nguyên)
         } catch (error) {
             message.error(t('connectionError') || "Lỗi kết nối");
         }

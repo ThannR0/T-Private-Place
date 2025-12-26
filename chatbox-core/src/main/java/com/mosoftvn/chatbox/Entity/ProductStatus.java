@@ -5,5 +5,6 @@ public enum ProductStatus {
     APPROVED,   // Đã duyệt (Đang bán)
     REJECTED,   // Bị từ chối
     SOLD_OUT,   // Hết hàng
-    HIDDEN      // Đã ẩn
+    HIDDEN,     // Đã ẩn
+    DELETED
 }

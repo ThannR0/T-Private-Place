@@ -11,21 +11,14 @@ import java.util.Optional;
 
 public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     Optional<Voucher> findByCodeAndOwnerUsername(String code, String username);
-
-    // 1. Kiểm tra mã chính xác
+    Optional<Voucher> findByCode(String code);
     boolean existsByCode(String code);
-
-    // 2. Kiểm tra mã bắt đầu bằng... (Dùng cho logic Sync)
-    // Ví dụ: Kiểm tra xem user này đã có voucher VIP_GOLD... chưa
     boolean existsByCodeStartingWith(String prefix);
 
-    // 3. Lấy voucher của User (Riêng hoặc Chung)
-    @Query("SELECT v FROM Voucher v WHERE (v.owner.id = :userId OR v.owner IS NULL) " +
-            "AND v.expiryDate > :now " +
-            "AND v.isActive = true " +
-            "AND v.usedCount < v.usageLimit")
-    List<Voucher> findAvailableVouchersForUser(@Param("userId") Long userId, @Param("now") LocalDateTime now);
-    List<Voucher> findByOwnerUsernameAndDeletedByUserFalse(String username);
+    // Lấy tất cả (kể cả đã dùng/hết hạn) ĐỂ HIỂN THỊ LỊCH SỬ
+    // Chỉ lọc bỏ những cái user đã chủ động xóa (deletedByUser = true)
+    @Query("SELECT v FROM Voucher v WHERE (v.owner.id = :userId OR v.owner IS NULL) AND (v.deletedByUser = false OR v.deletedByUser IS NULL) ORDER BY v.id DESC")
+    List<Voucher> findAllVouchersForUser(@Param("userId") Long userId);
 
 
 }
