@@ -25,73 +25,61 @@ public class SupportService {
 
     // 1. TẠO TICKET & GỬI MAIL ADMIN
     public SupportTicket createTicket(SupportTicket ticket) {
-        // Set mặc định khi mới tạo
         ticket.setStatus(TicketStatus.OPEN);
-        if (ticket.getPriority() == null) ticket.setPriority(TicketPriority.MEDIUM);
-
-        // Lưu vào DB
-        SupportTicket savedTicket = ticketRepo.save(ticket);
-
-        // 🟢 Gửi Email thông báo cho Admin
-        String subject = "[Support] Yêu cầu mới #" + savedTicket.getId() + ": " + savedTicket.getTitle();
-        String content = String.format("""
-                Chào Admin,
-                
-                Có một yêu cầu hỗ trợ mới từ người dùng: %s
-                Email liên hệ: %s
-                
-                Loại vấn đề: %s
-                Mức độ: %s
-                
-                Nội dung chi tiết:
-                %s
-                
-                Vui lòng kiểm tra trang quản trị để xử lý.
-                """,
-                ticket.getUserId(),
-                ticket.getUserEmail(),
-                ticket.getCategory(),
-                ticket.getPriority(),
-                ticket.getDescription()
-        );
-
-        // Gọi hàm sendEmail có sẵn của bạn
-        emailService.sendEmail(ADMIN_EMAIL, subject, content);
-
-        return savedTicket;
-    }
-
-    // 2. ADMIN TRẢ LỜI & CẬP NHẬT TRẠNG THÁI
-    public SupportTicket replyTicket(Long ticketId, String response, TicketStatus newStatus) {
-        SupportTicket ticket = ticketRepo.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ticket"));
-
-        ticket.setAdminResponse(response);
-        ticket.setStatus(newStatus);
-
-        SupportTicket updatedTicket = ticketRepo.save(ticket);
-
-        // 🟢 Gửi Email báo cho User biết là Admin đã trả lời
+        ticket.setCreatedAt(LocalDateTime.now());
+        SupportTicket saved = ticketRepo.save(ticket);
+        System.out.println("DEBUG EMAIL: Đang kiểm tra để gửi mail...");
+        System.out.println("DEBUG EMAIL: Email nhận được là: " + ticket.getUserEmail());
+        // 2. Gửi mail xác nhận cho USER
+        // Kiểm tra xem user có email không (được truyền từ frontend xuống hoặc query từ User Entity)
         if (ticket.getUserEmail() != null && !ticket.getUserEmail().isEmpty()) {
-            String subject = "[Chatbox] Phản hồi yêu cầu hỗ trợ #" + ticket.getId();
-            String content = String.format("""
-                    Chào bạn,
-                    
-                    Admin đã phản hồi về vấn đề "%s" của bạn.
-                    
-                    Nội dung phản hồi:
-                    %s
-                    
-                    Trạng thái hiện tại: %s
-                    
-                    Cảm ơn bạn đã sử dụng dịch vụ!
-                    """, ticket.getTitle(), response, newStatus);
+            String subject = "[Chatbox AI] Xác nhận yêu cầu hỗ trợ #" + saved.getId();
+            String content = "Chào " + ticket.getUserId() + ",\n\n" +
+                    "Chúng tôi đã nhận được yêu cầu: " + ticket.getTitle() + "\n" +
+                    "Đội ngũ kỹ thuật sẽ kiểm tra và phản hồi sớm nhất.\n\n" +
+                    "Trân trọng,";
 
-            emailService.sendEmail(ticket.getUserEmail(), subject, content);
+            // Chạy bất đồng bộ để không làm chậm API
+            new Thread(() -> emailService.sendEmail(ticket.getUserEmail(), subject, content)).start();
         }
 
-        return updatedTicket;
+        // 3. Gửi mail báo động cho ADMIN
+        String adminSubject = "🆘 [SUPPORT] Ticket Mới #" + saved.getId() + " - " + ticket.getPriority();
+        String adminContent = "User: " + ticket.getUserId() + "\n" +
+                "Loại: " + ticket.getCategory() + "\n" +
+                "Vấn đề: " + ticket.getTitle() + "\n" +
+                "Chi tiết: " + ticket.getDescription();
+
+        new Thread(() -> emailService.sendEmail(ADMIN_EMAIL, adminSubject, adminContent)).start();
+
+        return saved;
     }
+
+    // --- ADMIN TRẢ LỜI ---
+    public SupportTicket replyTicket(Long id, String reply, TicketStatus status) {
+        SupportTicket ticket = ticketRepo.findById(id).orElseThrow();
+        ticket.setAdminResponse(reply);
+        ticket.setStatus(status);
+        ticket.setUpdatedAt(LocalDateTime.now());
+        SupportTicket saved = ticketRepo.save(ticket);
+
+        // 4. Gửi mail thông báo cho USER
+        if (ticket.getUserEmail() != null) {
+            String subject = "[Chatbox AI] Admin đã phản hồi Ticket #" + id;
+            String content = "Chào bạn,\n\n" +
+                    "Admin vừa trả lời yêu cầu của bạn:\n" +
+                    "--------------------------------\n" +
+                    reply + "\n" +
+                    "--------------------------------\n" +
+                    "Trạng thái: " + status + "\n\n" +
+                    "Vui lòng truy cập website để xem chi tiết.";
+
+            new Thread(() -> emailService.sendEmail(ticket.getUserEmail(), subject, content)).start();
+        }
+
+        return saved;
+    }
+
 
     public List<SupportTicket> getAllTickets() {
         return ticketRepo.findAll();

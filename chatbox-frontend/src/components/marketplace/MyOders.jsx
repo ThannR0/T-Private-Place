@@ -386,7 +386,7 @@ const MyOrders = () => {
                     },
                     {
                         key: '3',
-                        label: <span><ClockCircleOutlined /> Đang Chờ Duyệt ({pendingProducts.length})</span>,
+                        label: <span><ClockCircleOutlined />Sản phẩm đăng bán dang chờ duyệt ({pendingProducts.length})</span>,
                         children: <Table dataSource={pendingProducts} columns={productColumns} rowKey="id" loading={loading} pagination={{pageSize: 5}} />
                     }
                 ]} />
