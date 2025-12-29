@@ -20,10 +20,10 @@ const Login = () => {
         const newCount = secretCount + 1;
         setSecretCount(newCount);
 
-        console.log(`Click: ${newCount}`); // Debug chơi thôi
+        console.log(`Click: ${newCount}`);
 
         if (newCount === 6) {
-            // Hiệu ứng "Hackerman" một tí
+
             message.loading("Đang truy cập hệ thống quản trị...", 1).then(() => {
                 navigate('/admin/dashboard'); // Chuyển hướng
                 setSecretCount(0);
@@ -48,6 +48,12 @@ const Login = () => {
             loginUser(dataToSave);
 
             message.success('Chào mừng trở lại!');
+
+            if (response.data.role === 'ROLE_ADMIN' || response.data.role === 'ADMIN') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/chat');
+            }
             navigate('/chat'); // Chuyển hướng
         } catch (error) {
             console.error("Lỗi đăng nhập: ", error);

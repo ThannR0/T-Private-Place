@@ -8,7 +8,7 @@ import {
     ProfileOutlined, MessageOutlined, HomeOutlined, BellOutlined, LockOutlined,
     DeleteOutlined, ClearOutlined, CheckCircleFilled, MinusCircleFilled, StopFilled,
     MenuOutlined, CompassOutlined, ScheduleOutlined,
-    ShopOutlined, ShoppingCartOutlined, FileTextOutlined, InfoCircleOutlined, RiseOutlined
+    ShopOutlined, ShoppingCartOutlined, FileTextOutlined, InfoCircleOutlined, RiseOutlined, CustomerServiceOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
@@ -282,6 +282,17 @@ const AppHeader = () => {
                 <Button type="text" block style={{textAlign: 'left', color: 'var(--text-color)', height: 42}}
                         icon={<LockOutlined/>}
                         onClick={() => navigate('/change-password')}>{t('changePassword')}</Button>
+
+                <Button
+                    type="text"
+                    block
+                    style={{ textAlign: 'left', color: 'var(--text-color)', height: 42 }}
+                    icon={<CustomerServiceOutlined />}
+                    onClick={() => navigate('/support')}
+                >
+                    {t('support') || "Hỗ trợ & Báo lỗi"}
+                </Button>
+
                 <Button type="text" block style={{textAlign: 'left', color: 'var(--text-color)', height: 42}}
                         icon={<SettingOutlined/>} onClick={() => setIsSettingsOpen(true)}>{t('settings')}</Button>
                 <Divider style={{margin: '8px 0', borderColor: 'var(--border-color)'}}/>

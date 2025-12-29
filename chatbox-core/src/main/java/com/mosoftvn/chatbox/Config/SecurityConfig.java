@@ -70,7 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/market/vouchers/admin/**").hasRole("ADMIN") // Nếu bạn phân quyền kỹ
                         .requestMatchers("/api/market/vouchers/**").authenticated()
-                        .requestMatchers("/api/admin/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // CHỐT CHẶN CUỐI CÙNG
                         .anyRequest().authenticated()

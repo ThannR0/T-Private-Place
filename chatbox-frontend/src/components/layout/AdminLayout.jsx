@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Button, Typography, Avatar, Dropdown, Space, Badge, Tag } from 'antd';
+import React, {useEffect, useState} from 'react';
+import {Layout, Menu, Button, Typography, Avatar, Dropdown, Space, Badge, Tag, message} from 'antd';
 import {
     DashboardOutlined, UserOutlined, LogoutOutlined,
     SettingOutlined, DollarCircleOutlined, ShopOutlined,
     BellOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
-    LineChartOutlined, GiftOutlined // Icon mới cho thống kê
+    LineChartOutlined, GiftOutlined, CustomerServiceOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
+import AdminSupportDashboard from "../Support/AdminSupportDashhboard.jsx";
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -15,8 +16,28 @@ const { Title } = Typography;
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { logoutUser, currentAvatar, currentFullName } = useChat();
+    const { logoutUser, currentAvatar, currentFullName, currentUser, currentRole } = useChat();
+
     const [collapsed, setCollapsed] = useState(false);
+    const [isChecking, setIsChecking] = useState(true); // Biến để chờ check quyền xong mới hiện giao diện
+
+    // 🟢 2. Thêm useEffect để kiểm tra quyền Admin
+    useEffect(() => {
+        // Giả sử logic lưu quyền:
+        // Cách A: Lấy từ Context (currentUser.role)
+        // Cách B: Lấy từ localStorage (nếu bạn có lưu 'role' khi login)
+
+        const role = currentUser?.role || localStorage.getItem('role');
+
+        // Logic kiểm tra: Nếu chưa đăng nhập HOẶC không phải ADMIN
+        if (!role || (role !== 'ADMIN' && role !== 'ROLE_ADMIN')) {
+            message.error("⛔ Bạn không có quyền truy cập trang quản trị!");
+            navigate('/');
+        } else {
+            setIsChecking(false);
+        }
+    }, [currentRole, navigate]);
+
 
     const handleLogout = () => {
         logoutUser();
@@ -63,10 +84,20 @@ const AdminLayout = () => {
         {
             key: '/admin/vouchers',
             icon: <GiftOutlined />, // Icon hộp quà
-            label: 'Quản lý Voucher',
+            label: 'Quản Lý Voucher',
             onClick: () => navigate('/admin/vouchers')
         },
+        {
+            key: '/admin/support',
+            icon: <CustomerServiceOutlined />,
+            label: 'Hỗ Trợ Người Dùng',
+            onClick: () => navigate('/admin/support')
+        }
     ];
+
+    if (isChecking) {
+        return <div style={{height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>...</div>;
+    }
 
     return (
         <Layout style={{ minHeight: '100vh' }}>

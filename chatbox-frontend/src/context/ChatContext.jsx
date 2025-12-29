@@ -27,6 +27,8 @@ export const ChatProvider = ({ children }) => {
     const [currentAvatar, setCurrentAvatar] = useState(() => localStorage.getItem('avatar'));
     const [myStatus, setMyStatus] = useState("ONLINE");
 
+    const [currentRole, setCurrentRole] = useState(() => localStorage.getItem('role'));
+
 
     // // --- STATE TIỀN TỆ & VIP ---
     // const [myBalance, setMyBalance] = useState(0);
@@ -457,6 +459,11 @@ export const ChatProvider = ({ children }) => {
     const loginUser = (data) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
+
+        if (data.role) {
+            localStorage.setItem('role', data.role);
+            setCurrentRole(data.role); // Cập nhật state role
+        }
         const name = data.fullName || data.username;
         const balance = data.balance || 0;
         setMyBalance(balance);
@@ -515,7 +522,10 @@ export const ChatProvider = ({ children }) => {
         if (stompClientRef.current) stompClientRef.current.deactivate();
 
         ['token', 'username', 'fullName', 'avatar'].forEach(key => localStorage.removeItem(key));
-        setCurrentUser(null); setCurrentFullName(null); setCurrentAvatar(null);
+        setCurrentUser(null);
+        setCurrentRole(null);
+        setCurrentFullName(null); setCurrentAvatar(null);
+
         setMyStatus("OFFLINE"); setMessages([]); setNotifications([]);
         setRecipient("bot");
         setIsConnected(false);
@@ -571,7 +581,7 @@ export const ChatProvider = ({ children }) => {
         myStatus, updateUserStatus, notifications, unreadCount, markNotificationsRead, feedUpdate, fetchMessages, fetchUsers,
         deleteNotification, clearAllNotifications, markOneRead, setCurrentUser, myBalance, fetchMyBalance, myTotalDeposited, fetchMyProfile, fetchMyTotalDeposited,
         celebrationData,
-        setCelebrationData
+        setCelebrationData, currentRole
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

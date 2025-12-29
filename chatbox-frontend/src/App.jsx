@@ -44,6 +44,8 @@ import AdminVoucherManager from "./components/marketplace/AdminVoucherManager.js
 import CreateShop from "./components/marketplace/CreateShop.jsx";
 import ShopProfile from "./components/marketplace/ShopProfile.jsx";
 import OrderDashboard from "./components/marketplace/OrderDashboard.jsx";
+import AdminSupportDashboard from "./components/Support/AdminSupportDashhboard.jsx";
+import UserSupportPage from "./components/Support/UserSupportPage.jsx";
 // ==========================================
 // 1. Layout Chính (Có Header + Nội dung thay đổi)
 // ==========================================
@@ -112,7 +114,7 @@ function App() {
                             <Route path="users" element={<AdminUserPage />} />
                             <Route path="market-stats" element={<MarketDashboard />} />
                             <Route path="vouchers" element={<AdminVoucherManager />} />
-
+                            <Route path="/admin/support" element={<AdminSupportDashboard />} />
 
                             {/* Sau này thêm: /admin/users, /admin/settings... */}
                         </Route>
@@ -136,6 +138,9 @@ function App() {
                             <Route path="/market/create" element={<CreateProduct />} />
                             <Route path="/market/cart" element={<Checkout />} />
                             <Route path="/market/orders" element={<MyOrders />} />
+
+                            <Route path="/support" element={<UserSupportPage />} />
+
                             <Route path="/market" element={
                                         <ProductList />
                             } />

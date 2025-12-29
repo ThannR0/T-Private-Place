@@ -9,31 +9,26 @@ const { Title } = Typography;
 
 const AdminLoginPage = () => {
     const navigate = useNavigate();
-    const { setCurrentUser } = useChat(); // Hàm set user vào context
+    const { loginUser } = useChat();
     const [loading, setLoading] = useState(false);
 
     const onFinish = async (values) => {
         setLoading(true);
         try {
             const res = await api.post('/auth/login', values);
+            const { role } = res.data;
 
-            // 🟢 SỬA LỖI: Backend trả về dạng phẳng, không có object 'user' lồng bên trong
-            // Cấu trúc: { token: "...", username: "...", role: "ADMIN", ... }
-            const { token, username, fullName, avatar, role } = res.data;
-
-            // Tự tạo object user để lưu vào Context
-            const user = { username, fullName, avatar, role };
-
-            // 🛡️ CHECK QUYỀN (Logic đơn giản vì giờ role là String)
-            if (role !== "ROLE_ADMIN") {
-                message.error("Truy cập bị từ chối! Tài khoản không có quyền ROLE_ADMIN.");
+            // 🛡️ CHECK QUYỀN
+            // Kiểm tra xem backend trả về "ADMIN" hay "ROLE_ADMIN" để so sánh cho đúng
+            if (role !== "ROLE_ADMIN" && role !== "ADMIN") {
+                message.error("Truy cập bị từ chối! Bạn không phải Admin.");
                 setLoading(false);
                 return;
             }
 
-            // Đăng nhập thành công
-            localStorage.setItem('token', token);
-            setCurrentUser(user);
+            // 🟢 SỬA QUAN TRỌNG: Gọi hàm loginUser để lưu Role, Avatar, Token chuẩn chỉ
+            loginUser(res.data);
+
             message.success("Chào mừng quay lại, Sếp!");
             navigate('/admin/dashboard');
 
