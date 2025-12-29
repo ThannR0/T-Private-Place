@@ -44,7 +44,7 @@ public class SupportService {
         }
 
         // 3. Gửi mail báo động cho ADMIN
-        String adminSubject = "🆘 [SUPPORT] Ticket Mới #" + saved.getId() + " - " + ticket.getPriority();
+        String adminSubject = "🆘 [SUPPORT TPP] Ticket Mới #" + saved.getId() + " - " + ticket.getPriority();
         String adminContent = "User: " + ticket.getUserId() + "\n" +
                 "Loại: " + ticket.getCategory() + "\n" +
                 "Vấn đề: " + ticket.getTitle() + "\n" +

@@ -112,13 +112,54 @@ const ChatWindow = () => {
     // --- ACTIONS ---
     const handleRevoke = async (msgId) => { try { await api.post(`/chat/${msgId}/revoke`); message.success("Đã thu hồi"); } catch (e) {} };
     const handlePin = async (msgId) => { try { await api.post(`/chat/${msgId}/pin`); } catch (e) {} };
-    const startEdit = (msg) => { setEditingMsgId(msg.id); setEditContent(msg.content); };
-    const saveEdit = async (msgId) => { try { await api.put(`/chat/${msgId}`, { content: editContent }); setEditingMsgId(null); } catch (e) {} };
+    const startEdit = (msg) => {
+        setEditingMsgId(msg.id);
+        setEditContent(msg.content);
+    };
 
+// 2. Hàm Lưu (khi bấm dấu tích V)
+    const saveEdit = async (msgId) => {
+        // 🟢 Thêm log để check xem msgId có bị undefined không
+        console.log("Đang lưu tin nhắn ID:", msgId);
+
+        if (!msgId) {
+            message.error("Lỗi: Không tìm thấy ID tin nhắn");
+            return;
+        }
+
+        try {
+            await api.put(`/chat/${msgId}`, { content: editContent });
+            setEditingMsgId(null);
+            // Không cần reload vì Socket sẽ tự update
+        } catch (e) {
+            console.error(e);
+            message.error("Lỗi khi lưu tin nhắn");
+        }
+    };
+    // Trong ChatWindow.jsx
     const handleForward = () => {
-        if (forwardTarget.length === 0) return message.warning("Chọn người");
-        forwardTarget.forEach(target => { api.post('/chat/forward', { originalMsgId: msgToForward.id, targetUsername: target }); });
-        message.success("Đã chuyển tiếp"); setIsForwardModalOpen(false); setForwardTarget([]);
+        if (forwardTarget.length === 0) return message.warning("Chưa chọn người nhận");
+
+        // Debug: Kiểm tra xem ID có tồn tại không trước khi gửi
+        console.log("Forwarding Message ID:", msgToForward?.id);
+
+        if (!msgToForward || !msgToForward.id) {
+            return message.error("Lỗi: Không tìm thấy tin nhắn gốc");
+        }
+
+        forwardTarget.forEach(target => {
+            api.post('/chat/forward', {
+                originalMsgId: msgToForward.id,
+                targetUsername: target
+            }).catch(err => {
+                console.error("Lỗi forward:", err);
+                message.error("Không thể chuyển tiếp cho " + target);
+            });
+        });
+
+        message.success("Đã chuyển tiếp");
+        setIsForwardModalOpen(false);
+        setForwardTarget([]);
     };
 
     // 2. HÀM GỌI API THẢ TIM

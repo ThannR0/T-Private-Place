@@ -31,7 +31,7 @@ const AdminLayout = () => {
 
         // Logic kiểm tra: Nếu chưa đăng nhập HOẶC không phải ADMIN
         if (!role || (role !== 'ADMIN' && role !== 'ROLE_ADMIN')) {
-            message.error("⛔ Bạn không có quyền truy cập trang quản trị!");
+            // message.error("⛔ Bạn không có quyền truy cập trang quản trị!");
             navigate('/');
         } else {
             setIsChecking(false);

@@ -238,8 +238,27 @@ export const ChatProvider = ({ children }) => {
             stompClientRef.current = client;
 
             // 1. Chat riêng
+            // 1. Chat riêng (Đã nâng cấp để nhận tin nhắn Sửa)
             client.subscribe(`/user/${currentUser}/queue/messages`, (payload) => {
-                addMessageUnique(JSON.parse(payload.body));
+                const data = JSON.parse(payload.body);
+
+                // 🟢 CASE 1: Nếu là tin nhắn SỬA (Realtime Edit)
+                if (data.type === 'MSG_UPDATE') {
+                    setMessages(prev => prev.map(m =>
+                        // Tìm tin nhắn cũ theo ID và cập nhật nội dung mới
+                        m.id === data.msg.id ? { ...m, ...data.msg } : m
+                    ));
+                    return; // Dừng lại, không thêm mới
+                }
+
+                // 🔵 CASE 2: Nếu là tin nhắn MỚI
+                // Backend gửi Map {type:.., msg:..} nên tin nhắn thật nằm trong data.msg
+                // Nếu Backend gửi trực tiếp tin nhắn (cũ) thì lấy data
+                const realMessage = data.msg || data;
+
+                addMessageUnique(realMessage);
+
+                // Phát âm thanh
                 const isSoundOn = localStorage.getItem('soundEnabled') === 'true';
                 if (isSoundOn) {
                     const audio = new Audio('/sounds/notification.mp3');

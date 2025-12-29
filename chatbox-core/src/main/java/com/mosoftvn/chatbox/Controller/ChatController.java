@@ -260,56 +260,108 @@ public class ChatController {
     @PutMapping("/{msgId}")
     public ResponseEntity<?> editMessage(@PathVariable String msgId, @RequestBody Map<String, String> body) {
         String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        ChatMessage msg = chatMessageRepository.findById(msgId).orElseThrow();
 
-        if (!msg.getSenderId().equals(currentUser)) return ResponseEntity.status(403).body("Không chính chủ");
+        // 🟢 1. IN LOG ĐỂ KIỂM TRA (Xem Frontend gửi lên cái gì)
+        System.out.println("DEBUG EDIT: Đang sửa tin nhắn có ID = " + msgId);
+
+        // 🟢 2. ÉP KIỂU ID (Quan trọng nếu dùng PostgreSQL)
+        // Nếu ID trong database của bạn là Long (số), hãy mở comment dòng dưới:
+        // Long idLong = Long.parseLong(msgId);
+
+        // Nếu bạn dùng MongoDB (ID là String) thì giữ nguyên 'msgId'
+        // Nếu dùng PostgreSQL thì thay 'msgId' bằng 'idLong' ở dòng dưới:
+        ChatMessage msg = chatMessageRepository.findById(msgId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tin nhắn với ID: " + msgId));
+
+        // Check quyền chính chủ
+        if (!msg.getSenderId().equals(currentUser)) {
+            return ResponseEntity.status(403).body("Không chính chủ");
+        }
 
         msg.setContent(body.get("content"));
         msg.setEdited(true);
         chatMessageRepository.save(msg);
 
-        messagingTemplate.convertAndSend("/topic/public", Optional.of(Map.of("type", "MSG_UPDATE", "msg", msg)));
+        // Gửi socket cập nhật (như code trước)
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "MSG_UPDATE");
+        payload.put("msg", msg);
+
+        if ("GROUP".equals(msg.getType()) || (msg.getRecipientId() != null && msg.getRecipientId().startsWith("GROUP_"))) {
+            String groupId = msg.getRecipientId().replace("GROUP_", "");
+            messagingTemplate.convertAndSend("/topic/group/" + groupId, (Object) payload);
+        } else {
+            messagingTemplate.convertAndSendToUser(msg.getRecipientId(), "/queue/messages", payload);
+            messagingTemplate.convertAndSendToUser(currentUser, "/queue/messages", payload);
+        }
+
         return ResponseEntity.ok(msg);
     }
 
     // 3. API CHUYỂN TIẾP (Viết Mới)
     @PostMapping("/forward")
-    public ResponseEntity<?> forwardMessage(@RequestBody Map<String, String> body) {
-        String originalMsgId = body.get("originalMsgId");
-        String rawTarget = body.get("targetUsername");
-        String currentSender = SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<?> forwardMessage(@RequestBody Map<String, Object> body) { // 🟢 Sửa thành Object
+        try {
+            // 1. Lấy ID an toàn (Chấp nhận cả Số và Chuỗi)
+            Object rawId = body.get("originalMsgId");
+            if (rawId == null) {
+                return ResponseEntity.badRequest().body("Thiếu ID tin nhắn gốc");
+            }
+            String originalMsgId = String.valueOf(rawId); // Chuyển đổi an toàn sang String
 
-        ChatMessage original = chatMessageRepository.findById(originalMsgId).orElseThrow();
+            String rawTarget = (String) body.get("targetUsername");
 
-        // Xử lý ID nhóm/người nhận
-        String finalRecipientId = rawTarget.startsWith("GROUP_") ? rawTarget.replace("GROUP_", "") : rawTarget;
-        boolean isGroup = rawTarget.startsWith("GROUP_");
+            // Lấy người gửi hiện tại (Người đang thực hiện chuyển tiếp)
+            String currentSender = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        ChatMessage newMsg = new ChatMessage();
-        newMsg.setSenderId(currentSender);
-        newMsg.setRecipientId(finalRecipientId);
+            // 2. Tìm tin nhắn gốc
+            // ⚠️ Lưu ý: Nếu bạn dùng SQL (ID là Long) thì phải parse: Long.parseLong(originalMsgId)
+            ChatMessage original = chatMessageRepository.findById(originalMsgId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tin nhắn gốc với ID: " + originalMsgId));
 
-        // --- LOGIC MỚI: THÊM HEADER CHUYỂN TIẾP ---
-        String forwardPrefix = "[Chuyển tiếp từ " + original.getSenderId() + "]:\n";
-        newMsg.setContent(forwardPrefix + (original.getContent() != null ? original.getContent() : ""));
-        // ------------------------------------------
+            // Xử lý Target (Group hay User)
+            String finalRecipientId = rawTarget.startsWith("GROUP_") ? rawTarget.replace("GROUP_", "") : rawTarget;
+            boolean isGroup = rawTarget.startsWith("GROUP_");
 
-        newMsg.setFileUrl(original.getFileUrl());
-        newMsg.setFileName(original.getFileName());
-        newMsg.setFileType(original.getFileType());
-        newMsg.setTimestamp(java.time.LocalDateTime.now());
-        if (isGroup) newMsg.setType("GROUP");
+            // 3. Tạo tin nhắn mới
+            ChatMessage newMsg = new ChatMessage();
+            newMsg.setSenderId(currentSender);
+            newMsg.setRecipientId(finalRecipientId);
 
-        chatMessageRepository.save(newMsg);
+            // 🟢 FIX LOGIC CONTENT: Đảm bảo không bị null + Thêm trích dẫn đẹp
+            String oldContent = original.getContent();
+            if (oldContent == null) oldContent = "[File đính kèm]";
 
-        // Bắn Socket
-        if (isGroup) {
-            messagingTemplate.convertAndSend("/topic/group/" + finalRecipientId, newMsg);
-        } else {
-            messagingTemplate.convertAndSendToUser(finalRecipientId, "/queue/messages", newMsg);
-            messagingTemplate.convertAndSendToUser(currentSender, "/queue/messages", newMsg);
+            // Format tin nhắn chuyển tiếp
+            String forwardPrefix = String.format("➤ Chuyển tiếp từ %s:\n\n", original.getSenderId());
+            newMsg.setContent(forwardPrefix + oldContent);
+
+            // Copy thông tin File (nếu có)
+            newMsg.setFileUrl(original.getFileUrl());
+            newMsg.setFileName(original.getFileName());
+            newMsg.setFileType(original.getFileType());
+
+            newMsg.setTimestamp(java.time.LocalDateTime.now());
+            if (isGroup) newMsg.setType("GROUP");
+
+            // Lưu và Gửi
+            chatMessageRepository.save(newMsg);
+
+            if (isGroup) {
+                messagingTemplate.convertAndSend("/topic/group/" + finalRecipientId, newMsg);
+            } else {
+                messagingTemplate.convertAndSendToUser(finalRecipientId, "/queue/messages", newMsg);
+                // Gửi lại cho chính mình để hiện lên UI ngay lập tức
+                messagingTemplate.convertAndSendToUser(currentSender, "/queue/messages", newMsg);
+            }
+
+            System.out.println("LOG: Đã chuyển tiếp tin nhắn " + originalMsgId + " tới " + finalRecipientId);
+            return ResponseEntity.ok("Đã chuyển tiếp");
+
+        } catch (Exception e) {
+            e.printStackTrace(); // In lỗi ra console để debug
+            return ResponseEntity.status(500).body("Lỗi chuyển tiếp: " + e.getMessage());
         }
-        return ResponseEntity.ok("Đã chuyển tiếp");
     }
 
     // 4. API THẢ CẢM XÚC (REACTION)
